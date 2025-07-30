@@ -10,6 +10,12 @@ place a user right in the relevant part of a video. This is meant to create a fe
 engaging a content creators chat page, giving the content creator analytics to help know what content to make,
 and also giving the content creator more views when users click through the sources.
 
+## Screenshots
+### Youtube Creator Video View
+![Screenshot 1](https://drive.google.com/uc?id=148CLphlyopIS7C2-r2Qn6UBpxIY9J1pi)
+### User Chatbox View
+![Screenshot 2](https://drive.google.com/uc?id=129tKfbAXyCbQKPwO5wKnAUHLb1bHzDbr)
+
 ### Technologies Used
 - Prisma for postgresql db management and ORM logic
 - ShadCN components to build UI
