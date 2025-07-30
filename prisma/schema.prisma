@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TranscriptionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Video {
+  id                String              @id @default(uuid())
+  youtubeId         String              @unique
+  channelHandle     String
+  title             String
+  content           String
+  chunks            TranscriptChunk[]
+  durationInMinutes Int
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  status            TranscriptionStatus @default(PENDING)
+}
+
+model TranscriptChunk {
+  id                 String                 @id @default(uuid())
+  timestampInSeconds Int
+  text               String
+  embedding          Unsupported("vector")?
+  video              Video                  @relation(fields: [videoId], references: [id])
+  videoId            String
+  createdAt          DateTime               @default(now())
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model Chat {
+  id            String        @id @default(uuid())
+  userEmail     String
+  channelHandle String
+  title         String
+  messages      ChatMessage[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  chatId    String
+  chat      Chat        @relation(fields: [chatId], references: [id])
+  role      MessageRole
+  message   String
+  createdAt DateTime    @default(now())
+}
