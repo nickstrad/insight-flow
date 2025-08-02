@@ -53,25 +53,17 @@ const renderMessageWithLinks = (message: string) => {
 
 interface ChatProps {
   userEmail: string;
-  channelHandle: string;
 }
 
-export const useChatHelpers = ({
-  userEmail,
-  channelHandle,
-}: {
-  userEmail: string;
-  channelHandle: string;
-}) => {
+export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
   const [currentChat, setCurrentChat] = useState<Chat>();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   // Get chats for user and channel
   const { data: chats, error: getAllChatsError } = useSuspenseQuery(
-    trpc.chats.getByUserAndChannel.queryOptions({
+    trpc.chats.getByUserEmail.queryOptions({
       userEmail,
-      channelHandle,
     })
   );
 
@@ -90,9 +82,8 @@ export const useChatHelpers = ({
       onSuccess: (newChat) => {
         toast.success("Chat created successfully!");
         queryClient.invalidateQueries(
-          trpc.chats.getByUserAndChannel.queryOptions({
+          trpc.chats.getByUserEmail.queryOptions({
             userEmail,
-            channelHandle,
           })
         );
         setCurrentChat(newChat);
@@ -108,9 +99,8 @@ export const useChatHelpers = ({
       onSuccess: (newChat) => {
         toast.success("Chat created successfully!");
         queryClient.invalidateQueries(
-          trpc.chats.getByUserAndChannel.queryOptions({
+          trpc.chats.getByUserEmail.queryOptions({
             userEmail,
-            channelHandle,
           })
         );
         setCurrentChat(newChat);
@@ -126,9 +116,8 @@ export const useChatHelpers = ({
       onSuccess: () => {
         toast.success("Chat created successfully!");
         queryClient.invalidateQueries(
-          trpc.chats.getByUserAndChannel.queryOptions({
+          trpc.chats.getByUserEmail.queryOptions({
             userEmail,
-            channelHandle,
           })
         );
         setCurrentChat(chats[0] || undefined);
@@ -140,11 +129,10 @@ export const useChatHelpers = ({
     async (title: string) => {
       return await createChatHandler.mutateAsync({
         userEmail,
-        channelHandle,
         title,
       });
     },
-    [createChatHandler, userEmail, channelHandle]
+    [createChatHandler, userEmail]
   );
 
   const editChatTitle = useCallback(
@@ -243,14 +231,14 @@ export const useMessageHelpers = (chatId?: string) => {
 
   const sendMessage = async (
     message: string,
-    channelHandle: string
+    userEmail: string
   ): Promise<boolean> => {
     if (!chatId) {
       return false;
     }
     try {
       await sendMessageHandler.mutateAsync({
-        channelHandle,
+        userEmail,
         query: message,
         chatId,
       });
@@ -268,13 +256,7 @@ export const useMessageHelpers = (chatId?: string) => {
   };
 };
 
-const useChatHandlers = ({
-  userEmail,
-  channelHandle,
-}: {
-  userEmail: string;
-  channelHandle: string;
-}) => {
+const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -288,7 +270,7 @@ const useChatHandlers = ({
     toggleChat,
     error: chatError,
     isLoading: chatIsLoading,
-  } = useChatHelpers({ userEmail, channelHandle });
+  } = useChatHelpers({ userEmail });
 
   const {
     messages,
@@ -311,7 +293,7 @@ const useChatHandlers = ({
     e.preventDefault();
     if (!newMessage.trim() || messageIsLoading || chatIsLoading) return;
 
-    const success = await sendMessage(newMessage, channelHandle);
+    const success = await sendMessage(newMessage);
     if (success) {
       setNewMessage("");
     }
@@ -347,7 +329,7 @@ const useChatHandlers = ({
   };
 };
 
-export default function Chat({ userEmail, channelHandle }: ChatProps) {
+export default function Chat({ userEmail }: ChatProps) {
   const {
     chat: {
       chats,
@@ -368,7 +350,7 @@ export default function Chat({ userEmail, channelHandle }: ChatProps) {
     },
     isLoading,
     error,
-  } = useChatHandlers({ userEmail, channelHandle });
+  } = useChatHandlers({ userEmail });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleModalSubmit = async (ev: React.FormEvent<HTMLFormElement>) => {

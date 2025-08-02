@@ -1,6 +1,6 @@
 "use client";
 
-import { useVideoTableState } from "./hooks";
+import { useVideoTableState } from "../hooks";
 import {
   Card,
   CardContent,
@@ -36,21 +36,26 @@ import {
 import { Loader2, SquareArrowOutUpRight, Pencil } from "lucide-react";
 
 interface VideoTableProps {
-  channelHandle: string;
+  userEmail: string;
 }
 
-export default function VideoTable({ channelHandle }: VideoTableProps) {
+export default function VideoTable({ userEmail }: VideoTableProps) {
   const {
     pagination: { currentPage, totalPages, handlePreviousPage, handleNextPage },
-    state: { isSyncing, isTranscribing, isModalOpen, selectedVideoText },
+    state: {
+      // isSyncing,
+      isTranscribing,
+      isModalOpen,
+      selectedVideoText,
+    },
     data: { currentVideos, videos },
     handleSort,
     getSortIcon,
-    handleSync,
+    // handleSync,
     transcribeNextN,
     openModal,
     closeModal,
-  } = useVideoTableState({ channelHandle });
+  } = useVideoTableState({ userEmail });
 
   return (
     <Card>
@@ -62,7 +67,7 @@ export default function VideoTable({ channelHandle }: VideoTableProps) {
       </CardHeader>
       <CardContent>
         <div className="flex justify-end space-x-2 mb-4">
-          <Button type="button" onClick={handleSync} disabled={isSyncing}>
+          {/* <Button type="button" onClick={handleSync} disabled={isSyncing}>
             {isSyncing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -71,7 +76,7 @@ export default function VideoTable({ channelHandle }: VideoTableProps) {
             ) : (
               "Sync Videos"
             )}
-          </Button>
+          </Button> */}
           <Button
             type="button"
             onClick={async () => {
@@ -173,7 +178,7 @@ export default function VideoTable({ channelHandle }: VideoTableProps) {
             {videos.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center">
-                  No videos found for {channelHandle}
+                  No videos found for {userEmail}
                 </TableCell>
               </TableRow>
             )}

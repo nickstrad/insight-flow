@@ -34,7 +34,7 @@ const responseSchema = z.object({
 const parser = StructuredOutputParser.fromZodSchema(responseSchema);
 
 export async function searchVideos(
-  channelHandle: string,
+  userEmail: string,
   queryText: string,
   limit: number = 5
 ): Promise<RetrievedChunk[]> {
@@ -62,7 +62,7 @@ export async function searchVideos(
       v."youtubeId"
     FROM "TranscriptChunk" tc
     JOIN "Video" v ON tc."videoId" = v.id
-    WHERE v.status = 'COMPLETED' AND v."channelHandle" = ${channelHandle}  -- Only search through successfully transcribed videos from specific channel
+    WHERE v.status = 'COMPLETED' AND v."userEmail" = ${userEmail}  -- Only search through successfully transcribed videos from specific user
     ORDER BY tc.embedding <=> ${vectorLiteral}::vector
     LIMIT ${limit}
   `;
@@ -193,11 +193,11 @@ ${formatInstructions}`;
 };
 
 export async function handleUserQuery({
-  channelHandle,
+  userEmail,
   query,
   chatId,
 }: {
-  channelHandle: string;
+  userEmail: string;
   query: string;
   chatId: string;
 }): Promise<{
@@ -210,6 +210,7 @@ export async function handleUserQuery({
   let chat = await prisma.chat.findFirst({
     where: {
       id: chatId,
+      userEmail,
     },
     include: {
       messages: {
@@ -226,7 +227,7 @@ export async function handleUserQuery({
   }
 
   // 2. Search for relevant video chunks
-  const chunks = await searchVideos(channelHandle, query);
+  const chunks = await searchVideos(chat.userEmail, query);
 
   // 3. Get previous messages for context
 

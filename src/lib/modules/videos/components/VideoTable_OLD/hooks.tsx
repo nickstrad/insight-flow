@@ -13,11 +13,7 @@ type SortField = keyof Video;
 
 type SortDirection = "asc" | "desc" | "none";
 
-export const useVideoTableState = ({
-  channelHandle,
-}: {
-  channelHandle: string;
-}) => {
+export const useVideoTableState = ({ userEmail }: { userEmail: string }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>();
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
@@ -31,7 +27,7 @@ export const useVideoTableState = ({
 
   const { data: videos, error: getAllVideosError } = useSuspenseQuery(
     trpc.videos.getAll.queryOptions({
-      channelHandle,
+      userEmail,
     })
   );
 
@@ -41,28 +37,28 @@ export const useVideoTableState = ({
     }
   }, [getAllVideosError]);
 
-  const syncVideosHandler = useMutation(
-    trpc.videos.syncVideos.mutationOptions({
-      onError: (error) => {
-        toast.error(error.message);
+  // const syncVideosHandler = useMutation(
+  //   trpc.videos.syncVideos.mutationOptions({
+  //     onError: (error) => {
+  //       toast.error(error.message);
 
-        // if (error.data?.code === "UNAUTHORIZED") {
-        //   clerk.openSignIn();
-        // }
+  //       // if (error.data?.code === "UNAUTHORIZED") {
+  //       //   clerk.openSignIn();
+  //       // }
 
-        // if (error.data?.code === "TOO_MANY_REQUESTS") {
-        //   router.push("/pricing");
-        // }
-      },
-      onSuccess: () => {
-        toast.success("Videos synced successfully!");
+  //       // if (error.data?.code === "TOO_MANY_REQUESTS") {
+  //       //   router.push("/pricing");
+  //       // }
+  //     },
+  //     onSuccess: () => {
+  //       toast.success("Videos synced successfully!");
 
-        queryClient.invalidateQueries(
-          trpc.videos.getAll.queryOptions({ channelHandle })
-        );
-      },
-    })
-  );
+  //       queryClient.invalidateQueries(
+  //         trpc.videos.getAll.queryOptions({ channelHandle })
+  //       );
+  //     },
+  //   })
+  // );
 
   const transcribeNextNHandler = useMutation(
     trpc.transcriptions.transcriptNextN.mutationOptions({
@@ -81,7 +77,7 @@ export const useVideoTableState = ({
         toast.success("Videos transcribed successfully!");
 
         queryClient.invalidateQueries(
-          trpc.videos.getAll.queryOptions({ channelHandle })
+          trpc.videos.getAll.queryOptions({ userEmail })
         );
       },
     })
@@ -94,9 +90,9 @@ export const useVideoTableState = ({
     [transcribeNextNHandler]
   );
 
-  const handleSync = useCallback(async () => {
-    await syncVideosHandler.mutateAsync({ channelHandle });
-  }, [syncVideosHandler, channelHandle]);
+  // const handleSync = useCallback(async () => {
+  //   await syncVideosHandler.mutateAsync({ userEmail });
+  // }, [syncVideosHandler, userEmail]);
 
   const openModal = (text: string) => {
     setSelectedVideoText(text);
@@ -186,7 +182,7 @@ export const useVideoTableState = ({
       handleNextPage,
     },
     state: {
-      isSyncing: syncVideosHandler.isPending,
+      // isSyncing: syncVideosHandler.isPending,
       isTranscribing: transcribeNextNHandler.isPending,
       isModalOpen,
       selectedVideoText,
@@ -194,7 +190,7 @@ export const useVideoTableState = ({
     handleSort,
     transcribeNextN,
     getSortIcon,
-    handleSync,
+    // handleSync,
     openModal,
     closeModal,
   };

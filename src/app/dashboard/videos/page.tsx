@@ -2,21 +2,17 @@ import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import { Suspense } from "react";
-import VideoTable from "@/components/video-table/VideoTable";
+import VideoTable from "@/lib/modules/videos/components/VideoTable_OLD/VideoTable";
+import { currentUser } from "@clerk/nextjs/server";
 
-interface Props {
-  params: Promise<{
-    channelHandle: string;
-  }>;
-}
-
-const Page = async ({ params }: Props) => {
-  const { channelHandle } = await params;
+const Page = async () => {
+  const user = await currentUser();
+  const userEmail = user?.emailAddresses[0]?.emailAddress!; // Access the primary email address
 
   const queryClient = getQueryClient();
   void queryClient.prefetchQuery(
     trpc.videos.getAll.queryOptions({
-      channelHandle,
+      userEmail,
     })
   );
 
@@ -24,7 +20,7 @@ const Page = async ({ params }: Props) => {
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
         <Suspense fallback={<div>Loading videos...</div>}>
-          <VideoTable channelHandle={channelHandle} />
+          <VideoTable userEmail={userEmail} />
         </Suspense>
       </ErrorBoundary>
     </HydrationBoundary>

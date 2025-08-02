@@ -6,16 +6,14 @@ export const messageRouter = createTRPCRouter({
   handleUserQuery: baseProcedure
     .input(
       z.object({
-        channelHandle: z
-          .string()
-          .min(1, { message: "Channel handle is required." }),
+        userEmail: z.string().min(1, { message: "User email is required." }),
         query: z.string().min(1, { message: "Query is required." }),
         chatId: z.string().min(1, { message: "Chat ID is required." }),
       })
     )
-    .mutation(async ({ input: { channelHandle, query, chatId } }) => {
+    .mutation(async ({ input: { userEmail, query, chatId } }) => {
       return handleUserQuery({
-        channelHandle,
+        userEmail,
         query,
         chatId,
       });

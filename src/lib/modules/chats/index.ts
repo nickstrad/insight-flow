@@ -4,17 +4,14 @@ import { Chat, ChatMessage } from "@/generated/prisma";
 // Create
 export async function createChat({
   userEmail,
-  channelHandle,
   title,
 }: {
   userEmail: string;
-  channelHandle: string;
   title: string;
 }): Promise<Chat> {
   const chat = await prisma.chat.create({
     data: {
       userEmail,
-      channelHandle,
       title,
     },
   });
@@ -37,17 +34,14 @@ export async function getChatById(
   });
 }
 
-export async function getChatsByUserAndChannel({
+export async function getChatByUserEmail({
   userEmail,
-  channelHandle,
 }: {
   userEmail: string;
-  channelHandle: string;
 }): Promise<Array<Chat & { messages: ChatMessage[] }> | null> {
   return await prisma.chat.findMany({
     where: {
       userEmail,
-      channelHandle,
     },
     include: {
       messages: {

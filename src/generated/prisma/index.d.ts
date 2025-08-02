@@ -1258,7 +1258,7 @@ export namespace Prisma {
   export type VideoMinAggregateOutputType = {
     id: string | null
     youtubeId: string | null
-    channelHandle: string | null
+    userEmail: string | null
     title: string | null
     content: string | null
     durationInMinutes: number | null
@@ -1270,7 +1270,7 @@ export namespace Prisma {
   export type VideoMaxAggregateOutputType = {
     id: string | null
     youtubeId: string | null
-    channelHandle: string | null
+    userEmail: string | null
     title: string | null
     content: string | null
     durationInMinutes: number | null
@@ -1282,7 +1282,7 @@ export namespace Prisma {
   export type VideoCountAggregateOutputType = {
     id: number
     youtubeId: number
-    channelHandle: number
+    userEmail: number
     title: number
     content: number
     durationInMinutes: number
@@ -1304,7 +1304,7 @@ export namespace Prisma {
   export type VideoMinAggregateInputType = {
     id?: true
     youtubeId?: true
-    channelHandle?: true
+    userEmail?: true
     title?: true
     content?: true
     durationInMinutes?: true
@@ -1316,7 +1316,7 @@ export namespace Prisma {
   export type VideoMaxAggregateInputType = {
     id?: true
     youtubeId?: true
-    channelHandle?: true
+    userEmail?: true
     title?: true
     content?: true
     durationInMinutes?: true
@@ -1328,7 +1328,7 @@ export namespace Prisma {
   export type VideoCountAggregateInputType = {
     id?: true
     youtubeId?: true
-    channelHandle?: true
+    userEmail?: true
     title?: true
     content?: true
     durationInMinutes?: true
@@ -1427,7 +1427,7 @@ export namespace Prisma {
   export type VideoGroupByOutputType = {
     id: string
     youtubeId: string
-    channelHandle: string
+    userEmail: string
     title: string
     content: string
     durationInMinutes: number
@@ -1458,7 +1458,7 @@ export namespace Prisma {
   export type VideoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     youtubeId?: boolean
-    channelHandle?: boolean
+    userEmail?: boolean
     title?: boolean
     content?: boolean
     durationInMinutes?: boolean
@@ -1472,7 +1472,7 @@ export namespace Prisma {
   export type VideoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     youtubeId?: boolean
-    channelHandle?: boolean
+    userEmail?: boolean
     title?: boolean
     content?: boolean
     durationInMinutes?: boolean
@@ -1484,7 +1484,7 @@ export namespace Prisma {
   export type VideoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     youtubeId?: boolean
-    channelHandle?: boolean
+    userEmail?: boolean
     title?: boolean
     content?: boolean
     durationInMinutes?: boolean
@@ -1496,7 +1496,7 @@ export namespace Prisma {
   export type VideoSelectScalar = {
     id?: boolean
     youtubeId?: boolean
-    channelHandle?: boolean
+    userEmail?: boolean
     title?: boolean
     content?: boolean
     durationInMinutes?: boolean
@@ -1505,7 +1505,7 @@ export namespace Prisma {
     status?: boolean
   }
 
-  export type VideoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "youtubeId" | "channelHandle" | "title" | "content" | "durationInMinutes" | "createdAt" | "updatedAt" | "status", ExtArgs["result"]["video"]>
+  export type VideoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "youtubeId" | "userEmail" | "title" | "content" | "durationInMinutes" | "createdAt" | "updatedAt" | "status", ExtArgs["result"]["video"]>
   export type VideoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     chunks?: boolean | Video$chunksArgs<ExtArgs>
     _count?: boolean | VideoCountOutputTypeDefaultArgs<ExtArgs>
@@ -1521,7 +1521,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       youtubeId: string
-      channelHandle: string
+      userEmail: string
       title: string
       content: string
       durationInMinutes: number
@@ -1954,7 +1954,7 @@ export namespace Prisma {
   interface VideoFieldRefs {
     readonly id: FieldRef<"Video", 'String'>
     readonly youtubeId: FieldRef<"Video", 'String'>
-    readonly channelHandle: FieldRef<"Video", 'String'>
+    readonly userEmail: FieldRef<"Video", 'String'>
     readonly title: FieldRef<"Video", 'String'>
     readonly content: FieldRef<"Video", 'String'>
     readonly durationInMinutes: FieldRef<"Video", 'Int'>
@@ -3496,7 +3496,6 @@ export namespace Prisma {
   export type ChatMinAggregateOutputType = {
     id: string | null
     userEmail: string | null
-    channelHandle: string | null
     title: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -3505,7 +3504,6 @@ export namespace Prisma {
   export type ChatMaxAggregateOutputType = {
     id: string | null
     userEmail: string | null
-    channelHandle: string | null
     title: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -3514,7 +3512,6 @@ export namespace Prisma {
   export type ChatCountAggregateOutputType = {
     id: number
     userEmail: number
-    channelHandle: number
     title: number
     createdAt: number
     updatedAt: number
@@ -3525,7 +3522,6 @@ export namespace Prisma {
   export type ChatMinAggregateInputType = {
     id?: true
     userEmail?: true
-    channelHandle?: true
     title?: true
     createdAt?: true
     updatedAt?: true
@@ -3534,7 +3530,6 @@ export namespace Prisma {
   export type ChatMaxAggregateInputType = {
     id?: true
     userEmail?: true
-    channelHandle?: true
     title?: true
     createdAt?: true
     updatedAt?: true
@@ -3543,7 +3538,6 @@ export namespace Prisma {
   export type ChatCountAggregateInputType = {
     id?: true
     userEmail?: true
-    channelHandle?: true
     title?: true
     createdAt?: true
     updatedAt?: true
@@ -3625,7 +3619,6 @@ export namespace Prisma {
   export type ChatGroupByOutputType = {
     id: string
     userEmail: string
-    channelHandle: string
     title: string
     createdAt: Date
     updatedAt: Date
@@ -3651,7 +3644,6 @@ export namespace Prisma {
   export type ChatSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userEmail?: boolean
-    channelHandle?: boolean
     title?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -3662,7 +3654,6 @@ export namespace Prisma {
   export type ChatSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userEmail?: boolean
-    channelHandle?: boolean
     title?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -3671,7 +3662,6 @@ export namespace Prisma {
   export type ChatSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userEmail?: boolean
-    channelHandle?: boolean
     title?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -3680,13 +3670,12 @@ export namespace Prisma {
   export type ChatSelectScalar = {
     id?: boolean
     userEmail?: boolean
-    channelHandle?: boolean
     title?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ChatOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userEmail" | "channelHandle" | "title" | "createdAt" | "updatedAt", ExtArgs["result"]["chat"]>
+  export type ChatOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userEmail" | "title" | "createdAt" | "updatedAt", ExtArgs["result"]["chat"]>
   export type ChatInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     messages?: boolean | Chat$messagesArgs<ExtArgs>
     _count?: boolean | ChatCountOutputTypeDefaultArgs<ExtArgs>
@@ -3702,7 +3691,6 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       userEmail: string
-      channelHandle: string
       title: string
       createdAt: Date
       updatedAt: Date
@@ -4132,7 +4120,6 @@ export namespace Prisma {
   interface ChatFieldRefs {
     readonly id: FieldRef<"Chat", 'String'>
     readonly userEmail: FieldRef<"Chat", 'String'>
-    readonly channelHandle: FieldRef<"Chat", 'String'>
     readonly title: FieldRef<"Chat", 'String'>
     readonly createdAt: FieldRef<"Chat", 'DateTime'>
     readonly updatedAt: FieldRef<"Chat", 'DateTime'>
@@ -5641,7 +5628,7 @@ export namespace Prisma {
   export const VideoScalarFieldEnum: {
     id: 'id',
     youtubeId: 'youtubeId',
-    channelHandle: 'channelHandle',
+    userEmail: 'userEmail',
     title: 'title',
     content: 'content',
     durationInMinutes: 'durationInMinutes',
@@ -5667,7 +5654,6 @@ export namespace Prisma {
   export const ChatScalarFieldEnum: {
     id: 'id',
     userEmail: 'userEmail',
-    channelHandle: 'channelHandle',
     title: 'title',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -5801,7 +5787,7 @@ export namespace Prisma {
     NOT?: VideoWhereInput | VideoWhereInput[]
     id?: StringFilter<"Video"> | string
     youtubeId?: StringFilter<"Video"> | string
-    channelHandle?: StringFilter<"Video"> | string
+    userEmail?: StringFilter<"Video"> | string
     title?: StringFilter<"Video"> | string
     content?: StringFilter<"Video"> | string
     durationInMinutes?: IntFilter<"Video"> | number
@@ -5814,7 +5800,7 @@ export namespace Prisma {
   export type VideoOrderByWithRelationInput = {
     id?: SortOrder
     youtubeId?: SortOrder
-    channelHandle?: SortOrder
+    userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
     durationInMinutes?: SortOrder
@@ -5830,7 +5816,7 @@ export namespace Prisma {
     AND?: VideoWhereInput | VideoWhereInput[]
     OR?: VideoWhereInput[]
     NOT?: VideoWhereInput | VideoWhereInput[]
-    channelHandle?: StringFilter<"Video"> | string
+    userEmail?: StringFilter<"Video"> | string
     title?: StringFilter<"Video"> | string
     content?: StringFilter<"Video"> | string
     durationInMinutes?: IntFilter<"Video"> | number
@@ -5843,7 +5829,7 @@ export namespace Prisma {
   export type VideoOrderByWithAggregationInput = {
     id?: SortOrder
     youtubeId?: SortOrder
-    channelHandle?: SortOrder
+    userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
     durationInMinutes?: SortOrder
@@ -5863,7 +5849,7 @@ export namespace Prisma {
     NOT?: VideoScalarWhereWithAggregatesInput | VideoScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Video"> | string
     youtubeId?: StringWithAggregatesFilter<"Video"> | string
-    channelHandle?: StringWithAggregatesFilter<"Video"> | string
+    userEmail?: StringWithAggregatesFilter<"Video"> | string
     title?: StringWithAggregatesFilter<"Video"> | string
     content?: StringWithAggregatesFilter<"Video"> | string
     durationInMinutes?: IntWithAggregatesFilter<"Video"> | number
@@ -5935,7 +5921,6 @@ export namespace Prisma {
     NOT?: ChatWhereInput | ChatWhereInput[]
     id?: StringFilter<"Chat"> | string
     userEmail?: StringFilter<"Chat"> | string
-    channelHandle?: StringFilter<"Chat"> | string
     title?: StringFilter<"Chat"> | string
     createdAt?: DateTimeFilter<"Chat"> | Date | string
     updatedAt?: DateTimeFilter<"Chat"> | Date | string
@@ -5945,7 +5930,6 @@ export namespace Prisma {
   export type ChatOrderByWithRelationInput = {
     id?: SortOrder
     userEmail?: SortOrder
-    channelHandle?: SortOrder
     title?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -5958,7 +5942,6 @@ export namespace Prisma {
     OR?: ChatWhereInput[]
     NOT?: ChatWhereInput | ChatWhereInput[]
     userEmail?: StringFilter<"Chat"> | string
-    channelHandle?: StringFilter<"Chat"> | string
     title?: StringFilter<"Chat"> | string
     createdAt?: DateTimeFilter<"Chat"> | Date | string
     updatedAt?: DateTimeFilter<"Chat"> | Date | string
@@ -5968,7 +5951,6 @@ export namespace Prisma {
   export type ChatOrderByWithAggregationInput = {
     id?: SortOrder
     userEmail?: SortOrder
-    channelHandle?: SortOrder
     title?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -5983,7 +5965,6 @@ export namespace Prisma {
     NOT?: ChatScalarWhereWithAggregatesInput | ChatScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Chat"> | string
     userEmail?: StringWithAggregatesFilter<"Chat"> | string
-    channelHandle?: StringWithAggregatesFilter<"Chat"> | string
     title?: StringWithAggregatesFilter<"Chat"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Chat"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Chat"> | Date | string
@@ -6047,7 +6028,7 @@ export namespace Prisma {
   export type VideoCreateInput = {
     id?: string
     youtubeId: string
-    channelHandle: string
+    userEmail: string
     title: string
     content: string
     durationInMinutes: number
@@ -6060,7 +6041,7 @@ export namespace Prisma {
   export type VideoUncheckedCreateInput = {
     id?: string
     youtubeId: string
-    channelHandle: string
+    userEmail: string
     title: string
     content: string
     durationInMinutes: number
@@ -6073,7 +6054,7 @@ export namespace Prisma {
   export type VideoUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     youtubeId?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
+    userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     durationInMinutes?: IntFieldUpdateOperationsInput | number
@@ -6086,7 +6067,7 @@ export namespace Prisma {
   export type VideoUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     youtubeId?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
+    userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     durationInMinutes?: IntFieldUpdateOperationsInput | number
@@ -6099,7 +6080,7 @@ export namespace Prisma {
   export type VideoCreateManyInput = {
     id?: string
     youtubeId: string
-    channelHandle: string
+    userEmail: string
     title: string
     content: string
     durationInMinutes: number
@@ -6111,7 +6092,7 @@ export namespace Prisma {
   export type VideoUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     youtubeId?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
+    userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     durationInMinutes?: IntFieldUpdateOperationsInput | number
@@ -6123,7 +6104,7 @@ export namespace Prisma {
   export type VideoUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     youtubeId?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
+    userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     durationInMinutes?: IntFieldUpdateOperationsInput | number
@@ -6190,7 +6171,6 @@ export namespace Prisma {
   export type ChatCreateInput = {
     id?: string
     userEmail: string
-    channelHandle: string
     title: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -6200,7 +6180,6 @@ export namespace Prisma {
   export type ChatUncheckedCreateInput = {
     id?: string
     userEmail: string
-    channelHandle: string
     title: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -6210,7 +6189,6 @@ export namespace Prisma {
   export type ChatUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     userEmail?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6220,7 +6198,6 @@ export namespace Prisma {
   export type ChatUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     userEmail?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6230,7 +6207,6 @@ export namespace Prisma {
   export type ChatCreateManyInput = {
     id?: string
     userEmail: string
-    channelHandle: string
     title: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -6239,7 +6215,6 @@ export namespace Prisma {
   export type ChatUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     userEmail?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6248,7 +6223,6 @@ export namespace Prisma {
   export type ChatUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     userEmail?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6366,7 +6340,7 @@ export namespace Prisma {
   export type VideoCountOrderByAggregateInput = {
     id?: SortOrder
     youtubeId?: SortOrder
-    channelHandle?: SortOrder
+    userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
     durationInMinutes?: SortOrder
@@ -6382,7 +6356,7 @@ export namespace Prisma {
   export type VideoMaxOrderByAggregateInput = {
     id?: SortOrder
     youtubeId?: SortOrder
-    channelHandle?: SortOrder
+    userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
     durationInMinutes?: SortOrder
@@ -6394,7 +6368,7 @@ export namespace Prisma {
   export type VideoMinOrderByAggregateInput = {
     id?: SortOrder
     youtubeId?: SortOrder
-    channelHandle?: SortOrder
+    userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
     durationInMinutes?: SortOrder
@@ -6515,7 +6489,6 @@ export namespace Prisma {
   export type ChatCountOrderByAggregateInput = {
     id?: SortOrder
     userEmail?: SortOrder
-    channelHandle?: SortOrder
     title?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -6524,7 +6497,6 @@ export namespace Prisma {
   export type ChatMaxOrderByAggregateInput = {
     id?: SortOrder
     userEmail?: SortOrder
-    channelHandle?: SortOrder
     title?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -6533,7 +6505,6 @@ export namespace Prisma {
   export type ChatMinOrderByAggregateInput = {
     id?: SortOrder
     userEmail?: SortOrder
-    channelHandle?: SortOrder
     title?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -6903,7 +6874,7 @@ export namespace Prisma {
   export type VideoCreateWithoutChunksInput = {
     id?: string
     youtubeId: string
-    channelHandle: string
+    userEmail: string
     title: string
     content: string
     durationInMinutes: number
@@ -6915,7 +6886,7 @@ export namespace Prisma {
   export type VideoUncheckedCreateWithoutChunksInput = {
     id?: string
     youtubeId: string
-    channelHandle: string
+    userEmail: string
     title: string
     content: string
     durationInMinutes: number
@@ -6943,7 +6914,7 @@ export namespace Prisma {
   export type VideoUpdateWithoutChunksInput = {
     id?: StringFieldUpdateOperationsInput | string
     youtubeId?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
+    userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     durationInMinutes?: IntFieldUpdateOperationsInput | number
@@ -6955,7 +6926,7 @@ export namespace Prisma {
   export type VideoUncheckedUpdateWithoutChunksInput = {
     id?: StringFieldUpdateOperationsInput | string
     youtubeId?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
+    userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     durationInMinutes?: IntFieldUpdateOperationsInput | number
@@ -7018,7 +6989,6 @@ export namespace Prisma {
   export type ChatCreateWithoutMessagesInput = {
     id?: string
     userEmail: string
-    channelHandle: string
     title: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7027,7 +6997,6 @@ export namespace Prisma {
   export type ChatUncheckedCreateWithoutMessagesInput = {
     id?: string
     userEmail: string
-    channelHandle: string
     title: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7052,7 +7021,6 @@ export namespace Prisma {
   export type ChatUpdateWithoutMessagesInput = {
     id?: StringFieldUpdateOperationsInput | string
     userEmail?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7061,7 +7029,6 @@ export namespace Prisma {
   export type ChatUncheckedUpdateWithoutMessagesInput = {
     id?: StringFieldUpdateOperationsInput | string
     userEmail?: StringFieldUpdateOperationsInput | string
-    channelHandle?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

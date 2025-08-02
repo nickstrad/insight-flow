@@ -3,7 +3,7 @@ import z from "zod";
 import {
   createChat,
   getChatById,
-  getChatsByUserAndChannel,
+  getChatByUserEmail,
   updateChatTitle,
   deleteChat,
 } from ".";
@@ -13,14 +13,11 @@ export const chatRouter = createTRPCRouter({
     .input(
       z.object({
         userEmail: z.string().email({ message: "Valid email is required." }),
-        channelHandle: z
-          .string()
-          .min(1, { message: "Channel handle is required." }),
         title: z.string().min(1, { message: "Title is required." }),
       })
     )
-    .mutation(async ({ input: { userEmail, channelHandle, title } }) => {
-      return createChat({ userEmail, channelHandle, title });
+    .mutation(async ({ input: { userEmail, title } }) => {
+      return createChat({ userEmail, title });
     }),
 
   getById: baseProcedure
@@ -33,19 +30,14 @@ export const chatRouter = createTRPCRouter({
       return getChatById(id);
     }),
 
-  getByUserAndChannel: baseProcedure
+  getByUserEmail: baseProcedure
     .input(
       z.object({
         userEmail: z.string().email({ message: "Valid email is required." }),
-        channelHandle: z
-          .string()
-          .min(1, { message: "Channel handle is required." }),
       })
     )
-    .query(async ({ input: { userEmail, channelHandle } }) => {
-      return (
-        (await getChatsByUserAndChannel({ userEmail, channelHandle })) ?? []
-      );
+    .query(async ({ input: { userEmail } }) => {
+      return (await getChatByUserEmail({ userEmail })) ?? [];
     }),
 
   updateTitle: baseProcedure

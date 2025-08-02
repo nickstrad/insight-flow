@@ -85,94 +85,94 @@ async function fetchVideoDurations(
   return durationMap;
 }
 
-export async function syncVideos(
-  channelHandle: string
-): Promise<{ success: boolean }> {
-  try {
-    const allVideos: Partial<Video>[] = [];
+// export async function syncVideos(
+//   userEmail: string
+// ): Promise<{ success: boolean }> {
+//   try {
+//     const allVideos: Partial<Video>[] = [];
 
-    // Fetch all videos from the channel's upload playlist
-    const { data: channelRes } = await axios.get<YouTubeChannelResponse>(
-      `https://www.googleapis.com/youtube/v3/channels`,
-      {
-        params: {
-          part: "contentDetails",
-          forHandle: channelHandle,
-          key: API_KEY,
-        },
-      }
-    );
+//     // Fetch all videos from the channel's upload playlist
+//     const { data: channelRes } = await axios.get<YouTubeChannelResponse>(
+//       `https://www.googleapis.com/youtube/v3/channels`,
+//       {
+//         params: {
+//           part: "contentDetails",
+//           forHandle: channelHandle,
+//           key: API_KEY,
+//         },
+//       }
+//     );
 
-    const uploadsPlaylistId =
-      channelRes.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
-    if (!uploadsPlaylistId) {
-      throw new Error("Failed to retrieve uploads playlist ID.");
-    }
+//     const uploadsPlaylistId =
+//       channelRes.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+//     if (!uploadsPlaylistId) {
+//       throw new Error("Failed to retrieve uploads playlist ID.");
+//     }
 
-    let nextPageToken = "";
-    do {
-      const { data: playlistRes } =
-        await axios.get<YouTubePlaylistItemsResponse>(
-          `https://www.googleapis.com/youtube/v3/playlistItems`,
-          {
-            params: {
-              part: "snippet",
-              maxResults: 50,
-              playlistId: uploadsPlaylistId,
-              pageToken: nextPageToken,
-              key: API_KEY,
-            },
-          }
-        );
+//     let nextPageToken = "";
+//     do {
+//       const { data: playlistRes } =
+//         await axios.get<YouTubePlaylistItemsResponse>(
+//           `https://www.googleapis.com/youtube/v3/playlistItems`,
+//           {
+//             params: {
+//               part: "snippet",
+//               maxResults: 50,
+//               playlistId: uploadsPlaylistId,
+//               pageToken: nextPageToken,
+//               key: API_KEY,
+//             },
+//           }
+//         );
 
-      const videos: Partial<Video>[] = playlistRes.items.map((item) => {
-        const video: Partial<Video> = {
-          youtubeId: item.snippet.resourceId.videoId,
-          title: item.snippet.title,
-          channelHandle,
-        };
-        return video;
-      });
+//       const videos: Partial<Video>[] = playlistRes.items.map((item) => {
+//         const video: Partial<Video> = {
+//           youtubeId: item.snippet.resourceId.videoId,
+//           title: item.snippet.title,
+//           userEmail,
+//         };
+//         return video;
+//       });
 
-      allVideos.push(...videos);
+//       allVideos.push(...videos);
 
-      nextPageToken = playlistRes.nextPageToken || "";
-    } while (nextPageToken);
+//       nextPageToken = playlistRes.nextPageToken || "";
+//     } while (nextPageToken);
 
-    const existingVideos = await getVideos(channelHandle);
-    const existingVideoIds = new Set(existingVideos.map((v) => v.youtubeId));
+//     const existingVideos = await getVideos(channelHandle);
+//     const existingVideoIds = new Set(existingVideos.map((v) => v.youtubeId));
 
-    const newVideos = allVideos.filter(
-      (video) => !existingVideoIds.has(video.youtubeId!)
-    );
+//     const newVideos = allVideos.filter(
+//       (video) => !existingVideoIds.has(video.youtubeId!)
+//     );
 
-    if (newVideos.length > 0) {
-      // Fetch durations for new videos
-      const videoIds = newVideos.map((v) => v.youtubeId!);
-      const durationMap = await fetchVideoDurations(videoIds);
+//     if (newVideos.length > 0) {
+//       // Fetch durations for new videos
+//       const videoIds = newVideos.map((v) => v.youtubeId!);
+//       const durationMap = await fetchVideoDurations(videoIds);
 
-      await prisma.video.createMany({
-        data: newVideos.map((v) => ({
-          youtubeId: v.youtubeId!,
-          title: v.title!,
-          channelHandle: v.channelHandle!,
-          content: "", // Initialize as empty string, will be populated during transcription
-          durationInMinutes: durationMap.get(v.youtubeId!) || 0,
-        })),
-      });
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("Error fetching videos from channel:", error);
-    throw error;
-  }
-}
+//       await prisma.video.createMany({
+//         data: newVideos.map((v) => ({
+//           youtubeId: v.youtubeId!,
+//           title: v.title!,
+//           userEmail: v.channelHandle!,
+//           content: "", // Initialize as empty string, will be populated during transcription
+//           durationInMinutes: durationMap.get(v.youtubeId!) || 0,
+//         })),
+//       });
+//     }
+//     return { success: true };
+//   } catch (error) {
+//     console.error("Error fetching videos from channel:", error);
+//     throw error;
+//   }
+// }
 
-export async function getVideos(channelHandler: string): Promise<Video[]> {
+export async function getVideos(userEmail: string): Promise<Video[]> {
   try {
     const videos: Video[] = await prisma.video.findMany({
       where: {
-        channelHandle: channelHandler,
+        userEmail,
       },
     });
     return videos;

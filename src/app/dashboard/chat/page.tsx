@@ -2,25 +2,17 @@ import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import { Suspense } from "react";
-import Chat from "@/components/chat";
+import Chat from "@/lib/modules/chats/components/chat";
 import { currentUser } from "@clerk/nextjs/server";
 
-interface Props {
-  params: Promise<{
-    channelHandle: string;
-  }>;
-}
-
-const Page = async ({ params }: Props) => {
-  const { channelHandle } = await params;
+const Page = async () => {
   const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress; // Access the primary email address
+  const userEmail = user?.emailAddresses[0]?.emailAddress!; // Access the primary email address
 
   const queryClient = getQueryClient();
   void queryClient.prefetchQuery(
-    trpc.chats.getByUserAndChannel.queryOptions({
-      channelHandle,
-      userEmail: email || "",
+    trpc.chats.getByUserEmail.queryOptions({
+      userEmail,
     })
   );
 
@@ -28,7 +20,7 @@ const Page = async ({ params }: Props) => {
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
         <Suspense fallback={<div>Loading videos...</div>}>
-          <Chat channelHandle={channelHandle} userEmail={email ?? ""} />
+          <Chat userEmail={userEmail} />
         </Suspense>
       </ErrorBoundary>
     </HydrationBoundary>

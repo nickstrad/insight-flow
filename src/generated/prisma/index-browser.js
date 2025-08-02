@@ -123,7 +123,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.VideoScalarFieldEnum = {
   id: 'id',
   youtubeId: 'youtubeId',
-  channelHandle: 'channelHandle',
+  userEmail: 'userEmail',
   title: 'title',
   content: 'content',
   durationInMinutes: 'durationInMinutes',
@@ -143,7 +143,6 @@ exports.Prisma.TranscriptChunkScalarFieldEnum = {
 exports.Prisma.ChatScalarFieldEnum = {
   id: 'id',
   userEmail: 'userEmail',
-  channelHandle: 'channelHandle',
   title: 'title',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

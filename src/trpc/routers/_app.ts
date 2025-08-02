@@ -3,10 +3,12 @@ import { createTRPCRouter } from "../init";
 import { transcriptRouter } from "@/lib/modules/transcriptions/procedures";
 import { chatRouter } from "@/lib/modules/chats/procedures";
 import { messageRouter } from "@/lib/modules/messages/procedures";
+import { videosRouter } from "@/lib/modules/videos/procedures";
 
 export const appRouter = createTRPCRouter({
   transcriptions: transcriptRouter,
-  videos: channelRouter,
+  channels: channelRouter,
+  videos: videosRouter,
   chats: chatRouter,
   messages: messageRouter,
 });

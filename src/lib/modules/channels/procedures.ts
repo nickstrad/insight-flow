@@ -1,29 +1,27 @@
 import { createTRPCRouter, baseProcedure } from "@/trpc/init";
 import z from "zod";
-import { getVideos, syncVideos } from ".";
+import { getVideos } from ".";
 
 export const channelRouter = createTRPCRouter({
   getAll: baseProcedure
     .input(
       z.object({
-        channelHandle: z
-          .string()
-          .min(1, { message: "Channel handle is required." }),
+        userEmail: z.string().min(1, { message: "User email is required." }),
       })
     )
-    .query(async ({ input: { channelHandle } }) => {
-      const vidoes = await getVideos(channelHandle);
-      return vidoes;
+    .query(async ({ input: { userEmail } }) => {
+      const videos = await getVideos(userEmail);
+      return videos;
     }),
-  syncVideos: baseProcedure
-    .input(
-      z.object({
-        channelHandle: z
-          .string()
-          .min(1, { message: "Channel handle is required." }),
-      })
-    )
-    .mutation(async ({ input: { channelHandle } }) => {
-      await syncVideos(channelHandle);
-    }),
+  // syncVideos: baseProcedure
+  //   .input(
+  //     z.object({
+  //       channelHandle: z
+  //         .string()
+  //         .min(1, { message: "Channel handle is required." }),
+  //     })
+  //   )
+  //   .mutation(async ({ input: { channelHandle } }) => {
+  //     await syncVideos(channelHandle);
+  //   }),
 });
