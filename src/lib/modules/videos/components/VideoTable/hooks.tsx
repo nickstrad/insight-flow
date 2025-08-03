@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { toast } from "sonner";
@@ -23,10 +19,8 @@ export const useVideoTableState = ({ userEmail }: { userEmail: string }) => {
 
   const trpc = useTRPC();
 
-  const queryClient = useQueryClient();
-
   const { data: videos, error: getAllVideosError } = useSuspenseQuery(
-    trpc.videos.getAll.queryOptions({
+    trpc.videos.getStoredVideosForChannel.queryOptions({
       userEmail,
     })
   );
@@ -36,63 +30,6 @@ export const useVideoTableState = ({ userEmail }: { userEmail: string }) => {
       toast.error(getAllVideosError.message);
     }
   }, [getAllVideosError]);
-
-  // const syncVideosHandler = useMutation(
-  //   trpc.videos.syncVideos.mutationOptions({
-  //     onError: (error) => {
-  //       toast.error(error.message);
-
-  //       // if (error.data?.code === "UNAUTHORIZED") {
-  //       //   clerk.openSignIn();
-  //       // }
-
-  //       // if (error.data?.code === "TOO_MANY_REQUESTS") {
-  //       //   router.push("/pricing");
-  //       // }
-  //     },
-  //     onSuccess: () => {
-  //       toast.success("Videos synced successfully!");
-
-  //       queryClient.invalidateQueries(
-  //         trpc.videos.getAll.queryOptions({ channelHandle })
-  //       );
-  //     },
-  //   })
-  // );
-
-  const transcribeNextNHandler = useMutation(
-    trpc.transcriptions.transcriptNextN.mutationOptions({
-      onError: (error) => {
-        toast.error(error.message);
-
-        // if (error.data?.code === "UNAUTHORIZED") {
-        //   clerk.openSignIn();
-        // }
-
-        // if (error.data?.code === "TOO_MANY_REQUESTS") {
-        //   router.push("/pricing");
-        // }
-      },
-      onSuccess: () => {
-        toast.success("Videos transcribed successfully!");
-
-        queryClient.invalidateQueries(
-          trpc.videos.getAll.queryOptions({ userEmail })
-        );
-      },
-    })
-  );
-
-  const transcribeNextN = useCallback(
-    async ({ batchSize, n }: { batchSize: number; n: number }) => {
-      await transcribeNextNHandler.mutateAsync({ batchSize, n });
-    },
-    [transcribeNextNHandler]
-  );
-
-  // const handleSync = useCallback(async () => {
-  //   await syncVideosHandler.mutateAsync({ userEmail });
-  // }, [syncVideosHandler, userEmail]);
 
   const openModal = (text: string) => {
     setSelectedVideoText(text);
@@ -182,15 +119,11 @@ export const useVideoTableState = ({ userEmail }: { userEmail: string }) => {
       handleNextPage,
     },
     state: {
-      // isSyncing: syncVideosHandler.isPending,
-      isTranscribing: transcribeNextNHandler.isPending,
       isModalOpen,
       selectedVideoText,
     },
     handleSort,
-    transcribeNextN,
     getSortIcon,
-    // handleSync,
     openModal,
     closeModal,
   };

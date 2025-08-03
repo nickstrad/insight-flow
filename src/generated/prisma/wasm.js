@@ -120,6 +120,13 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.QuotaScalarFieldEnum = {
+  userEmail: 'userEmail',
+  messagesLeft: 'messagesLeft',
+  videoHoursLeft: 'videoHoursLeft',
+  resetAt: 'resetAt'
+};
+
 exports.Prisma.VideoScalarFieldEnum = {
   id: 'id',
   youtubeId: 'youtubeId',
@@ -179,6 +186,7 @@ exports.MessageRole = exports.$Enums.MessageRole = {
 };
 
 exports.Prisma.ModelName = {
+  Quota: 'Quota',
   Video: 'Video',
   TranscriptChunk: 'TranscriptChunk',
   Chat: 'Chat',

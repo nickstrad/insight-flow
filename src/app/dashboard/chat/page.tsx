@@ -4,6 +4,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { Suspense } from "react";
 import Chat from "@/lib/modules/chats/components/chat";
 import { currentUser } from "@clerk/nextjs/server";
+import DashboardPageHeader from "@/components/DashboardPageHeader";
 
 const Page = async () => {
   const user = await currentUser();
@@ -18,8 +19,13 @@ const Page = async () => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <DashboardPageHeader 
+        title="AI Chat"
+        description="Chat with AI about your transcribed videos and get insights"
+      />
+      
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
-        <Suspense fallback={<div>Loading videos...</div>}>
+        <Suspense fallback={<div>Loading chat...</div>}>
           <Chat userEmail={userEmail} />
         </Suspense>
       </ErrorBoundary>

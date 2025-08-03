@@ -1,6 +1,4 @@
-import { Video } from "@/generated/prisma";
 import axios from "axios";
-import { prisma } from "@/db";
 import { YoutubeVideo } from "./types";
 
 interface YouTubeChannelResponse {
@@ -86,7 +84,8 @@ async function fetchVideoDurations(
   return durationMap;
 }
 
-export async function getVideosForChannel(
+// BACKUP: Original function without duration fetching (for potential revert)
+export async function getVideosForChannelOriginal(
   channelHandle: string
 ): Promise<YoutubeVideo[]> {
   try {
@@ -142,6 +141,80 @@ export async function getVideosForChannel(
     } while (nextPageToken);
 
     return videos;
+  } catch (error) {
+    console.error("Error fetching videos from channel:", error);
+    throw error;
+  }
+}
+
+// Updated function with duration fetching
+export async function getVideosForChannel(
+  channelHandle: string
+): Promise<YoutubeVideo[]> {
+  try {
+    const videos: YoutubeVideo[] = [];
+
+    // Fetch all videos from the channel's upload playlist
+    const { data: channelRes } = await axios.get<YouTubeChannelResponse>(
+      `https://www.googleapis.com/youtube/v3/channels`,
+      {
+        params: {
+          part: "contentDetails",
+          forHandle: channelHandle,
+          key: API_KEY,
+        },
+      }
+    );
+
+    const uploadsPlaylistId =
+      channelRes.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+    if (!uploadsPlaylistId) {
+      throw new Error("Failed to retrieve uploads playlist ID.");
+    }
+
+    let nextPageToken = "";
+    do {
+      const { data: playlistRes } =
+        await axios.get<YouTubePlaylistItemsResponse>(
+          `https://www.googleapis.com/youtube/v3/playlistItems`,
+          {
+            params: {
+              part: "snippet",
+              maxResults: 50,
+              playlistId: uploadsPlaylistId,
+              pageToken: nextPageToken,
+              key: API_KEY,
+            },
+          }
+        );
+
+      const nextVideos: YoutubeVideo[] = playlistRes.items.map((item) => {
+        const video: YoutubeVideo = {
+          youtubeId: item.snippet.resourceId.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.default.url,
+        };
+        return video;
+      });
+
+      videos.push(...nextVideos);
+
+      nextPageToken = playlistRes.nextPageToken || "";
+    } while (nextPageToken);
+
+    // Fetch duration information for all videos
+    console.log(`Fetching durations for ${videos.length} videos...`);
+    const videoIds = videos.map(video => video.youtubeId);
+    const durationMap = await fetchVideoDurations(videoIds);
+
+    // Add duration information to videos
+    const videosWithDuration = videos.map(video => ({
+      ...video,
+      durationInMinutes: durationMap.get(video.youtubeId) || 0,
+    }));
+
+    return videosWithDuration;
   } catch (error) {
     console.error("Error fetching videos from channel:", error);
     throw error;

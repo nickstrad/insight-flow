@@ -293,7 +293,7 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     e.preventDefault();
     if (!newMessage.trim() || messageIsLoading || chatIsLoading) return;
 
-    const success = await sendMessage(newMessage);
+    const success = await sendMessage(newMessage, userEmail);
     if (success) {
       setNewMessage("");
     }

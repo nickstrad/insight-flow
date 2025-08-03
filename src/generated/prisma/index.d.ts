@@ -14,6 +14,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
 
 
 /**
+ * Model Quota
+ * 
+ */
+export type Quota = $Result.DefaultSelection<Prisma.$QuotaPayload>
+/**
  * Model Video
  * 
  */
@@ -73,8 +78,8 @@ export const MessageRole: typeof $Enums.MessageRole
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Videos
- * const videos = await prisma.video.findMany()
+ * // Fetch zero or more Quotas
+ * const quotas = await prisma.quota.findMany()
  * ```
  *
  *
@@ -94,8 +99,8 @@ export class PrismaClient<
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Videos
-   * const videos = await prisma.video.findMany()
+   * // Fetch zero or more Quotas
+   * const quotas = await prisma.quota.findMany()
    * ```
    *
    *
@@ -192,6 +197,16 @@ export class PrismaClient<
   }>>
 
       /**
+   * `prisma.quota`: Exposes CRUD operations for the **Quota** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Quotas
+    * const quotas = await prisma.quota.findMany()
+    * ```
+    */
+  get quota(): Prisma.QuotaDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.video`: Exposes CRUD operations for the **Video** model.
     * Example usage:
     * ```ts
@@ -670,6 +685,7 @@ export namespace Prisma {
 
 
   export const ModelName: {
+    Quota: 'Quota',
     Video: 'Video',
     TranscriptChunk: 'TranscriptChunk',
     Chat: 'Chat',
@@ -692,10 +708,84 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "video" | "transcriptChunk" | "chat" | "chatMessage"
+      modelProps: "quota" | "video" | "transcriptChunk" | "chat" | "chatMessage"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
+      Quota: {
+        payload: Prisma.$QuotaPayload<ExtArgs>
+        fields: Prisma.QuotaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.QuotaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.QuotaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>
+          }
+          findFirst: {
+            args: Prisma.QuotaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.QuotaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>
+          }
+          findMany: {
+            args: Prisma.QuotaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>[]
+          }
+          create: {
+            args: Prisma.QuotaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>
+          }
+          createMany: {
+            args: Prisma.QuotaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.QuotaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>[]
+          }
+          delete: {
+            args: Prisma.QuotaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>
+          }
+          update: {
+            args: Prisma.QuotaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>
+          }
+          deleteMany: {
+            args: Prisma.QuotaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.QuotaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.QuotaUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>[]
+          }
+          upsert: {
+            args: Prisma.QuotaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$QuotaPayload>
+          }
+          aggregate: {
+            args: Prisma.QuotaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateQuota>
+          }
+          groupBy: {
+            args: Prisma.QuotaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<QuotaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.QuotaCountArgs<ExtArgs>
+            result: $Utils.Optional<QuotaCountAggregateOutputType> | number
+          }
+        }
+      }
       Video: {
         payload: Prisma.$VideoPayload<ExtArgs>
         fields: Prisma.VideoFieldRefs
@@ -1076,6 +1166,7 @@ export namespace Prisma {
     omit?: Prisma.GlobalOmitConfig
   }
   export type GlobalOmitConfig = {
+    quota?: QuotaOmit
     video?: VideoOmit
     transcriptChunk?: TranscriptChunkOmit
     chat?: ChatOmit
@@ -1234,6 +1325,1026 @@ export namespace Prisma {
   /**
    * Models
    */
+
+  /**
+   * Model Quota
+   */
+
+  export type AggregateQuota = {
+    _count: QuotaCountAggregateOutputType | null
+    _avg: QuotaAvgAggregateOutputType | null
+    _sum: QuotaSumAggregateOutputType | null
+    _min: QuotaMinAggregateOutputType | null
+    _max: QuotaMaxAggregateOutputType | null
+  }
+
+  export type QuotaAvgAggregateOutputType = {
+    messagesLeft: number | null
+    videoHoursLeft: number | null
+  }
+
+  export type QuotaSumAggregateOutputType = {
+    messagesLeft: number | null
+    videoHoursLeft: number | null
+  }
+
+  export type QuotaMinAggregateOutputType = {
+    userEmail: string | null
+    messagesLeft: number | null
+    videoHoursLeft: number | null
+    resetAt: Date | null
+  }
+
+  export type QuotaMaxAggregateOutputType = {
+    userEmail: string | null
+    messagesLeft: number | null
+    videoHoursLeft: number | null
+    resetAt: Date | null
+  }
+
+  export type QuotaCountAggregateOutputType = {
+    userEmail: number
+    messagesLeft: number
+    videoHoursLeft: number
+    resetAt: number
+    _all: number
+  }
+
+
+  export type QuotaAvgAggregateInputType = {
+    messagesLeft?: true
+    videoHoursLeft?: true
+  }
+
+  export type QuotaSumAggregateInputType = {
+    messagesLeft?: true
+    videoHoursLeft?: true
+  }
+
+  export type QuotaMinAggregateInputType = {
+    userEmail?: true
+    messagesLeft?: true
+    videoHoursLeft?: true
+    resetAt?: true
+  }
+
+  export type QuotaMaxAggregateInputType = {
+    userEmail?: true
+    messagesLeft?: true
+    videoHoursLeft?: true
+    resetAt?: true
+  }
+
+  export type QuotaCountAggregateInputType = {
+    userEmail?: true
+    messagesLeft?: true
+    videoHoursLeft?: true
+    resetAt?: true
+    _all?: true
+  }
+
+  export type QuotaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Quota to aggregate.
+     */
+    where?: QuotaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Quotas to fetch.
+     */
+    orderBy?: QuotaOrderByWithRelationInput | QuotaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: QuotaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Quotas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Quotas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Quotas
+    **/
+    _count?: true | QuotaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: QuotaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: QuotaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: QuotaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: QuotaMaxAggregateInputType
+  }
+
+  export type GetQuotaAggregateType<T extends QuotaAggregateArgs> = {
+        [P in keyof T & keyof AggregateQuota]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateQuota[P]>
+      : GetScalarType<T[P], AggregateQuota[P]>
+  }
+
+
+
+
+  export type QuotaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: QuotaWhereInput
+    orderBy?: QuotaOrderByWithAggregationInput | QuotaOrderByWithAggregationInput[]
+    by: QuotaScalarFieldEnum[] | QuotaScalarFieldEnum
+    having?: QuotaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: QuotaCountAggregateInputType | true
+    _avg?: QuotaAvgAggregateInputType
+    _sum?: QuotaSumAggregateInputType
+    _min?: QuotaMinAggregateInputType
+    _max?: QuotaMaxAggregateInputType
+  }
+
+  export type QuotaGroupByOutputType = {
+    userEmail: string
+    messagesLeft: number
+    videoHoursLeft: number
+    resetAt: Date
+    _count: QuotaCountAggregateOutputType | null
+    _avg: QuotaAvgAggregateOutputType | null
+    _sum: QuotaSumAggregateOutputType | null
+    _min: QuotaMinAggregateOutputType | null
+    _max: QuotaMaxAggregateOutputType | null
+  }
+
+  type GetQuotaGroupByPayload<T extends QuotaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<QuotaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof QuotaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], QuotaGroupByOutputType[P]>
+            : GetScalarType<T[P], QuotaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type QuotaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userEmail?: boolean
+    messagesLeft?: boolean
+    videoHoursLeft?: boolean
+    resetAt?: boolean
+  }, ExtArgs["result"]["quota"]>
+
+  export type QuotaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userEmail?: boolean
+    messagesLeft?: boolean
+    videoHoursLeft?: boolean
+    resetAt?: boolean
+  }, ExtArgs["result"]["quota"]>
+
+  export type QuotaSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userEmail?: boolean
+    messagesLeft?: boolean
+    videoHoursLeft?: boolean
+    resetAt?: boolean
+  }, ExtArgs["result"]["quota"]>
+
+  export type QuotaSelectScalar = {
+    userEmail?: boolean
+    messagesLeft?: boolean
+    videoHoursLeft?: boolean
+    resetAt?: boolean
+  }
+
+  export type QuotaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userEmail" | "messagesLeft" | "videoHoursLeft" | "resetAt", ExtArgs["result"]["quota"]>
+
+  export type $QuotaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Quota"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      userEmail: string
+      messagesLeft: number
+      videoHoursLeft: number
+      resetAt: Date
+    }, ExtArgs["result"]["quota"]>
+    composites: {}
+  }
+
+  type QuotaGetPayload<S extends boolean | null | undefined | QuotaDefaultArgs> = $Result.GetResult<Prisma.$QuotaPayload, S>
+
+  type QuotaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<QuotaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: QuotaCountAggregateInputType | true
+    }
+
+  export interface QuotaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Quota'], meta: { name: 'Quota' } }
+    /**
+     * Find zero or one Quota that matches the filter.
+     * @param {QuotaFindUniqueArgs} args - Arguments to find a Quota
+     * @example
+     * // Get one Quota
+     * const quota = await prisma.quota.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends QuotaFindUniqueArgs>(args: SelectSubset<T, QuotaFindUniqueArgs<ExtArgs>>): Prisma__QuotaClient<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Quota that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {QuotaFindUniqueOrThrowArgs} args - Arguments to find a Quota
+     * @example
+     * // Get one Quota
+     * const quota = await prisma.quota.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends QuotaFindUniqueOrThrowArgs>(args: SelectSubset<T, QuotaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__QuotaClient<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Quota that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {QuotaFindFirstArgs} args - Arguments to find a Quota
+     * @example
+     * // Get one Quota
+     * const quota = await prisma.quota.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends QuotaFindFirstArgs>(args?: SelectSubset<T, QuotaFindFirstArgs<ExtArgs>>): Prisma__QuotaClient<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Quota that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {QuotaFindFirstOrThrowArgs} args - Arguments to find a Quota
+     * @example
+     * // Get one Quota
+     * const quota = await prisma.quota.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends QuotaFindFirstOrThrowArgs>(args?: SelectSubset<T, QuotaFindFirstOrThrowArgs<ExtArgs>>): Prisma__QuotaClient<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Quotas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {QuotaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Quotas
+     * const quotas = await prisma.quota.findMany()
+     * 
+     * // Get first 10 Quotas
+     * const quotas = await prisma.quota.findMany({ take: 10 })
+     * 
+     * // Only select the `userEmail`
+     * const quotaWithUserEmailOnly = await prisma.quota.findMany({ select: { userEmail: true } })
+     * 
+     */
+    findMany<T extends QuotaFindManyArgs>(args?: SelectSubset<T, QuotaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Quota.
+     * @param {QuotaCreateArgs} args - Arguments to create a Quota.
+     * @example
+     * // Create one Quota
+     * const Quota = await prisma.quota.create({
+     *   data: {
+     *     // ... data to create a Quota
+     *   }
+     * })
+     * 
+     */
+    create<T extends QuotaCreateArgs>(args: SelectSubset<T, QuotaCreateArgs<ExtArgs>>): Prisma__QuotaClient<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Quotas.
+     * @param {QuotaCreateManyArgs} args - Arguments to create many Quotas.
+     * @example
+     * // Create many Quotas
+     * const quota = await prisma.quota.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends QuotaCreateManyArgs>(args?: SelectSubset<T, QuotaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Quotas and returns the data saved in the database.
+     * @param {QuotaCreateManyAndReturnArgs} args - Arguments to create many Quotas.
+     * @example
+     * // Create many Quotas
+     * const quota = await prisma.quota.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Quotas and only return the `userEmail`
+     * const quotaWithUserEmailOnly = await prisma.quota.createManyAndReturn({
+     *   select: { userEmail: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends QuotaCreateManyAndReturnArgs>(args?: SelectSubset<T, QuotaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Quota.
+     * @param {QuotaDeleteArgs} args - Arguments to delete one Quota.
+     * @example
+     * // Delete one Quota
+     * const Quota = await prisma.quota.delete({
+     *   where: {
+     *     // ... filter to delete one Quota
+     *   }
+     * })
+     * 
+     */
+    delete<T extends QuotaDeleteArgs>(args: SelectSubset<T, QuotaDeleteArgs<ExtArgs>>): Prisma__QuotaClient<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Quota.
+     * @param {QuotaUpdateArgs} args - Arguments to update one Quota.
+     * @example
+     * // Update one Quota
+     * const quota = await prisma.quota.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends QuotaUpdateArgs>(args: SelectSubset<T, QuotaUpdateArgs<ExtArgs>>): Prisma__QuotaClient<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Quotas.
+     * @param {QuotaDeleteManyArgs} args - Arguments to filter Quotas to delete.
+     * @example
+     * // Delete a few Quotas
+     * const { count } = await prisma.quota.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends QuotaDeleteManyArgs>(args?: SelectSubset<T, QuotaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Quotas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {QuotaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Quotas
+     * const quota = await prisma.quota.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends QuotaUpdateManyArgs>(args: SelectSubset<T, QuotaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Quotas and returns the data updated in the database.
+     * @param {QuotaUpdateManyAndReturnArgs} args - Arguments to update many Quotas.
+     * @example
+     * // Update many Quotas
+     * const quota = await prisma.quota.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Quotas and only return the `userEmail`
+     * const quotaWithUserEmailOnly = await prisma.quota.updateManyAndReturn({
+     *   select: { userEmail: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends QuotaUpdateManyAndReturnArgs>(args: SelectSubset<T, QuotaUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Quota.
+     * @param {QuotaUpsertArgs} args - Arguments to update or create a Quota.
+     * @example
+     * // Update or create a Quota
+     * const quota = await prisma.quota.upsert({
+     *   create: {
+     *     // ... data to create a Quota
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Quota we want to update
+     *   }
+     * })
+     */
+    upsert<T extends QuotaUpsertArgs>(args: SelectSubset<T, QuotaUpsertArgs<ExtArgs>>): Prisma__QuotaClient<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Quotas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {QuotaCountArgs} args - Arguments to filter Quotas to count.
+     * @example
+     * // Count the number of Quotas
+     * const count = await prisma.quota.count({
+     *   where: {
+     *     // ... the filter for the Quotas we want to count
+     *   }
+     * })
+    **/
+    count<T extends QuotaCountArgs>(
+      args?: Subset<T, QuotaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], QuotaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Quota.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {QuotaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends QuotaAggregateArgs>(args: Subset<T, QuotaAggregateArgs>): Prisma.PrismaPromise<GetQuotaAggregateType<T>>
+
+    /**
+     * Group by Quota.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {QuotaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends QuotaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: QuotaGroupByArgs['orderBy'] }
+        : { orderBy?: QuotaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, QuotaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetQuotaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Quota model
+   */
+  readonly fields: QuotaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Quota.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__QuotaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Quota model
+   */
+  interface QuotaFieldRefs {
+    readonly userEmail: FieldRef<"Quota", 'String'>
+    readonly messagesLeft: FieldRef<"Quota", 'Int'>
+    readonly videoHoursLeft: FieldRef<"Quota", 'Int'>
+    readonly resetAt: FieldRef<"Quota", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Quota findUnique
+   */
+  export type QuotaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * Filter, which Quota to fetch.
+     */
+    where: QuotaWhereUniqueInput
+  }
+
+  /**
+   * Quota findUniqueOrThrow
+   */
+  export type QuotaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * Filter, which Quota to fetch.
+     */
+    where: QuotaWhereUniqueInput
+  }
+
+  /**
+   * Quota findFirst
+   */
+  export type QuotaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * Filter, which Quota to fetch.
+     */
+    where?: QuotaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Quotas to fetch.
+     */
+    orderBy?: QuotaOrderByWithRelationInput | QuotaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Quotas.
+     */
+    cursor?: QuotaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Quotas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Quotas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Quotas.
+     */
+    distinct?: QuotaScalarFieldEnum | QuotaScalarFieldEnum[]
+  }
+
+  /**
+   * Quota findFirstOrThrow
+   */
+  export type QuotaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * Filter, which Quota to fetch.
+     */
+    where?: QuotaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Quotas to fetch.
+     */
+    orderBy?: QuotaOrderByWithRelationInput | QuotaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Quotas.
+     */
+    cursor?: QuotaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Quotas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Quotas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Quotas.
+     */
+    distinct?: QuotaScalarFieldEnum | QuotaScalarFieldEnum[]
+  }
+
+  /**
+   * Quota findMany
+   */
+  export type QuotaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * Filter, which Quotas to fetch.
+     */
+    where?: QuotaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Quotas to fetch.
+     */
+    orderBy?: QuotaOrderByWithRelationInput | QuotaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Quotas.
+     */
+    cursor?: QuotaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Quotas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Quotas.
+     */
+    skip?: number
+    distinct?: QuotaScalarFieldEnum | QuotaScalarFieldEnum[]
+  }
+
+  /**
+   * Quota create
+   */
+  export type QuotaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * The data needed to create a Quota.
+     */
+    data: XOR<QuotaCreateInput, QuotaUncheckedCreateInput>
+  }
+
+  /**
+   * Quota createMany
+   */
+  export type QuotaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Quotas.
+     */
+    data: QuotaCreateManyInput | QuotaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Quota createManyAndReturn
+   */
+  export type QuotaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * The data used to create many Quotas.
+     */
+    data: QuotaCreateManyInput | QuotaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Quota update
+   */
+  export type QuotaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * The data needed to update a Quota.
+     */
+    data: XOR<QuotaUpdateInput, QuotaUncheckedUpdateInput>
+    /**
+     * Choose, which Quota to update.
+     */
+    where: QuotaWhereUniqueInput
+  }
+
+  /**
+   * Quota updateMany
+   */
+  export type QuotaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Quotas.
+     */
+    data: XOR<QuotaUpdateManyMutationInput, QuotaUncheckedUpdateManyInput>
+    /**
+     * Filter which Quotas to update
+     */
+    where?: QuotaWhereInput
+    /**
+     * Limit how many Quotas to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Quota updateManyAndReturn
+   */
+  export type QuotaUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * The data used to update Quotas.
+     */
+    data: XOR<QuotaUpdateManyMutationInput, QuotaUncheckedUpdateManyInput>
+    /**
+     * Filter which Quotas to update
+     */
+    where?: QuotaWhereInput
+    /**
+     * Limit how many Quotas to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Quota upsert
+   */
+  export type QuotaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * The filter to search for the Quota to update in case it exists.
+     */
+    where: QuotaWhereUniqueInput
+    /**
+     * In case the Quota found by the `where` argument doesn't exist, create a new Quota with this data.
+     */
+    create: XOR<QuotaCreateInput, QuotaUncheckedCreateInput>
+    /**
+     * In case the Quota was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<QuotaUpdateInput, QuotaUncheckedUpdateInput>
+  }
+
+  /**
+   * Quota delete
+   */
+  export type QuotaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+    /**
+     * Filter which Quota to delete.
+     */
+    where: QuotaWhereUniqueInput
+  }
+
+  /**
+   * Quota deleteMany
+   */
+  export type QuotaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Quotas to delete
+     */
+    where?: QuotaWhereInput
+    /**
+     * Limit how many Quotas to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Quota without action
+   */
+  export type QuotaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Quota
+     */
+    select?: QuotaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Quota
+     */
+    omit?: QuotaOmit<ExtArgs> | null
+  }
+
 
   /**
    * Model Video
@@ -5625,6 +6736,16 @@ export namespace Prisma {
   export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+  export const QuotaScalarFieldEnum: {
+    userEmail: 'userEmail',
+    messagesLeft: 'messagesLeft',
+    videoHoursLeft: 'videoHoursLeft',
+    resetAt: 'resetAt'
+  };
+
+  export type QuotaScalarFieldEnum = (typeof QuotaScalarFieldEnum)[keyof typeof QuotaScalarFieldEnum]
+
+
   export const VideoScalarFieldEnum: {
     id: 'id',
     youtubeId: 'youtubeId',
@@ -5780,6 +6901,55 @@ export namespace Prisma {
    * Deep Input Types
    */
 
+
+  export type QuotaWhereInput = {
+    AND?: QuotaWhereInput | QuotaWhereInput[]
+    OR?: QuotaWhereInput[]
+    NOT?: QuotaWhereInput | QuotaWhereInput[]
+    userEmail?: StringFilter<"Quota"> | string
+    messagesLeft?: IntFilter<"Quota"> | number
+    videoHoursLeft?: IntFilter<"Quota"> | number
+    resetAt?: DateTimeFilter<"Quota"> | Date | string
+  }
+
+  export type QuotaOrderByWithRelationInput = {
+    userEmail?: SortOrder
+    messagesLeft?: SortOrder
+    videoHoursLeft?: SortOrder
+    resetAt?: SortOrder
+  }
+
+  export type QuotaWhereUniqueInput = Prisma.AtLeast<{
+    userEmail?: string
+    AND?: QuotaWhereInput | QuotaWhereInput[]
+    OR?: QuotaWhereInput[]
+    NOT?: QuotaWhereInput | QuotaWhereInput[]
+    messagesLeft?: IntFilter<"Quota"> | number
+    videoHoursLeft?: IntFilter<"Quota"> | number
+    resetAt?: DateTimeFilter<"Quota"> | Date | string
+  }, "userEmail">
+
+  export type QuotaOrderByWithAggregationInput = {
+    userEmail?: SortOrder
+    messagesLeft?: SortOrder
+    videoHoursLeft?: SortOrder
+    resetAt?: SortOrder
+    _count?: QuotaCountOrderByAggregateInput
+    _avg?: QuotaAvgOrderByAggregateInput
+    _max?: QuotaMaxOrderByAggregateInput
+    _min?: QuotaMinOrderByAggregateInput
+    _sum?: QuotaSumOrderByAggregateInput
+  }
+
+  export type QuotaScalarWhereWithAggregatesInput = {
+    AND?: QuotaScalarWhereWithAggregatesInput | QuotaScalarWhereWithAggregatesInput[]
+    OR?: QuotaScalarWhereWithAggregatesInput[]
+    NOT?: QuotaScalarWhereWithAggregatesInput | QuotaScalarWhereWithAggregatesInput[]
+    userEmail?: StringWithAggregatesFilter<"Quota"> | string
+    messagesLeft?: IntWithAggregatesFilter<"Quota"> | number
+    videoHoursLeft?: IntWithAggregatesFilter<"Quota"> | number
+    resetAt?: DateTimeWithAggregatesFilter<"Quota"> | Date | string
+  }
 
   export type VideoWhereInput = {
     AND?: VideoWhereInput | VideoWhereInput[]
@@ -6023,6 +7193,55 @@ export namespace Prisma {
     role?: EnumMessageRoleWithAggregatesFilter<"ChatMessage"> | $Enums.MessageRole
     message?: StringWithAggregatesFilter<"ChatMessage"> | string
     createdAt?: DateTimeWithAggregatesFilter<"ChatMessage"> | Date | string
+  }
+
+  export type QuotaCreateInput = {
+    userEmail: string
+    messagesLeft: number
+    videoHoursLeft: number
+    resetAt: Date | string
+  }
+
+  export type QuotaUncheckedCreateInput = {
+    userEmail: string
+    messagesLeft: number
+    videoHoursLeft: number
+    resetAt: Date | string
+  }
+
+  export type QuotaUpdateInput = {
+    userEmail?: StringFieldUpdateOperationsInput | string
+    messagesLeft?: IntFieldUpdateOperationsInput | number
+    videoHoursLeft?: IntFieldUpdateOperationsInput | number
+    resetAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type QuotaUncheckedUpdateInput = {
+    userEmail?: StringFieldUpdateOperationsInput | string
+    messagesLeft?: IntFieldUpdateOperationsInput | number
+    videoHoursLeft?: IntFieldUpdateOperationsInput | number
+    resetAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type QuotaCreateManyInput = {
+    userEmail: string
+    messagesLeft: number
+    videoHoursLeft: number
+    resetAt: Date | string
+  }
+
+  export type QuotaUpdateManyMutationInput = {
+    userEmail?: StringFieldUpdateOperationsInput | string
+    messagesLeft?: IntFieldUpdateOperationsInput | number
+    videoHoursLeft?: IntFieldUpdateOperationsInput | number
+    resetAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type QuotaUncheckedUpdateManyInput = {
+    userEmail?: StringFieldUpdateOperationsInput | string
+    messagesLeft?: IntFieldUpdateOperationsInput | number
+    videoHoursLeft?: IntFieldUpdateOperationsInput | number
+    resetAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type VideoCreateInput = {
@@ -6320,6 +7539,85 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
+  export type QuotaCountOrderByAggregateInput = {
+    userEmail?: SortOrder
+    messagesLeft?: SortOrder
+    videoHoursLeft?: SortOrder
+    resetAt?: SortOrder
+  }
+
+  export type QuotaAvgOrderByAggregateInput = {
+    messagesLeft?: SortOrder
+    videoHoursLeft?: SortOrder
+  }
+
+  export type QuotaMaxOrderByAggregateInput = {
+    userEmail?: SortOrder
+    messagesLeft?: SortOrder
+    videoHoursLeft?: SortOrder
+    resetAt?: SortOrder
+  }
+
+  export type QuotaMinOrderByAggregateInput = {
+    userEmail?: SortOrder
+    messagesLeft?: SortOrder
+    videoHoursLeft?: SortOrder
+    resetAt?: SortOrder
+  }
+
+  export type QuotaSumOrderByAggregateInput = {
+    messagesLeft?: SortOrder
+    videoHoursLeft?: SortOrder
+  }
+
+  export type StringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
   export type EnumTranscriptionStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.TranscriptionStatus | EnumTranscriptionStatusFieldRefInput<$PrismaModel>
     in?: $Enums.TranscriptionStatus[] | ListEnumTranscriptionStatusFieldRefInput<$PrismaModel>
@@ -6379,54 +7677,6 @@ export namespace Prisma {
 
   export type VideoSumOrderByAggregateInput = {
     durationInMinutes?: SortOrder
-  }
-
-  export type StringWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedStringFilter<$PrismaModel>
-    _max?: NestedStringFilter<$PrismaModel>
-  }
-
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type EnumTranscriptionStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -6556,20 +7806,6 @@ export namespace Prisma {
     _max?: NestedEnumMessageRoleFilter<$PrismaModel>
   }
 
-  export type TranscriptChunkCreateNestedManyWithoutVideoInput = {
-    create?: XOR<TranscriptChunkCreateWithoutVideoInput, TranscriptChunkUncheckedCreateWithoutVideoInput> | TranscriptChunkCreateWithoutVideoInput[] | TranscriptChunkUncheckedCreateWithoutVideoInput[]
-    connectOrCreate?: TranscriptChunkCreateOrConnectWithoutVideoInput | TranscriptChunkCreateOrConnectWithoutVideoInput[]
-    createMany?: TranscriptChunkCreateManyVideoInputEnvelope
-    connect?: TranscriptChunkWhereUniqueInput | TranscriptChunkWhereUniqueInput[]
-  }
-
-  export type TranscriptChunkUncheckedCreateNestedManyWithoutVideoInput = {
-    create?: XOR<TranscriptChunkCreateWithoutVideoInput, TranscriptChunkUncheckedCreateWithoutVideoInput> | TranscriptChunkCreateWithoutVideoInput[] | TranscriptChunkUncheckedCreateWithoutVideoInput[]
-    connectOrCreate?: TranscriptChunkCreateOrConnectWithoutVideoInput | TranscriptChunkCreateOrConnectWithoutVideoInput[]
-    createMany?: TranscriptChunkCreateManyVideoInputEnvelope
-    connect?: TranscriptChunkWhereUniqueInput | TranscriptChunkWhereUniqueInput[]
-  }
-
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -6584,6 +7820,20 @@ export namespace Prisma {
 
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
+  }
+
+  export type TranscriptChunkCreateNestedManyWithoutVideoInput = {
+    create?: XOR<TranscriptChunkCreateWithoutVideoInput, TranscriptChunkUncheckedCreateWithoutVideoInput> | TranscriptChunkCreateWithoutVideoInput[] | TranscriptChunkUncheckedCreateWithoutVideoInput[]
+    connectOrCreate?: TranscriptChunkCreateOrConnectWithoutVideoInput | TranscriptChunkCreateOrConnectWithoutVideoInput[]
+    createMany?: TranscriptChunkCreateManyVideoInputEnvelope
+    connect?: TranscriptChunkWhereUniqueInput | TranscriptChunkWhereUniqueInput[]
+  }
+
+  export type TranscriptChunkUncheckedCreateNestedManyWithoutVideoInput = {
+    create?: XOR<TranscriptChunkCreateWithoutVideoInput, TranscriptChunkUncheckedCreateWithoutVideoInput> | TranscriptChunkCreateWithoutVideoInput[] | TranscriptChunkUncheckedCreateWithoutVideoInput[]
+    connectOrCreate?: TranscriptChunkCreateOrConnectWithoutVideoInput | TranscriptChunkCreateOrConnectWithoutVideoInput[]
+    createMany?: TranscriptChunkCreateManyVideoInputEnvelope
+    connect?: TranscriptChunkWhereUniqueInput | TranscriptChunkWhereUniqueInput[]
   }
 
   export type EnumTranscriptionStatusFieldUpdateOperationsInput = {
@@ -6728,13 +7978,6 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
-  export type NestedEnumTranscriptionStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.TranscriptionStatus | EnumTranscriptionStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.TranscriptionStatus[] | ListEnumTranscriptionStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TranscriptionStatus[] | ListEnumTranscriptionStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumTranscriptionStatusFilter<$PrismaModel> | $Enums.TranscriptionStatus
-  }
-
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -6791,6 +8034,13 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumTranscriptionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TranscriptionStatus | EnumTranscriptionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TranscriptionStatus[] | ListEnumTranscriptionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TranscriptionStatus[] | ListEnumTranscriptionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTranscriptionStatusFilter<$PrismaModel> | $Enums.TranscriptionStatus
   }
 
   export type NestedEnumTranscriptionStatusWithAggregatesFilter<$PrismaModel = never> = {

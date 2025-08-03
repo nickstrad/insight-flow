@@ -1,6 +1,5 @@
 "use client";
 
-import { useVideoTableState } from "../hooks";
 import {
   Card,
   CardContent,
@@ -33,7 +32,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Loader2, SquareArrowOutUpRight, Pencil } from "lucide-react";
+import { SquareArrowOutUpRight, Pencil } from "lucide-react";
+import { useVideoTableState } from "./hooks";
 
 interface VideoTableProps {
   userEmail: string;
@@ -42,17 +42,10 @@ interface VideoTableProps {
 export default function VideoTable({ userEmail }: VideoTableProps) {
   const {
     pagination: { currentPage, totalPages, handlePreviousPage, handleNextPage },
-    state: {
-      // isSyncing,
-      isTranscribing,
-      isModalOpen,
-      selectedVideoText,
-    },
+    state: { isModalOpen, selectedVideoText },
     data: { currentVideos, videos },
     handleSort,
     getSortIcon,
-    // handleSync,
-    transcribeNextN,
     openModal,
     closeModal,
   } = useVideoTableState({ userEmail });
@@ -66,35 +59,6 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-end space-x-2 mb-4">
-          {/* <Button type="button" onClick={handleSync} disabled={isSyncing}>
-            {isSyncing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Syncing...
-              </>
-            ) : (
-              "Sync Videos"
-            )}
-          </Button> */}
-          <Button
-            type="button"
-            onClick={async () => {
-              await transcribeNextN({ batchSize: 1, n: 1 });
-            }}
-            disabled={isTranscribing}
-          >
-            {isTranscribing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Transcribing...
-              </>
-            ) : (
-              "Transcribe Videos"
-            )}
-          </Button>
-        </div>
-
         <Table>
           <TableHeader>
             <TableRow>

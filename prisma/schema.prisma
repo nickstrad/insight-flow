@@ -27,6 +27,13 @@ enum MessageRole {
   SYSTEM
 }
 
+model Quota {
+  userEmail      String   @unique
+  messagesLeft   Int
+  videoHoursLeft Int
+  resetAt        DateTime
+}
+
 model Video {
   id                String              @id @default(uuid())
   youtubeId         String              @unique

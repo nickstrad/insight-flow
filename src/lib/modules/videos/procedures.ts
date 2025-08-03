@@ -14,24 +14,21 @@ export const videosRouter = createTRPCRouter({
     .query(async ({ input: { channelHandle } }) => {
       return getVideosForChannel(channelHandle);
     }),
-  
   getStoredVideosForChannel: baseProcedure
     .input(
       z.object({
-        channelHandle: z
-          .string()
-          .min(1, { message: "Channel handle is required." }),
+        userEmail: z.string().min(1, { message: "User email is required." }),
       })
     )
-    .query(async ({ input: { channelHandle } }) => {
+    .query(async ({ input: { userEmail } }) => {
       const { prisma } = await import("@/db");
       return await prisma.video.findMany({
         where: {
-          userEmail: channelHandle, // Assuming channelHandle maps to userEmail
+          userEmail,
         },
         orderBy: {
-          createdAt: 'desc'
-        }
+          createdAt: "desc",
+        },
       });
     }),
 });

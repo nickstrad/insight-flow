@@ -3,6 +3,15 @@ import { Video } from "@/generated/prisma";
 import { GoogleGenAI } from "@google/genai";
 import { toGeminiSchema } from "gemini-zod";
 import z from "zod";
+import { YoutubeVideo } from "../videos/types";
+import {
+  getQuota,
+  fetchVideoDurations,
+  createVideoRecordsFromYoutubeVideos,
+  calculateVideoHoursNeeded,
+  checkVideoQuota,
+  deductVideoQuota,
+} from "../quota/utils";
 
 type TranscriptChunk = {
   timestamp: number | string;
@@ -51,7 +60,6 @@ function convertTimestampToSeconds(time: string): number | null {
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 // This script transcribes a YouTube video using the YoutubeLoader from LangChain
-
 export const getEmbeddings = async (text: string[]) => {
   const response = await ai.models.embedContent({
     model: "gemini-embedding-001",
@@ -149,192 +157,661 @@ const getTranscript = async ({
   return { transcriptionText, formattedTranscriptions };
 };
 
-export const transcribeNextN = async (
-  n: number = 10,
-  batchSize: number = 5
-): Promise<{ totalAttempts: number; totalTranscribed: number }> => {
-  console.log(
-    `🎯 Starting transcription of next ${n} videos (batch size: ${batchSize})`
+// 1. Extract setup/preparation logic
+async function prepareTranscriptionJob(
+  youtubeVideos: YoutubeVideo[],
+  userEmail: string
+): Promise<{
+  videoRecords: Video[];
+  pendingVideos: Video[];
+  totalHoursNeeded: number;
+  currentQuota: any;
+  shouldEarlyReturn: boolean;
+  earlyReturnResult?: {
+    totalAttempts: number;
+    totalTranscribed: number;
+    quotaExceeded: boolean;
+    processedVideos: Video[];
+  };
+}> {
+  logTranscriptionStart(youtubeVideos.length, userEmail);
+
+  // Step 1: Fetch video durations from YouTube API
+  logFetchingDurations();
+  const videoIds = youtubeVideos.map(v => v.youtubeId);
+  const durationMap = await fetchVideoDurations(videoIds);
+
+  // Step 2: Create Video records in database from YoutubeVideo objects
+  logCreatingRecords();
+  const videoRecords = await createVideoRecordsFromYoutubeVideos(
+    youtubeVideos,
+    userEmail,
+    durationMap
   );
 
-  // Fetch pending videos from database
-  const videos: Video[] = await prisma.video.findMany({
-    where: {
-      status: "PENDING",
-    },
-    take: n,
-  });
-  console.log(`📋 Found ${videos.length} pending videos to process`);
+  // Step 3: Filter to only pending videos and calculate total hours needed
+  const pendingVideos = videoRecords.filter((v) => v.status === "PENDING");
+  const totalHoursNeeded = pendingVideos.reduce(
+    (sum, v) => sum + calculateVideoHoursNeeded(v.durationInMinutes),
+    0
+  );
 
-  if (videos.length === 0) {
-    console.log("✅ No pending videos found - nothing to transcribe");
-    return { totalAttempts: 0, totalTranscribed: 0 };
+  logQuotaSummary(pendingVideos.length, totalHoursNeeded);
+
+  // Step 4: Check initial quota
+  const currentQuota = await getQuota(userEmail);
+  logCurrentQuota(currentQuota.videoHoursLeft);
+
+  // Step 5: Validate quota for batch processing
+  const validation = validateQuotaForBatch(
+    pendingVideos,
+    currentQuota,
+    videoRecords
+  );
+  if (validation.shouldEarlyReturn) {
+    return {
+      videoRecords,
+      pendingVideos,
+      totalHoursNeeded,
+      currentQuota,
+      shouldEarlyReturn: true,
+      earlyReturnResult: validation.earlyReturnResult,
+    };
   }
 
-  const results: TranscriptionResult[] = [];
+  return {
+    videoRecords,
+    pendingVideos,
+    totalHoursNeeded,
+    currentQuota,
+    shouldEarlyReturn: false,
+  };
+}
 
-  // Process videos in batches to avoid API rate limits
-  for (let i = 0; i < videos.length; i += batchSize) {
-    const batch = videos.slice(i, i + batchSize);
-    const batchNumber = Math.floor(i / batchSize) + 1;
-    const totalBatches = Math.ceil(videos.length / batchSize);
+// 3. Extract video chunking & transcription logic
+async function transcribeVideoInChunks(video: Video): Promise<{
+  allTranscripts: Transcript;
+  fullTranscriptionText: string;
+}> {
+  const allTranscripts: Transcript = [];
+  const allTranscriptionTexts: string[] = [];
+  const durationInSeconds = video.durationInMinutes * 60;
+  const chunkDurationSeconds = 30 * 60; // 30 minutes in seconds
+
+  const chunks = Math.ceil(durationInSeconds / chunkDurationSeconds);
+  logVideoChunking(chunks);
+
+  for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
+    const fromSeconds = chunkIndex * chunkDurationSeconds;
+    const toSeconds = Math.min(
+      (chunkIndex + 1) * chunkDurationSeconds,
+      durationInSeconds
+    );
+
+    logChunkProgress(chunkIndex, chunks, fromSeconds, toSeconds);
+
+    const { transcriptionText, formattedTranscriptions } = await getTranscript({
+      video: video.youtubeId,
+      fromSeconds,
+      toSeconds,
+    });
+
+    allTranscriptionTexts.push(transcriptionText);
+
+    // Adjust timestamps to be relative to the full video
+    const adjustedTranscriptions = formattedTranscriptions.map((chunk) => ({
+      ...chunk,
+      timestamp:
+        typeof chunk.timestamp === "number"
+          ? chunk.timestamp + fromSeconds
+          : chunk.timestamp,
+    }));
+
+    allTranscripts.push(...adjustedTranscriptions);
+  }
+
+  logTranscriptComplete(allTranscripts.length, video.youtubeId);
+
+  const fullTranscriptionText = allTranscriptionTexts.join(" ");
+  return { allTranscripts, fullTranscriptionText };
+}
+
+// 2. Extract single video processing logic
+async function processVideoTranscription(
+  video: Video,
+  userEmail: string
+): Promise<TranscriptionResult> {
+  // Check quota before processing this video
+  const videoHoursNeeded = calculateVideoHoursNeeded(video.durationInMinutes);
+  const { hasQuota, currentQuota } = await checkVideoQuota(
+    userEmail,
+    videoHoursNeeded
+  );
+
+  if (!hasQuota) {
+    console.log(
+      `⚠️ Insufficient quota for video ${video.youtubeId} (needs ${videoHoursNeeded}h, has ${currentQuota.videoHoursLeft}h)`
+    );
+    throw new Error("QUOTA_EXCEEDED");
+  }
+
+  console.log(
+    `📹 Transcribing video: ${video.youtubeId} (${
+      video.title || "Untitled"
+    }) - ${video.durationInMinutes} minutes`
+  );
+
+  try {
+    // Step 1: Split video into chunks and get transcripts
+    const { allTranscripts, fullTranscriptionText } =
+      await transcribeVideoInChunks(video);
+
+    // Step 2: Generate embeddings for each transcript chunk and store in DB
+    const transcriptWithEmbeddings = await appendEmbeddings({
+      videoId: video.id,
+      transcript: allTranscripts,
+    });
+
+    // Step 3: Update video status and content
+    await prisma.video.update({
+      where: { id: video.id },
+      data: {
+        status: "COMPLETED",
+        content: fullTranscriptionText,
+      },
+    });
+
+    // Step 4: Deduct quota
+    const updatedQuota = await deductVideoQuota(userEmail, videoHoursNeeded);
 
     console.log(
-      `🔄 Processing batch ${batchNumber}/${totalBatches} (${batch.length} videos)`
+      `  💳 Deducted ${videoHoursNeeded} hours from quota (${updatedQuota.videoHoursLeft} remaining)`
     );
 
-    // Process batch in parallel for better performance
-    const batchPromises = batch.map(
-      async (video): Promise<TranscriptionResult> => {
-        console.log(
-          `  📹 Transcribing video: ${video.youtubeId} (${
-            video.title || "Untitled"
-          }) - ${video.durationInMinutes} minutes`
-        );
-        try {
-          // Step 1: Split video into 30-minute chunks and get transcripts
-          const allTranscripts: Transcript = [];
-          const allTranscriptionTexts: string[] = [];
-          const durationInSeconds = video.durationInMinutes * 60;
-          const chunkDurationSeconds = 30 * 60; // 30 minutes in seconds
+    return {
+      video,
+      transcript: {
+        videoId: video.id,
+        chunks: transcriptWithEmbeddings,
+      },
+      fullTranscriptionText,
+    };
+  } catch (error) {
+    // Re-throw error to be handled by processBatchesWithQuotaCheck
+    throw error;
+  }
+}
 
-          const chunks = Math.ceil(durationInSeconds / chunkDurationSeconds);
-          console.log(
-            `  📝 Splitting video into ${chunks} chunk(s) of up to 30 minutes`
-          );
+// 4. Extract quota validation logic
+type ValidationResult = {
+  isValid: boolean;
+  shouldEarlyReturn: boolean;
+  earlyReturnResult?: {
+    totalAttempts: number;
+    totalTranscribed: number;
+    quotaExceeded: boolean;
+    processedVideos: Video[];
+  };
+};
 
-          for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
-            const fromSeconds = chunkIndex * chunkDurationSeconds;
-            const toSeconds = Math.min(
-              (chunkIndex + 1) * chunkDurationSeconds,
-              durationInSeconds
-            );
-
-            console.log(
-              `    🎬 Transcribing chunk ${
-                chunkIndex + 1
-              }/${chunks} (${fromSeconds}s-${toSeconds}s)`
-            );
-
-            const { transcriptionText, formattedTranscriptions } =
-              await getTranscript({
-                video: video.youtubeId,
-                fromSeconds,
-                toSeconds,
-              });
-
-            // Store the transcription text for this chunk
-            allTranscriptionTexts.push(transcriptionText);
-
-            // Adjust timestamps to be relative to the full video
-            const adjustedTranscriptions = formattedTranscriptions.map(
-              (chunk) => ({
-                ...chunk,
-                timestamp:
-                  typeof chunk.timestamp === "number"
-                    ? chunk.timestamp + fromSeconds
-                    : chunk.timestamp,
-              })
-            );
-
-            allTranscripts.push(...adjustedTranscriptions);
-          }
-
-          console.log(
-            `  ✅ Got transcript with ${allTranscripts.length} chunks for ${video.youtubeId}`
-          );
-
-          // Step 2: Generate embeddings for each transcript chunk and store in DB
-          const transcriptWithEmbeddings = await appendEmbeddings({
-            videoId: video.id,
-            transcript: allTranscripts,
-          });
-          console.log(
-            `  🔗 Added embeddings to transcript for ${video.youtubeId}`
-          );
-
-          // Step 3: Concatenate all transcription texts
-          const fullTranscriptionText = allTranscriptionTexts.join(" ");
-          console.log(
-            `  📄 Full transcription length: ${fullTranscriptionText.length} characters`
-          );
-
-          return {
-            video,
-            transcript: {
-              videoId: video.id,
-              chunks: transcriptWithEmbeddings,
-            },
-            fullTranscriptionText,
-          };
-        } catch (error) {
-          console.error(`  ❌ Failed to transcribe ${video.youtubeId}:`, error);
-          return {
-            video,
-            error:
-              error instanceof Error ? error.message : "Unknown error occurred",
-          };
-        }
-      }
-    );
-
-    const batchResults = await Promise.all(batchPromises);
-    results.push(...batchResults);
-    console.log(`  ✅ Batch ${batchNumber} completed`);
+function validateQuotaForBatch(
+  pendingVideos: Video[],
+  currentQuota: any,
+  videoRecords: Video[]
+): ValidationResult {
+  if (pendingVideos.length === 0) {
+    logNoPendingVideos();
+    return {
+      isValid: false,
+      shouldEarlyReturn: true,
+      earlyReturnResult: {
+        totalAttempts: 0,
+        totalTranscribed: 0,
+        quotaExceeded: false,
+        processedVideos: videoRecords,
+      },
+    };
   }
 
-  // Separate successful and failed results for database updates
+  if (currentQuota.videoHoursLeft <= 0) {
+    logNoQuotaRemaining();
+    return {
+      isValid: false,
+      shouldEarlyReturn: true,
+      earlyReturnResult: {
+        totalAttempts: 0,
+        totalTranscribed: 0,
+        quotaExceeded: true,
+        processedVideos: videoRecords,
+      },
+    };
+  }
+
+  return {
+    isValid: true,
+    shouldEarlyReturn: false,
+  };
+}
+
+// 6. Extract error handling logic
+async function handleVideoTranscriptionError(
+  video: Video,
+  error: Error
+): Promise<TranscriptionResult> {
+  logTranscriptionError(video.youtubeId, error);
+
+  // Update video to failed status
+  await markVideoFailed(video.id);
+
+  return {
+    video,
+    error: error instanceof Error ? error.message : "Unknown error occurred",
+  };
+}
+
+// 5. Extract batch processing loop
+async function processBatchesWithQuotaCheck(
+  pendingVideos: Video[],
+  userEmail: string,
+  batchSize: number
+): Promise<{
+  results: TranscriptionResult[];
+  quotaExceeded: boolean;
+}> {
+  const results: TranscriptionResult[] = [];
+  let quotaExceeded = false;
+
+  for (let i = 0; i < pendingVideos.length; i += batchSize) {
+    const batch = pendingVideos.slice(i, i + batchSize);
+    const batchNumber = Math.floor(i / batchSize) + 1;
+    const totalBatches = Math.ceil(pendingVideos.length / batchSize);
+
+    logBatchProgress(batchNumber, totalBatches, batch.length);
+
+    // Process each video in batch sequentially
+    for (const video of batch) {
+      try {
+        const result = await executeVideoProcessingPipeline(video, userEmail);
+        results.push(result);
+      } catch (error) {
+        if (error instanceof Error && error.message === "QUOTA_EXCEEDED") {
+          quotaExceeded = true;
+          break;
+        }
+
+        // Handle other transcription errors
+        if (error instanceof Error) {
+          const errorResult = await handleVideoTranscriptionError(video, error);
+          results.push(errorResult);
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    if (quotaExceeded) {
+      logQuotaExceeded();
+      break;
+    }
+
+    logBatchCompleted(batchNumber);
+  }
+
+  return { results, quotaExceeded };
+}
+
+// 7. Extract database update operations
+async function markVideoCompleted(
+  videoId: string,
+  content: string
+): Promise<void> {
+  await prisma.video.update({
+    where: { id: videoId },
+    data: {
+      status: "COMPLETED",
+      content: content,
+    },
+  });
+}
+
+async function markVideoFailed(videoId: string): Promise<void> {
+  await prisma.video.update({
+    where: { id: videoId },
+    data: { status: "FAILED" },
+  });
+}
+
+// 9. Extract logging helper functions
+function logTranscriptionStart(videoCount: number, userEmail: string): void {
+  console.log(
+    `🎯 Starting transcription of ${videoCount} videos for user: ${userEmail}`
+  );
+}
+
+function logFetchingDurations(): void {
+  console.log("🔍 Fetching video durations from YouTube API...");
+}
+
+function logCreatingRecords(): void {
+  console.log("💾 Creating video records in database...");
+}
+
+function logQuotaSummary(pendingCount: number, totalHours: number): void {
+  console.log(
+    `📊 Found ${pendingCount} pending videos requiring ~${totalHours} hours of quota`
+  );
+}
+
+function logCurrentQuota(hoursRemaining: number): void {
+  console.log(`💳 Current quota: ${hoursRemaining} hours remaining`);
+}
+
+function logNoPendingVideos(): void {
+  console.log("✅ No pending videos to transcribe");
+}
+
+function logNoQuotaRemaining(): void {
+  console.log("❌ No video hours quota remaining");
+}
+
+function logVideoChunking(chunks: number): void {
+  console.log(
+    `  📝 Splitting video into ${chunks} chunk(s) of up to 30 minutes`
+  );
+}
+
+function logChunkProgress(
+  chunkIndex: number,
+  totalChunks: number,
+  fromSeconds: number,
+  toSeconds: number
+): void {
+  console.log(
+    `    🎬 Transcribing chunk ${
+      chunkIndex + 1
+    }/${totalChunks} (${fromSeconds}s-${toSeconds}s)`
+  );
+}
+
+function logTranscriptComplete(chunkCount: number, videoId: string): void {
+  console.log(`  ✅ Got transcript with ${chunkCount} chunks for ${videoId}`);
+}
+
+function logInsufficientQuota(
+  videoId: string,
+  needed: number,
+  available: number
+): void {
+  console.log(
+    `⚠️ Insufficient quota for video ${videoId} (needs ${needed}h, has ${available}h)`
+  );
+}
+
+function logVideoTranscriptionStart(
+  videoId: string,
+  title: string,
+  duration: number
+): void {
+  console.log(
+    `📹 Transcribing video: ${videoId} (${
+      title || "Untitled"
+    }) - ${duration} minutes`
+  );
+}
+
+function logQuotaDeduction(hoursUsed: number, remaining: number): void {
+  console.log(
+    `  💳 Deducted ${hoursUsed} hours from quota (${remaining} remaining)`
+  );
+}
+
+function logTranscriptionError(videoId: string, error: Error): void {
+  console.error(`  ❌ Failed to transcribe ${videoId}:`, error);
+}
+
+function logBatchProgress(
+  batchNumber: number,
+  totalBatches: number,
+  batchLength: number
+): void {
+  console.log(
+    `🔄 Processing batch ${batchNumber}/${totalBatches} (${batchLength} videos)`
+  );
+}
+
+function logQuotaExceeded(): void {
+  console.log("⚠️ Quota exceeded, stopping batch processing");
+}
+
+function logBatchCompleted(batchNumber: number): void {
+  console.log(`  ✅ Batch ${batchNumber} completed`);
+}
+
+function logTranscriptionResults(
+  successful: number,
+  failed: number,
+  quotaExceeded: boolean
+): void {
+  console.log(
+    `📊 Results: ${successful} successful, ${failed} failed${
+      quotaExceeded ? " (quota exceeded)" : ""
+    }`
+  );
+}
+
+function logTranscriptionComplete(successful: number, total: number): void {
+  console.log(
+    `🏁 Transcription complete: ${successful}/${total} videos transcribed successfully`
+  );
+}
+
+// 8. Extract results processing logic
+type ResultSummary = {
+  successful: TranscriptionResult[];
+  failed: TranscriptionResult[];
+  totalAttempts: number;
+  totalTranscribed: number;
+};
+
+function processTranscriptionResults(
+  results: TranscriptionResult[]
+): ResultSummary {
   const successful = results.filter((r) => r.transcript && !r.error);
   const failed = results.filter((r) => r.error);
 
-  console.log(
-    `📊 Results: ${successful.length} successful, ${failed.length} failed`
+  return {
+    successful,
+    failed,
+    totalAttempts: results.length,
+    totalTranscribed: successful.length,
+  };
+}
+
+// 10. Create video processing pipeline pattern
+type ProcessingStep = {
+  name: string;
+  execute: (context: ProcessingContext) => Promise<ProcessingContext>;
+};
+
+type ProcessingContext = {
+  video: Video;
+  userEmail: string;
+  allTranscripts?: Transcript;
+  fullTranscriptionText?: string;
+  transcriptWithEmbeddings?: Transcript;
+  videoHoursNeeded?: number;
+  updatedQuota?: any;
+};
+
+const checkQuotaStep: ProcessingStep = {
+  name: "checkQuota",
+  execute: async (context: ProcessingContext): Promise<ProcessingContext> => {
+    const videoHoursNeeded = calculateVideoHoursNeeded(
+      context.video.durationInMinutes
+    );
+    const { hasQuota, currentQuota } = await checkVideoQuota(
+      context.userEmail,
+      videoHoursNeeded
+    );
+
+    if (!hasQuota) {
+      logInsufficientQuota(
+        context.video.youtubeId,
+        videoHoursNeeded,
+        currentQuota.videoHoursLeft
+      );
+      throw new Error("QUOTA_EXCEEDED");
+    }
+
+    logVideoTranscriptionStart(
+      context.video.youtubeId,
+      context.video.title,
+      context.video.durationInMinutes
+    );
+
+    return {
+      ...context,
+      videoHoursNeeded,
+    };
+  },
+};
+
+const transcribeChunksStep: ProcessingStep = {
+  name: "transcribeChunks",
+  execute: async (context: ProcessingContext): Promise<ProcessingContext> => {
+    const { allTranscripts, fullTranscriptionText } =
+      await transcribeVideoInChunks(context.video);
+
+    return {
+      ...context,
+      allTranscripts,
+      fullTranscriptionText,
+    };
+  },
+};
+
+const generateEmbeddingsStep: ProcessingStep = {
+  name: "generateEmbeddings",
+  execute: async (context: ProcessingContext): Promise<ProcessingContext> => {
+    const transcriptWithEmbeddings = await appendEmbeddings({
+      videoId: context.video.id,
+      transcript: context.allTranscripts!,
+    });
+
+    return {
+      ...context,
+      transcriptWithEmbeddings,
+    };
+  },
+};
+
+const saveTranscriptionStep: ProcessingStep = {
+  name: "saveTranscription",
+  execute: async (context: ProcessingContext): Promise<ProcessingContext> => {
+    await markVideoCompleted(context.video.id, context.fullTranscriptionText!);
+
+    return context;
+  },
+};
+
+const deductQuotaStep: ProcessingStep = {
+  name: "deductQuota",
+  execute: async (context: ProcessingContext): Promise<ProcessingContext> => {
+    const updatedQuota = await deductVideoQuota(
+      context.userEmail,
+      context.videoHoursNeeded!
+    );
+
+    logQuotaDeduction(context.videoHoursNeeded!, updatedQuota.videoHoursLeft);
+
+    return {
+      ...context,
+      updatedQuota,
+    };
+  },
+};
+
+const videoProcessingPipeline: ProcessingStep[] = [
+  checkQuotaStep,
+  transcribeChunksStep,
+  generateEmbeddingsStep,
+  saveTranscriptionStep,
+  deductQuotaStep,
+];
+
+async function executeVideoProcessingPipeline(
+  video: Video,
+  userEmail: string,
+  pipeline: ProcessingStep[] = videoProcessingPipeline
+): Promise<TranscriptionResult> {
+  let context: ProcessingContext = { video, userEmail };
+
+  try {
+    for (const step of pipeline) {
+      context = await step.execute(context);
+    }
+
+    return {
+      video: context.video,
+      transcript: {
+        videoId: context.video.id,
+        chunks: context.transcriptWithEmbeddings!,
+      },
+      fullTranscriptionText: context.fullTranscriptionText!,
+    };
+  } catch (error) {
+    // Re-throw error to be handled by processBatchesWithQuotaCheck
+    throw error;
+  }
+}
+
+// Main function to transcribe YoutubeVideo types with quota checking
+export const transcribeVideos = async ({
+  youtubeVideos,
+  userEmail,
+  batchSize = 5,
+}: {
+  youtubeVideos: YoutubeVideo[];
+  userEmail: string;
+  batchSize?: number;
+}): Promise<{
+  totalAttempts: number;
+  totalTranscribed: number;
+  quotaExceeded: boolean;
+  processedVideos: Video[];
+}> => {
+  // Step 1: Prepare transcription job (fetch durations, create records, check quota)
+  const preparation = await prepareTranscriptionJob(youtubeVideos, userEmail);
+
+  if (preparation.shouldEarlyReturn) {
+    return preparation.earlyReturnResult!;
+  }
+
+  const { videoRecords, pendingVideos } = preparation;
+
+  // Step 2: Process videos in batches with quota checking
+  const { results, quotaExceeded } = await processBatchesWithQuotaCheck(
+    pendingVideos,
+    userEmail,
+    batchSize
   );
 
-  // Update successful videos to COMPLETED status and save full transcription
-  if (successful.length > 0) {
-    console.log(
-      `💾 Updating ${successful.length} videos to COMPLETED status with full transcription`
-    );
-
-    // Update each video individually to set the content field
-    for (const result of successful) {
-      await prisma.video.update({
-        where: {
-          id: result.video.id,
-        },
-        data: {
-          status: "COMPLETED",
-          content: result.fullTranscriptionText || "",
-        },
-      });
-    }
-  }
-
-  // Batch update failed videos to FAILED status
-  if (failed.length > 0) {
-    console.log(`💾 Updating ${failed.length} videos to FAILED status`);
-    console.log(
-      `❌ Failed videos: ${failed.map((f) => f.video.youtubeId).join(", ")}`
-    );
-    await prisma.video.updateMany({
-      where: {
-        id: {
-          in: failed.map((r) => r.video.id),
-        },
-      },
-      data: {
-        status: "FAILED",
-      },
-    });
-  }
-
-  console.log(
-    `🏁 Transcription complete: ${successful.length}/${results.length} videos transcribed successfully`
+  // Process and log results
+  const resultSummary = processTranscriptionResults(results);
+  logTranscriptionResults(
+    resultSummary.totalTranscribed,
+    resultSummary.failed.length,
+    quotaExceeded
+  );
+  logTranscriptionComplete(
+    resultSummary.totalTranscribed,
+    resultSummary.totalAttempts
   );
 
   return {
-    totalAttempts: results.length,
-    totalTranscribed: successful.length,
+    totalAttempts: resultSummary.totalAttempts,
+    totalTranscribed: resultSummary.totalTranscribed,
+    quotaExceeded,
+    processedVideos: videoRecords,
   };
 };

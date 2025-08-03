@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import PurchaseVideoTable from "../PurchaseVideoTable/PurchaseVideoTable";
+import QuotaViewer from "@/lib/modules/quota/components/QuotaViewer";
 
 export const VideoSearch = () => {
   const [channelHandle, setChannelHandle] = useState("");
@@ -38,7 +39,8 @@ export const VideoSearch = () => {
         <CardHeader>
           <CardTitle>Search YouTube Channel</CardTitle>
           <CardDescription>
-            Enter a YouTube channel handle to view and select videos for transcription.
+            Enter a YouTube channel handle to view and select videos for
+            transcription.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -71,10 +73,19 @@ export const VideoSearch = () => {
           </form>
         </CardContent>
       </Card>
-
-      {isSubmitted && (
-        <PurchaseVideoTable channelHandle={submittedHandle} />
-      )}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Video Selection</h3>
+        <Suspense
+          fallback={
+            <div className="text-sm text-muted-foreground">
+              Loading quota...
+            </div>
+          }
+        >
+          <QuotaViewer />
+        </Suspense>
+      </div>
+      {isSubmitted && <PurchaseVideoTable channelHandle={submittedHandle} />}
     </div>
   );
 };

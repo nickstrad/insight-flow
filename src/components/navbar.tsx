@@ -35,10 +35,7 @@ export default function Navbar() {
             </SignedOut>
 
             <SignedIn>
-              <Link
-                href="/dashboard/TruthUnites"
-                className="flex items-center space-x-2"
-              >
+              <Link href="/dashboard" className="flex items-center space-x-2">
                 <h2>Dashboard</h2>
               </Link>
               <UserControl showName />
