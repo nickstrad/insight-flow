@@ -40,6 +40,7 @@ model Video {
   userEmail         String
   title             String
   content           String
+  channelHandle     String?
   chunks            TranscriptChunk[]
   durationInMinutes Int
   createdAt         DateTime            @default(now())

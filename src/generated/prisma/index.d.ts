@@ -2372,6 +2372,7 @@ export namespace Prisma {
     userEmail: string | null
     title: string | null
     content: string | null
+    channelHandle: string | null
     durationInMinutes: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2384,6 +2385,7 @@ export namespace Prisma {
     userEmail: string | null
     title: string | null
     content: string | null
+    channelHandle: string | null
     durationInMinutes: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2396,6 +2398,7 @@ export namespace Prisma {
     userEmail: number
     title: number
     content: number
+    channelHandle: number
     durationInMinutes: number
     createdAt: number
     updatedAt: number
@@ -2418,6 +2421,7 @@ export namespace Prisma {
     userEmail?: true
     title?: true
     content?: true
+    channelHandle?: true
     durationInMinutes?: true
     createdAt?: true
     updatedAt?: true
@@ -2430,6 +2434,7 @@ export namespace Prisma {
     userEmail?: true
     title?: true
     content?: true
+    channelHandle?: true
     durationInMinutes?: true
     createdAt?: true
     updatedAt?: true
@@ -2442,6 +2447,7 @@ export namespace Prisma {
     userEmail?: true
     title?: true
     content?: true
+    channelHandle?: true
     durationInMinutes?: true
     createdAt?: true
     updatedAt?: true
@@ -2541,6 +2547,7 @@ export namespace Prisma {
     userEmail: string
     title: string
     content: string
+    channelHandle: string | null
     durationInMinutes: number
     createdAt: Date
     updatedAt: Date
@@ -2572,6 +2579,7 @@ export namespace Prisma {
     userEmail?: boolean
     title?: boolean
     content?: boolean
+    channelHandle?: boolean
     durationInMinutes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2586,6 +2594,7 @@ export namespace Prisma {
     userEmail?: boolean
     title?: boolean
     content?: boolean
+    channelHandle?: boolean
     durationInMinutes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2598,6 +2607,7 @@ export namespace Prisma {
     userEmail?: boolean
     title?: boolean
     content?: boolean
+    channelHandle?: boolean
     durationInMinutes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2610,13 +2620,14 @@ export namespace Prisma {
     userEmail?: boolean
     title?: boolean
     content?: boolean
+    channelHandle?: boolean
     durationInMinutes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     status?: boolean
   }
 
-  export type VideoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "youtubeId" | "userEmail" | "title" | "content" | "durationInMinutes" | "createdAt" | "updatedAt" | "status", ExtArgs["result"]["video"]>
+  export type VideoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "youtubeId" | "userEmail" | "title" | "content" | "channelHandle" | "durationInMinutes" | "createdAt" | "updatedAt" | "status", ExtArgs["result"]["video"]>
   export type VideoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     chunks?: boolean | Video$chunksArgs<ExtArgs>
     _count?: boolean | VideoCountOutputTypeDefaultArgs<ExtArgs>
@@ -2635,6 +2646,7 @@ export namespace Prisma {
       userEmail: string
       title: string
       content: string
+      channelHandle: string | null
       durationInMinutes: number
       createdAt: Date
       updatedAt: Date
@@ -3068,6 +3080,7 @@ export namespace Prisma {
     readonly userEmail: FieldRef<"Video", 'String'>
     readonly title: FieldRef<"Video", 'String'>
     readonly content: FieldRef<"Video", 'String'>
+    readonly channelHandle: FieldRef<"Video", 'String'>
     readonly durationInMinutes: FieldRef<"Video", 'Int'>
     readonly createdAt: FieldRef<"Video", 'DateTime'>
     readonly updatedAt: FieldRef<"Video", 'DateTime'>
@@ -6752,6 +6765,7 @@ export namespace Prisma {
     userEmail: 'userEmail',
     title: 'title',
     content: 'content',
+    channelHandle: 'channelHandle',
     durationInMinutes: 'durationInMinutes',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -6808,6 +6822,14 @@ export namespace Prisma {
   };
 
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
   /**
@@ -6960,6 +6982,7 @@ export namespace Prisma {
     userEmail?: StringFilter<"Video"> | string
     title?: StringFilter<"Video"> | string
     content?: StringFilter<"Video"> | string
+    channelHandle?: StringNullableFilter<"Video"> | string | null
     durationInMinutes?: IntFilter<"Video"> | number
     createdAt?: DateTimeFilter<"Video"> | Date | string
     updatedAt?: DateTimeFilter<"Video"> | Date | string
@@ -6973,6 +6996,7 @@ export namespace Prisma {
     userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
+    channelHandle?: SortOrderInput | SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -6989,6 +7013,7 @@ export namespace Prisma {
     userEmail?: StringFilter<"Video"> | string
     title?: StringFilter<"Video"> | string
     content?: StringFilter<"Video"> | string
+    channelHandle?: StringNullableFilter<"Video"> | string | null
     durationInMinutes?: IntFilter<"Video"> | number
     createdAt?: DateTimeFilter<"Video"> | Date | string
     updatedAt?: DateTimeFilter<"Video"> | Date | string
@@ -7002,6 +7027,7 @@ export namespace Prisma {
     userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
+    channelHandle?: SortOrderInput | SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7022,6 +7048,7 @@ export namespace Prisma {
     userEmail?: StringWithAggregatesFilter<"Video"> | string
     title?: StringWithAggregatesFilter<"Video"> | string
     content?: StringWithAggregatesFilter<"Video"> | string
+    channelHandle?: StringNullableWithAggregatesFilter<"Video"> | string | null
     durationInMinutes?: IntWithAggregatesFilter<"Video"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Video"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Video"> | Date | string
@@ -7250,6 +7277,7 @@ export namespace Prisma {
     userEmail: string
     title: string
     content: string
+    channelHandle?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7263,6 +7291,7 @@ export namespace Prisma {
     userEmail: string
     title: string
     content: string
+    channelHandle?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7276,6 +7305,7 @@ export namespace Prisma {
     userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7289,6 +7319,7 @@ export namespace Prisma {
     userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7302,6 +7333,7 @@ export namespace Prisma {
     userEmail: string
     title: string
     content: string
+    channelHandle?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7314,6 +7346,7 @@ export namespace Prisma {
     userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7326,6 +7359,7 @@ export namespace Prisma {
     userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7618,6 +7652,21 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type EnumTranscriptionStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.TranscriptionStatus | EnumTranscriptionStatusFieldRefInput<$PrismaModel>
     in?: $Enums.TranscriptionStatus[] | ListEnumTranscriptionStatusFieldRefInput<$PrismaModel>
@@ -7631,6 +7680,11 @@ export namespace Prisma {
     none?: TranscriptChunkWhereInput
   }
 
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
   export type TranscriptChunkOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -7641,6 +7695,7 @@ export namespace Prisma {
     userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
+    channelHandle?: SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7657,6 +7712,7 @@ export namespace Prisma {
     userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
+    channelHandle?: SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7669,6 +7725,7 @@ export namespace Prisma {
     userEmail?: SortOrder
     title?: SortOrder
     content?: SortOrder
+    channelHandle?: SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7677,6 +7734,24 @@ export namespace Prisma {
 
   export type VideoSumOrderByAggregateInput = {
     durationInMinutes?: SortOrder
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type EnumTranscriptionStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -7834,6 +7909,10 @@ export namespace Prisma {
     connectOrCreate?: TranscriptChunkCreateOrConnectWithoutVideoInput | TranscriptChunkCreateOrConnectWithoutVideoInput[]
     createMany?: TranscriptChunkCreateManyVideoInputEnvelope
     connect?: TranscriptChunkWhereUniqueInput | TranscriptChunkWhereUniqueInput[]
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
   }
 
   export type EnumTranscriptionStatusFieldUpdateOperationsInput = {
@@ -8036,11 +8115,53 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type NestedEnumTranscriptionStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.TranscriptionStatus | EnumTranscriptionStatusFieldRefInput<$PrismaModel>
     in?: $Enums.TranscriptionStatus[] | ListEnumTranscriptionStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.TranscriptionStatus[] | ListEnumTranscriptionStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumTranscriptionStatusFilter<$PrismaModel> | $Enums.TranscriptionStatus
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedEnumTranscriptionStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -8127,6 +8248,7 @@ export namespace Prisma {
     userEmail: string
     title: string
     content: string
+    channelHandle?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8139,6 +8261,7 @@ export namespace Prisma {
     userEmail: string
     title: string
     content: string
+    channelHandle?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8167,6 +8290,7 @@ export namespace Prisma {
     userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8179,6 +8303,7 @@ export namespace Prisma {
     userEmail?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

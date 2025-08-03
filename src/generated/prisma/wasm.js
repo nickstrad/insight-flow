@@ -133,6 +133,7 @@ exports.Prisma.VideoScalarFieldEnum = {
   userEmail: 'userEmail',
   title: 'title',
   content: 'content',
+  channelHandle: 'channelHandle',
   durationInMinutes: 'durationInMinutes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -171,6 +172,11 @@ exports.Prisma.SortOrder = {
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
 };
 exports.TranscriptionStatus = exports.$Enums.TranscriptionStatus = {
   PENDING: 'PENDING',

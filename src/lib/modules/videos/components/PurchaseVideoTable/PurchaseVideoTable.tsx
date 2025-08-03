@@ -42,7 +42,8 @@ import { useTRPC } from "@/trpc/client";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, Video, AlertCircle } from "lucide-react";
+import { Clock, Video, AlertCircle, X } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import PaginatedVideoList from "./PaginatedVideoList";
 
 interface VideoTableProps {
@@ -59,6 +60,7 @@ export default function PurchaseVideoTable({ channelHandle }: VideoTableProps) {
   const {
     pagination: { currentPage, totalPages, handlePreviousPage, handleNextPage },
     data: { currentVideos, videos },
+    error: { apiError, clearError },
     handleSort,
     getSortIcon,
   } = useVideoTableState({ channelHandle });
@@ -190,6 +192,24 @@ export default function PurchaseVideoTable({ channelHandle }: VideoTableProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* API Error Alert */}
+        {apiError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>{apiError}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearError}
+                className="h-6 w-6 p-0 text-destructive hover:text-destructive/90"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Quota Status Message */}
         {quota && (
           <div className="mb-4">

@@ -131,6 +131,7 @@ export async function getVideosForChannelOriginal(
           title: item.snippet.title,
           description: item.snippet.description,
           thumbnail: item.snippet.thumbnails.default.url,
+          channelHandle,
         };
         return video;
       });
@@ -194,6 +195,7 @@ export async function getVideosForChannel(
           title: item.snippet.title,
           description: item.snippet.description,
           thumbnail: item.snippet.thumbnails.default.url,
+          channelHandle,
         };
         return video;
       });

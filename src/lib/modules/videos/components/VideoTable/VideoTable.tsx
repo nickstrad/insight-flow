@@ -32,8 +32,22 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { SquareArrowOutUpRight, Pencil } from "lucide-react";
+import { SquareArrowOutUpRight, Pencil, RefreshCcw, Loader2 } from "lucide-react";
 import { useVideoTableState } from "./hooks";
+import { useTRPC } from "@/trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface VideoTableProps {
   userEmail: string;
@@ -49,6 +63,51 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
     openModal,
     closeModal,
   } = useVideoTableState({ userEmail });
+  
+  const [isRetryModalOpen, setIsRetryModalOpen] = useState(false);
+  const [selectedVideoForRetry, setSelectedVideoForRetry] = useState<string | null>(null);
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  
+  // Retry transcription mutation
+  const retryTranscriptionMutation = useMutation(
+    trpc.transcriptions.transcribeExistingVideos.mutationOptions({
+      onSuccess: (data) => {
+        toast.success(`Re-transcription started! Processing ${data.totalAttempts} videos.`);
+        
+        // Invalidate videos query to refresh the table
+        queryClient.invalidateQueries(
+          trpc.videos.getStoredVideosForChannel.queryOptions({ userEmail })
+        );
+        
+        setIsRetryModalOpen(false);
+        setSelectedVideoForRetry(null);
+      },
+      onError: (error) => {
+        toast.error(`Re-transcription failed: ${error.message}`);
+      },
+    })
+  );
+  
+  const handleRetryClick = (videoId: string) => {
+    setSelectedVideoForRetry(videoId);
+    setIsRetryModalOpen(true);
+  };
+  
+  const handleConfirmRetry = async () => {
+    if (!selectedVideoForRetry) return;
+    
+    try {
+      await retryTranscriptionMutation.mutateAsync({
+        videoIds: [selectedVideoForRetry],
+        userEmail,
+        batchSize: 1,
+      });
+    } catch (error) {
+      // Error handling is already done in the mutation options
+      console.error('Retry transcription error:', error);
+    }
+  };
 
   return (
     <Card>
@@ -62,6 +121,9 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+                            <TableHead onClick={() => handleSort("channelHandle")}>
+                Channel {getSortIcon("channelHandle")}
+              </TableHead>
               <TableHead onClick={() => handleSort("title")}>
                 Title {getSortIcon("title")}
               </TableHead>
@@ -84,6 +146,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
           <TableBody>
             {currentVideos.map((video) => (
               <TableRow key={video.id}>
+                <TableCell>{video.channelHandle || 'Unknown'}</TableCell>
                 <TableCell>
                   <a
                     href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
@@ -127,21 +190,40 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                   {new Date(video.createdAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    onClick={() => {
-                      // TODO: Implement transcribe single video
-                    }}
-                    variant="ghost"
-                    size="icon"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      onClick={() => {
+                        // TODO: Implement transcribe single video
+                      }}
+                      variant="ghost"
+                      size="icon"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    {video.status === "FAILED" && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          onClick={() => handleRetryClick(video.id)}
+                          variant="ghost"
+                          size="icon"
+                          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                          title="Retry transcription"
+                          disabled={retryTranscriptionMutation.isPending}
+                        >
+                          <RefreshCcw className="h-4 w-4" />
+                        </Button>
+                        {retryTranscriptionMutation.isPending && selectedVideoForRetry === video.id && (
+                          <Loader2 className="h-4 w-4 animate-spin text-orange-600" />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
             {videos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">
+                <TableCell colSpan={8} className="text-center">
                   No videos found for {userEmail}
                 </TableCell>
               </TableRow>
@@ -191,6 +273,28 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
           </DialogHeader>
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={isRetryModalOpen} onOpenChange={setIsRetryModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retry Video Transcription</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to retry transcribing this video? This will reset the video status and attempt transcription again. This action will consume quota if successful.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={retryTranscriptionMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmRetry}
+              disabled={retryTranscriptionMutation.isPending}
+            >
+              {retryTranscriptionMutation.isPending ? "Retrying..." : "Retry Transcription"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

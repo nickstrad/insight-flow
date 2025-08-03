@@ -170,6 +170,7 @@ export async function createVideoRecordsFromYoutubeVideos(
 ): Promise<Video[]> {
   const videoRecords: Video[] = [];
 
+  console.log(youtubeVideos)
   for (const ytVideo of youtubeVideos) {
     const duration = durationMap.get(ytVideo.youtubeId) || 0;
 
@@ -190,6 +191,7 @@ export async function createVideoRecordsFromYoutubeVideos(
         userEmail,
         title: ytVideo.title,
         content: "", // Will be filled after transcription
+        channelHandle: ytVideo.channelHandle,
         durationInMinutes: duration,
         status: "PENDING",
       },

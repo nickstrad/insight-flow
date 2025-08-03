@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { YoutubeVideo } from "../../types";
@@ -30,7 +30,7 @@ export default function PaginatedVideoList({
   };
   
   // Reset to first page when videos change
-  useState(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [videos.length]);
   

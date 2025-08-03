@@ -1,7 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { toast } from "sonner";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { YoutubeVideo } from "../../types";
 
@@ -19,6 +18,7 @@ export const useVideoTableState = ({
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
   const [videos, setVideos] = useState<YoutubeVideo[]>([]);
   const [selectedVideos, setSelectedVideos] = useState<YoutubeVideo[]>([]);
+  const [apiError, setApiError] = useState<string | null>(null);
   const itemsPerPage = 20;
 
   const trpc = useTRPC();
@@ -31,7 +31,7 @@ export const useVideoTableState = ({
 
   useEffect(() => {
     if (getAllVideosError) {
-      toast.error(getAllVideosError.message);
+      setApiError(getAllVideosError.message);
     }
   }, [getAllVideosError]);
 
@@ -115,6 +115,10 @@ export const useVideoTableState = ({
     );
   };
 
+  const clearError = useCallback(() => {
+    setApiError(null);
+  }, []);
+
   return {
     data: {
       selectedVideos,
@@ -126,6 +130,10 @@ export const useVideoTableState = ({
       totalPages,
       handlePreviousPage,
       handleNextPage,
+    },
+    error: {
+      apiError,
+      clearError,
     },
     handleSort,
     getSortIcon,

@@ -61,13 +61,137 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 // This script transcribes a YouTube video using the YoutubeLoader from LangChain
 export const getEmbeddings = async (text: string[]) => {
-  const response = await ai.models.embedContent({
-    model: "gemini-embedding-001",
-    contents: text,
-  });
+  const batchSize = 100;
+  const maxConcurrent = 5;
+  const allEmbeddings: (number[] | undefined)[] = new Array(text.length);
 
-  return (response.embeddings ?? []).map((embedding) => embedding.values);
+  // Create batches
+  const batches: string[][] = [];
+  for (let i = 0; i < text.length; i += batchSize) {
+    batches.push(text.slice(i, i + batchSize));
+  }
+
+  // Process batches in groups of up to 5 concurrent calls
+  for (let i = 0; i < batches.length; i += maxConcurrent) {
+    const batchGroup = batches.slice(i, i + maxConcurrent);
+    
+    const promises = batchGroup.map(async (batch, groupIndex) => {
+      const response = await ai.models.embedContent({
+        model: "gemini-embedding-001",
+        contents: batch,
+      });
+      
+      const batchEmbeddings = (response.embeddings ?? []).map((embedding) => embedding.values);
+      const startIndex = (i + groupIndex) * batchSize;
+      
+      // Place embeddings in correct positions
+      batchEmbeddings.forEach((embedding, embeddingIndex) => {
+        allEmbeddings[startIndex + embeddingIndex] = embedding;
+      });
+    });
+
+    await Promise.all(promises);
+  }
+
+  return allEmbeddings;
 };
+
+// Helper function to prepare existing videos for re-transcription
+async function prepareExistingVideos(
+  videos: Video[],
+  userEmail: string
+): Promise<{
+  videosToProcess: Video[];
+  totalHoursNeeded: number;
+  currentQuota: any;
+  shouldEarlyReturn: boolean;
+  earlyReturnResult?: {
+    totalAttempts: number;
+    totalTranscribed: number;
+    quotaExceeded: boolean;
+    processedVideos: Video[];
+  };
+}> {
+  console.log(
+    `🔄 Starting re-transcription of ${videos.length} existing videos for user: ${userEmail}`
+  );
+
+  // Reset videos to PENDING status and clear existing transcript chunks
+  const videosToProcess: Video[] = [];
+  for (const video of videos) {
+    // Delete existing transcript chunks
+    await prisma.transcriptChunk.deleteMany({
+      where: { videoId: video.id },
+    });
+
+    // Reset video status to PENDING and ensure channelHandle is set
+    const resetVideo = await prisma.video.update({
+      where: { id: video.id },
+      data: {
+        status: "PENDING",
+        content: "",
+        // If channelHandle is missing, we can't easily determine it here
+        // since we only have the Video record, not the original channel info
+      },
+    });
+
+    videosToProcess.push(resetVideo);
+  }
+
+  // Calculate total hours needed
+  const totalHoursNeeded = videosToProcess.reduce(
+    (sum, v) => sum + calculateVideoHoursNeeded(v.durationInMinutes),
+    0
+  );
+
+  console.log(
+    `📊 Processing ${videosToProcess.length} videos requiring ~${totalHoursNeeded} hours of quota`
+  );
+
+  // Check quota
+  const currentQuota = await getQuota(userEmail);
+  console.log(`💳 Current quota: ${currentQuota.videoHoursLeft} hours remaining`);
+
+  // Validate quota
+  if (videosToProcess.length === 0) {
+    console.log("✅ No videos to re-transcribe");
+    return {
+      videosToProcess,
+      totalHoursNeeded,
+      currentQuota,
+      shouldEarlyReturn: true,
+      earlyReturnResult: {
+        totalAttempts: 0,
+        totalTranscribed: 0,
+        quotaExceeded: false,
+        processedVideos: videos,
+      },
+    };
+  }
+
+  if (currentQuota.videoHoursLeft <= 0) {
+    console.log("❌ No video hours quota remaining");
+    return {
+      videosToProcess,
+      totalHoursNeeded,
+      currentQuota,
+      shouldEarlyReturn: true,
+      earlyReturnResult: {
+        totalAttempts: 0,
+        totalTranscribed: 0,
+        quotaExceeded: true,
+        processedVideos: videos,
+      },
+    };
+  }
+
+  return {
+    videosToProcess,
+    totalHoursNeeded,
+    currentQuota,
+    shouldEarlyReturn: false,
+  };
+}
 
 const appendEmbeddings = async ({
   videoId,
@@ -813,5 +937,56 @@ export const transcribeVideos = async ({
     totalTranscribed: resultSummary.totalTranscribed,
     quotaExceeded,
     processedVideos: videoRecords,
+  };
+};
+
+// Function to re-transcribe existing Video records that failed or need re-processing
+export const transcribeExistingVideo = async ({
+  videos,
+  userEmail,
+  batchSize = 5,
+}: {
+  videos: Video[];
+  userEmail: string;
+  batchSize?: number;
+}): Promise<{
+  totalAttempts: number;
+  totalTranscribed: number;
+  quotaExceeded: boolean;
+  processedVideos: Video[];
+}> => {
+  // Step 1: Prepare existing videos for re-transcription (reset status, clear chunks)
+  const preparation = await prepareExistingVideos(videos, userEmail);
+
+  if (preparation.shouldEarlyReturn) {
+    return preparation.earlyReturnResult!;
+  }
+
+  const { videosToProcess } = preparation;
+
+  // Step 2: Process videos in batches with quota checking (reuse existing batch processing)
+  const { results, quotaExceeded } = await processBatchesWithQuotaCheck(
+    videosToProcess,
+    userEmail,
+    batchSize
+  );
+
+  // Process and log results
+  const resultSummary = processTranscriptionResults(results);
+  logTranscriptionResults(
+    resultSummary.totalTranscribed,
+    resultSummary.failed.length,
+    quotaExceeded
+  );
+  logTranscriptionComplete(
+    resultSummary.totalTranscribed,
+    resultSummary.totalAttempts
+  );
+
+  return {
+    totalAttempts: resultSummary.totalAttempts,
+    totalTranscribed: resultSummary.totalTranscribed,
+    quotaExceeded,
+    processedVideos: videos,
   };
 };
