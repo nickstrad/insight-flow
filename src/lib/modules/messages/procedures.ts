@@ -1,6 +1,6 @@
 import { createTRPCRouter, baseProcedure } from "@/trpc/init";
 import z from "zod";
-import { handleUserQuery } from ".";
+import { handleUserQuery } from "./helpers";
 
 export const messageRouter = createTRPCRouter({
   handleUserQuery: baseProcedure

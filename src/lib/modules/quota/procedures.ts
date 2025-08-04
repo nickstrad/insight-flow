@@ -1,6 +1,6 @@
 import { createTRPCRouter, baseProcedure } from "@/trpc/init";
 import z from "zod";
-import { getQuota } from "./utils";
+import { getQuota } from "./helpers";
 
 export const quotasRouter = createTRPCRouter({
   getQuota: baseProcedure

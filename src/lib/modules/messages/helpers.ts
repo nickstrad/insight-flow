@@ -1,5 +1,5 @@
 import { prisma } from "@/db";
-import { getEmbeddings } from "../transcriptions";
+import { getEmbeddings } from "../transcriptions/helpers";
 import { GoogleGenAI } from "@google/genai";
 import { ChatMessage, MessageRole } from "@/generated/prisma";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";

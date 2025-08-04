@@ -1,5 +1,6 @@
 import axios from "axios";
 import { YoutubeVideo } from "./types";
+import { prisma } from "@/db";
 
 interface YouTubeChannelResponse {
   items: {
@@ -7,6 +8,14 @@ interface YouTubeChannelResponse {
       relatedPlaylists: {
         uploads: string;
       };
+    };
+  }[];
+}
+
+interface YouTubePlaylistDetailsResponse {
+  items: {
+    contentDetails: {
+      itemCount: number;
     };
   }[];
 }
@@ -148,13 +157,17 @@ export async function getVideosForChannelOriginal(
   }
 }
 
+export const PAGINATION_LIMIT = 20;
 // Updated function with duration fetching
-export async function getVideosForChannel(
+export async function getUploadsMetadataForChannel(
   channelHandle: string
-): Promise<YoutubeVideo[]> {
+): Promise<{
+  uploadsPlaylistId: string;
+  firstPageVideos: YoutubeVideo[];
+  nextToken?: string;
+  totalVideoCount: number;
+}> {
   try {
-    const videos: YoutubeVideo[] = [];
-
     // Fetch all videos from the channel's upload playlist
     const { data: channelRes } = await axios.get<YouTubeChannelResponse>(
       `https://www.googleapis.com/youtube/v3/channels`,
@@ -173,50 +186,130 @@ export async function getVideosForChannel(
       throw new Error("Failed to retrieve uploads playlist ID.");
     }
 
-    let nextPageToken = "";
-    do {
-      const { data: playlistRes } =
-        await axios.get<YouTubePlaylistItemsResponse>(
-          `https://www.googleapis.com/youtube/v3/playlistItems`,
-          {
-            params: {
-              part: "snippet",
-              maxResults: 50,
-              playlistId: uploadsPlaylistId,
-              pageToken: nextPageToken,
-              key: API_KEY,
-            },
-          }
-        );
+    // Get total video count from playlist details
+    const { data: playlistDetailsRes } =
+      await axios.get<YouTubePlaylistDetailsResponse>(
+        `https://www.googleapis.com/youtube/v3/playlists`,
+        {
+          params: {
+            part: "contentDetails",
+            id: uploadsPlaylistId,
+            key: API_KEY,
+          },
+        }
+      );
 
-      const nextVideos: YoutubeVideo[] = playlistRes.items.map((item) => {
-        const video: YoutubeVideo = {
-          youtubeId: item.snippet.resourceId.videoId,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.default.url,
-          channelHandle,
-        };
-        return video;
-      });
+    const totalVideoCount =
+      playlistDetailsRes.items?.[0]?.contentDetails?.itemCount || 0;
 
-      videos.push(...nextVideos);
+    // Get first page of videos
+    const { data: playlistRes } = await axios.get<YouTubePlaylistItemsResponse>(
+      `https://www.googleapis.com/youtube/v3/playlistItems`,
+      {
+        params: {
+          part: "snippet",
+          maxResults: PAGINATION_LIMIT,
+          playlistId: uploadsPlaylistId,
+          key: API_KEY,
+        },
+      }
+    );
 
-      nextPageToken = playlistRes.nextPageToken || "";
-    } while (nextPageToken);
+    const videos = playlistRes.items.map((item) => {
+      const video: YoutubeVideo = {
+        youtubeId: item.snippet.resourceId.videoId,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails.default.url,
+        channelHandle,
+      };
+      return video;
+    });
 
-    // Fetch duration information for all videos
+    // Fetch duration information for first page videos
     console.log(`Fetching durations for ${videos.length} videos...`);
-    const videoIds = videos.map(video => video.youtubeId);
+    const videoIds = videos.map((video) => video.youtubeId);
     const durationMap = await fetchVideoDurations(videoIds);
 
     // Add duration information to videos
-    const videosWithDuration = videos.map(video => ({
+    const videosWithDuration = videos.map((video) => ({
       ...video,
       durationInMinutes: durationMap.get(video.youtubeId) || 0,
     }));
 
-    return videosWithDuration;
+    return {
+      uploadsPlaylistId,
+      firstPageVideos: videosWithDuration,
+      nextToken: playlistRes.nextPageToken,
+      totalVideoCount,
+    };
+  } catch (error) {
+    console.error("Error fetching videos from channel:", error);
+    throw error;
+  }
+}
+
+export async function getNextVideosForPlaylist({
+  channelHandle,
+  playlistId,
+  nextToken,
+  currentPage,
+}: {
+  channelHandle: string;
+  playlistId: string;
+  nextToken?: string;
+  currentPage: number;
+}): Promise<{
+  videos: YoutubeVideo[];
+  nextToken?: string;
+  forPage: number;
+}> {
+  try {
+    const { data: playlistRes } = await axios.get<YouTubePlaylistItemsResponse>(
+      `https://www.googleapis.com/youtube/v3/playlistItems`,
+      {
+        params: {
+          part: "snippet",
+          maxResults: PAGINATION_LIMIT,
+          playlistId: playlistId,
+          pageToken: nextToken,
+          key: API_KEY,
+        },
+      }
+    );
+
+    const videos = playlistRes.items.map((item) => {
+      const video: YoutubeVideo = {
+        youtubeId: item.snippet.resourceId.videoId,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails.default.url,
+        channelHandle,
+      };
+      return video;
+    });
+
+    // Fetch duration information for all videos
+    console.log(`Fetching durations for ${videos.length} videos...`);
+    const videoIds = videos.map((video) => video.youtubeId);
+    const durationMap = await fetchVideoDurations(videoIds);
+
+    // Add duration information to videos
+    const videosWithDuration = videos.map((video) => ({
+      ...video,
+      durationInMinutes: durationMap.get(video.youtubeId) || 0,
+    }));
+
+    const returnVal = {
+      videos: videosWithDuration,
+      nextToken: playlistRes.nextPageToken,
+      forPage: currentPage,
+    };
+
+    console.log(
+      `Fetched ${videosWithDuration.length} videos for channel ${channelHandle} with nextToken: ${returnVal.nextToken}`
+    );
+    return returnVal;
   } catch (error) {
     console.error("Error fetching videos from channel:", error);
     throw error;

@@ -14,7 +14,7 @@ import {
 import PurchaseVideoTable from "../PurchaseVideoTable/PurchaseVideoTable";
 import QuotaViewer from "@/lib/modules/quota/components/QuotaViewer";
 
-export const VideoSearch = () => {
+export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
   const [channelHandle, setChannelHandle] = useState("");
   const [submittedHandle, setSubmittedHandle] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -82,10 +82,15 @@ export const VideoSearch = () => {
             </div>
           }
         >
-          <QuotaViewer />
+          <QuotaViewer userEmail={userEmail} />
         </Suspense>
       </div>
-      {isSubmitted && <PurchaseVideoTable channelHandle={submittedHandle} />}
+      {isSubmitted && (
+        <PurchaseVideoTable
+          channelHandle={submittedHandle}
+          userEmail={userEmail}
+        />
+      )}
     </div>
   );
 };

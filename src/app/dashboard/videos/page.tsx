@@ -19,11 +19,11 @@ const Page = async () => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DashboardPageHeader 
+      <DashboardPageHeader
         title="My Videos"
         description="View and manage your transcribed video library"
       />
-      
+
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
         <Suspense fallback={<div>Loading videos...</div>}>
           <VideoTable userEmail={userEmail} />

@@ -188,7 +188,13 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
   };
 };
 
-export const useMessageHelpers = (chatId?: string) => {
+export const useMessageHelpers = ({
+  userEmail,
+  chatId,
+}: {
+  chatId?: string;
+  userEmail: string;
+}) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -197,6 +203,20 @@ export const useMessageHelpers = (chatId?: string) => {
   const { data: chat, error: getChatError } = useQuery(
     trpc.chats.getById.queryOptions({ id: chatId || "" })
   );
+
+  const {
+    data: getAllChannelsForUserResponse,
+    error: getAllChannelsForUserError,
+  } = useSuspenseQuery(
+    trpc.videos.getAllChannelsForUser.queryOptions({
+      userEmail,
+    })
+  );
+  useEffect(() => {
+    if (getAllChannelsForUserError) {
+      toast.error(getAllChannelsForUserError.message);
+    }
+  }, [getAllChannelsForUserError]);
 
   // Update messages when chat data changes
   useEffect(() => {
@@ -249,6 +269,7 @@ export const useMessageHelpers = (chatId?: string) => {
   };
 
   return {
+    allChannels: getAllChannelsForUserResponse,
     messages,
     sendMessage,
     error: getChatError?.message || "",
@@ -277,7 +298,7 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     sendMessage,
     error: messageError,
     isLoading: messageIsLoading,
-  } = useMessageHelpers(currentChat?.id);
+  } = useMessageHelpers({ chatId: currentChat?.id, userEmail });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

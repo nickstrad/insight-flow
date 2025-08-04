@@ -11,7 +11,7 @@ import {
   calculateVideoHoursNeeded,
   checkVideoQuota,
   deductVideoQuota,
-} from "../quota/utils";
+} from "../quota/helpers";
 
 type TranscriptChunk = {
   timestamp: number | string;
@@ -35,8 +35,8 @@ type TranscriptionResult = {
 
 const zodSchema = z.array(
   z.object({
-    timestamp: z.string().describe("The timestamp of the transcription"),
-    text: z.string().describe("The transcribed text"),
+    timestamp: z.string().describe("The timestamp of this transcription chunk"),
+    text: z.string().describe("The transcribed text for this chunk"),
   })
 );
 
@@ -74,16 +74,18 @@ export const getEmbeddings = async (text: string[]) => {
   // Process batches in groups of up to 5 concurrent calls
   for (let i = 0; i < batches.length; i += maxConcurrent) {
     const batchGroup = batches.slice(i, i + maxConcurrent);
-    
+
     const promises = batchGroup.map(async (batch, groupIndex) => {
       const response = await ai.models.embedContent({
         model: "gemini-embedding-001",
         contents: batch,
       });
-      
-      const batchEmbeddings = (response.embeddings ?? []).map((embedding) => embedding.values);
+
+      const batchEmbeddings = (response.embeddings ?? []).map(
+        (embedding) => embedding.values
+      );
       const startIndex = (i + groupIndex) * batchSize;
-      
+
       // Place embeddings in correct positions
       batchEmbeddings.forEach((embedding, embeddingIndex) => {
         allEmbeddings[startIndex + embeddingIndex] = embedding;
@@ -150,7 +152,9 @@ async function prepareExistingVideos(
 
   // Check quota
   const currentQuota = await getQuota(userEmail);
-  console.log(`💳 Current quota: ${currentQuota.videoHoursLeft} hours remaining`);
+  console.log(
+    `💳 Current quota: ${currentQuota.videoHoursLeft} hours remaining`
+  );
 
   // Validate quota
   if (videosToProcess.length === 0) {
@@ -246,11 +250,15 @@ const getTranscript = async ({
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-lite",
     contents: [
-      `Please transcribe this video from ${fromSeconds} seconds to ${toSeconds} seconds.`,
+      `Please transcribe this video.`,
       {
         fileData: {
           mimeType: "video/mp4",
           fileUri: `https://www.youtube.com/watch?v=${video}`,
+        },
+        videoMetadata: {
+          startOffset: `${fromSeconds}s`,
+          endOffset: `${toSeconds}s`,
         },
       },
     ],
@@ -302,7 +310,7 @@ async function prepareTranscriptionJob(
 
   // Step 1: Fetch video durations from YouTube API
   logFetchingDurations();
-  const videoIds = youtubeVideos.map(v => v.youtubeId);
+  const videoIds = youtubeVideos.map((v) => v.youtubeId);
   const durationMap = await fetchVideoDurations(videoIds);
 
   // Step 2: Create Video records in database from YoutubeVideo objects
@@ -360,26 +368,66 @@ async function transcribeVideoInChunks(video: Video): Promise<{
   const allTranscripts: Transcript = [];
   const allTranscriptionTexts: string[] = [];
   const durationInSeconds = video.durationInMinutes * 60;
-  const chunkDurationSeconds = 30 * 60; // 30 minutes in seconds
+  const chunkDurationSeconds = 5 * 60; // 5 minutes in seconds
 
-  const chunks = Math.ceil(durationInSeconds / chunkDurationSeconds);
-  logVideoChunking(chunks);
+  const totalChunks = Math.ceil(durationInSeconds / chunkDurationSeconds);
+  logVideoChunking(totalChunks);
 
-  for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
+  // Create chunk info array
+  const chunkInfos = Array.from({ length: totalChunks }, (_, chunkIndex) => {
     const fromSeconds = chunkIndex * chunkDurationSeconds;
     const toSeconds = Math.min(
       (chunkIndex + 1) * chunkDurationSeconds,
       durationInSeconds
     );
+    return { chunkIndex, fromSeconds, toSeconds };
+  });
 
-    logChunkProgress(chunkIndex, chunks, fromSeconds, toSeconds);
+  // Process chunks in batches with controlled concurrency
+  const batchSize = 3; // Process 3 chunks at a time to avoid API rate limits
+  const results: Array<{
+    chunkIndex: number;
+    fromSeconds: number;
+    transcriptionText: string;
+    formattedTranscriptions: Transcript;
+  }> = [];
 
-    const { transcriptionText, formattedTranscriptions } = await getTranscript({
-      video: video.youtubeId,
-      fromSeconds,
-      toSeconds,
-    });
+  for (let i = 0; i < chunkInfos.length; i += batchSize) {
+    const batch = chunkInfos.slice(i, i + batchSize);
 
+    const batchPromises = batch.map(
+      async ({ chunkIndex, fromSeconds, toSeconds }) => {
+        logChunkProgress(chunkIndex, totalChunks, fromSeconds, toSeconds);
+
+        const { transcriptionText, formattedTranscriptions } =
+          await getTranscript({
+            video: video.youtubeId,
+            fromSeconds,
+            toSeconds,
+          });
+
+        return {
+          chunkIndex,
+          fromSeconds,
+          transcriptionText,
+          formattedTranscriptions,
+        };
+      }
+    );
+
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...batchResults);
+  }
+
+  // Sort results by chunk index to maintain order
+  results.sort((a, b) => a.chunkIndex - b.chunkIndex);
+
+  // Process results in order
+  for (const {
+    fromSeconds,
+    transcriptionText,
+    formattedTranscriptions,
+  } of results) {
     allTranscriptionTexts.push(transcriptionText);
 
     // Adjust timestamps to be relative to the full video
@@ -552,25 +600,35 @@ async function processBatchesWithQuotaCheck(
 
     logBatchProgress(batchNumber, totalBatches, batch.length);
 
-    // Process each video in batch sequentially
-    for (const video of batch) {
+    // Process each video in batch in parallel
+    const batchPromises = batch.map(async (video) => {
       try {
         const result = await executeVideoProcessingPipeline(video, userEmail);
-        results.push(result);
+        return result;
       } catch (error) {
         if (error instanceof Error && error.message === "QUOTA_EXCEEDED") {
-          quotaExceeded = true;
-          break;
+          throw error; // Re-throw to be handled at batch level
         }
 
         // Handle other transcription errors
         if (error instanceof Error) {
           const errorResult = await handleVideoTranscriptionError(video, error);
-          results.push(errorResult);
+          return errorResult;
         } else {
           throw error;
         }
       }
+    });
+
+    try {
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+    } catch (error) {
+      if (error instanceof Error && error.message === "QUOTA_EXCEEDED") {
+        quotaExceeded = true;
+        break;
+      }
+      throw error;
     }
 
     if (quotaExceeded) {

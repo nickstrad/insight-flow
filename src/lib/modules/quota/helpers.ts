@@ -80,8 +80,10 @@ export const getQuota = async (userEmail: string) => {
       userEmail,
     },
   });
+  console.log("getQuota called for user:", userEmail);
 
   if (!quota) {
+    console.log("No quota found, creating new quota for user:", userEmail);
     quota = await prisma.quota.create({
       data: {
         userEmail,
@@ -91,6 +93,7 @@ export const getQuota = async (userEmail: string) => {
       },
     });
   } else {
+    console.log("Quota found for user:", userEmail, quota);
     // Check if resetAt date is outdated
     const now = new Date();
     if (quota.resetAt <= now) {
@@ -105,6 +108,7 @@ export const getQuota = async (userEmail: string) => {
     }
   }
 
+  console.log("Returning quota for user:", userEmail, quota);
   return quota;
 };
 
@@ -170,7 +174,7 @@ export async function createVideoRecordsFromYoutubeVideos(
 ): Promise<Video[]> {
   const videoRecords: Video[] = [];
 
-  console.log(youtubeVideos)
+  console.log(youtubeVideos);
   for (const ytVideo of youtubeVideos) {
     const duration = durationMap.get(ytVideo.youtubeId) || 0;
 

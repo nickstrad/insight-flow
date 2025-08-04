@@ -17,13 +17,19 @@ const Page = async () => {
     })
   );
 
+  void queryClient.prefetchQuery(
+    trpc.videos.getAllChannelsForUser.queryOptions({
+      userEmail,
+    })
+  );
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DashboardPageHeader 
+      <DashboardPageHeader
         title="AI Chat"
         description="Chat with AI about your transcribed videos and get insights"
       />
-      
+
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
         <Suspense fallback={<div>Loading chat...</div>}>
           <Chat userEmail={userEmail} />

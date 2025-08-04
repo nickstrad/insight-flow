@@ -6,10 +6,10 @@ interface DashboardPageHeaderProps {
   children?: ReactNode;
 }
 
-export default function DashboardPageHeader({ 
-  title, 
-  description, 
-  children 
+export default function DashboardPageHeader({
+  title,
+  description,
+  children,
 }: DashboardPageHeaderProps) {
   return (
     <div className="mb-8">
@@ -19,15 +19,11 @@ export default function DashboardPageHeader({
             {title}
           </h1>
           {description && (
-            <p className="mt-2 text-muted-foreground">
-              {description}
-            </p>
+            <p className="mt-2 text-muted-foreground">{description}</p>
           )}
         </div>
         {children && (
-          <div className="flex items-center space-x-4">
-            {children}
-          </div>
+          <div className="flex items-center space-x-4">{children}</div>
         )}
       </div>
     </div>

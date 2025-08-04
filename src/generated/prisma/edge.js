@@ -181,7 +181,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/dad/Software/insight-flow/src/generated/prisma",
+      "value": "/Users/nick/Software/insight-flow/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -195,7 +195,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/dad/Software/insight-flow/prisma/schema.prisma",
+    "sourceFilePath": "/Users/nick/Software/insight-flow/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

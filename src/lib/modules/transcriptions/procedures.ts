@@ -1,6 +1,6 @@
 import { createTRPCRouter, baseProcedure } from "@/trpc/init";
 import z from "zod";
-import { transcribeVideos, transcribeExistingVideo } from ".";
+import { transcribeVideos, transcribeExistingVideo } from "./helpers";
 import { prisma } from "@/db";
 
 export const transcriptRouter = createTRPCRouter({
