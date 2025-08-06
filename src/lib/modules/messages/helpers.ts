@@ -1,10 +1,10 @@
 import { prisma } from "@/db";
-import { getEmbeddings } from "../transcriptions/helpers";
 import { GoogleGenAI } from "@google/genai";
 import { ChatMessage, MessageRole } from "@/generated/prisma";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { z } from "zod";
 import { StructuredOutputParser } from "langchain/output_parsers";
+import { getEmbeddings } from "../embeddings/helpers";
 
 type RetrievedChunk = {
   text: string;

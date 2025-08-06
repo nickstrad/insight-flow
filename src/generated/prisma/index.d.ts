@@ -45,9 +45,9 @@ export type ChatMessage = $Result.DefaultSelection<Prisma.$ChatMessagePayload>
 export namespace $Enums {
   export const TranscriptionStatus: {
   PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING',
-  COMPLETED: 'COMPLETED',
-  FAILED: 'FAILED'
+  TRANSCRIBE_ERROR: 'TRANSCRIBE_ERROR',
+  EMBEDDING_ERROR: 'EMBEDDING_ERROR',
+  COMPLETED: 'COMPLETED'
 };
 
 export type TranscriptionStatus = (typeof TranscriptionStatus)[keyof typeof TranscriptionStatus]
@@ -2373,6 +2373,7 @@ export namespace Prisma {
     title: string | null
     content: string | null
     channelHandle: string | null
+    playlistId: string | null
     durationInMinutes: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2386,6 +2387,7 @@ export namespace Prisma {
     title: string | null
     content: string | null
     channelHandle: string | null
+    playlistId: string | null
     durationInMinutes: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2399,6 +2401,7 @@ export namespace Prisma {
     title: number
     content: number
     channelHandle: number
+    playlistId: number
     durationInMinutes: number
     createdAt: number
     updatedAt: number
@@ -2422,6 +2425,7 @@ export namespace Prisma {
     title?: true
     content?: true
     channelHandle?: true
+    playlistId?: true
     durationInMinutes?: true
     createdAt?: true
     updatedAt?: true
@@ -2435,6 +2439,7 @@ export namespace Prisma {
     title?: true
     content?: true
     channelHandle?: true
+    playlistId?: true
     durationInMinutes?: true
     createdAt?: true
     updatedAt?: true
@@ -2448,6 +2453,7 @@ export namespace Prisma {
     title?: true
     content?: true
     channelHandle?: true
+    playlistId?: true
     durationInMinutes?: true
     createdAt?: true
     updatedAt?: true
@@ -2548,6 +2554,7 @@ export namespace Prisma {
     title: string
     content: string
     channelHandle: string | null
+    playlistId: string | null
     durationInMinutes: number
     createdAt: Date
     updatedAt: Date
@@ -2580,6 +2587,7 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     channelHandle?: boolean
+    playlistId?: boolean
     durationInMinutes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2595,6 +2603,7 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     channelHandle?: boolean
+    playlistId?: boolean
     durationInMinutes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2608,6 +2617,7 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     channelHandle?: boolean
+    playlistId?: boolean
     durationInMinutes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2621,13 +2631,14 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     channelHandle?: boolean
+    playlistId?: boolean
     durationInMinutes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     status?: boolean
   }
 
-  export type VideoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "youtubeId" | "userEmail" | "title" | "content" | "channelHandle" | "durationInMinutes" | "createdAt" | "updatedAt" | "status", ExtArgs["result"]["video"]>
+  export type VideoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "youtubeId" | "userEmail" | "title" | "content" | "channelHandle" | "playlistId" | "durationInMinutes" | "createdAt" | "updatedAt" | "status", ExtArgs["result"]["video"]>
   export type VideoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     chunks?: boolean | Video$chunksArgs<ExtArgs>
     _count?: boolean | VideoCountOutputTypeDefaultArgs<ExtArgs>
@@ -2647,6 +2658,7 @@ export namespace Prisma {
       title: string
       content: string
       channelHandle: string | null
+      playlistId: string | null
       durationInMinutes: number
       createdAt: Date
       updatedAt: Date
@@ -3081,6 +3093,7 @@ export namespace Prisma {
     readonly title: FieldRef<"Video", 'String'>
     readonly content: FieldRef<"Video", 'String'>
     readonly channelHandle: FieldRef<"Video", 'String'>
+    readonly playlistId: FieldRef<"Video", 'String'>
     readonly durationInMinutes: FieldRef<"Video", 'Int'>
     readonly createdAt: FieldRef<"Video", 'DateTime'>
     readonly updatedAt: FieldRef<"Video", 'DateTime'>
@@ -6766,6 +6779,7 @@ export namespace Prisma {
     title: 'title',
     content: 'content',
     channelHandle: 'channelHandle',
+    playlistId: 'playlistId',
     durationInMinutes: 'durationInMinutes',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -6983,6 +6997,7 @@ export namespace Prisma {
     title?: StringFilter<"Video"> | string
     content?: StringFilter<"Video"> | string
     channelHandle?: StringNullableFilter<"Video"> | string | null
+    playlistId?: StringNullableFilter<"Video"> | string | null
     durationInMinutes?: IntFilter<"Video"> | number
     createdAt?: DateTimeFilter<"Video"> | Date | string
     updatedAt?: DateTimeFilter<"Video"> | Date | string
@@ -6997,6 +7012,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     channelHandle?: SortOrderInput | SortOrder
+    playlistId?: SortOrderInput | SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7014,6 +7030,7 @@ export namespace Prisma {
     title?: StringFilter<"Video"> | string
     content?: StringFilter<"Video"> | string
     channelHandle?: StringNullableFilter<"Video"> | string | null
+    playlistId?: StringNullableFilter<"Video"> | string | null
     durationInMinutes?: IntFilter<"Video"> | number
     createdAt?: DateTimeFilter<"Video"> | Date | string
     updatedAt?: DateTimeFilter<"Video"> | Date | string
@@ -7028,6 +7045,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     channelHandle?: SortOrderInput | SortOrder
+    playlistId?: SortOrderInput | SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7049,6 +7067,7 @@ export namespace Prisma {
     title?: StringWithAggregatesFilter<"Video"> | string
     content?: StringWithAggregatesFilter<"Video"> | string
     channelHandle?: StringNullableWithAggregatesFilter<"Video"> | string | null
+    playlistId?: StringNullableWithAggregatesFilter<"Video"> | string | null
     durationInMinutes?: IntWithAggregatesFilter<"Video"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Video"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Video"> | Date | string
@@ -7278,6 +7297,7 @@ export namespace Prisma {
     title: string
     content: string
     channelHandle?: string | null
+    playlistId?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7292,6 +7312,7 @@ export namespace Prisma {
     title: string
     content: string
     channelHandle?: string | null
+    playlistId?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7306,6 +7327,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
+    playlistId?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7320,6 +7342,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
+    playlistId?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7334,6 +7357,7 @@ export namespace Prisma {
     title: string
     content: string
     channelHandle?: string | null
+    playlistId?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7347,6 +7371,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
+    playlistId?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7360,6 +7385,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
+    playlistId?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7696,6 +7722,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     channelHandle?: SortOrder
+    playlistId?: SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7713,6 +7740,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     channelHandle?: SortOrder
+    playlistId?: SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7726,6 +7754,7 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     channelHandle?: SortOrder
+    playlistId?: SortOrder
     durationInMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -8249,6 +8278,7 @@ export namespace Prisma {
     title: string
     content: string
     channelHandle?: string | null
+    playlistId?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8262,6 +8292,7 @@ export namespace Prisma {
     title: string
     content: string
     channelHandle?: string | null
+    playlistId?: string | null
     durationInMinutes: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8291,6 +8322,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
+    playlistId?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8304,6 +8336,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     channelHandle?: NullableStringFieldUpdateOperationsInput | string | null
+    playlistId?: NullableStringFieldUpdateOperationsInput | string | null
     durationInMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

@@ -5,8 +5,12 @@ import { YoutubeVideo } from "../../types";
 
 export const useVideoTableState = ({
   channelHandle,
+  playlistId,
+  searchType,
 }: {
   channelHandle: string;
+  playlistId?: string;
+  searchType: "channel" | "playlist";
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [uploadsPlaylistId, setUploadsPlaylistId] = useState<string>("");
@@ -18,17 +22,28 @@ export const useVideoTableState = ({
   const [apiError, setApiError] = useState<string | null>(null);
   const trpc = useTRPC();
 
-  const {
-    data: getUploadsResponse,
-    error: getUploadsError,
-    isLoading: getUploadsQueryIsLoading,
-  } = useSuspenseQuery(
-    trpc.videos.getUploadsMetadataForChannel.queryOptions({
-      channelHandle,
-    })
+  // Use the appropriate query based on search type
+  const queryResult = useSuspenseQuery(
+    searchType === "channel"
+      ? trpc.videos.getUploadsMetadataForChannel.queryOptions({
+          channelHandle,
+        })
+      : trpc.videos.getPlaylistMetadata.queryOptions({
+          playlistId: playlistId || "",
+        })
   );
 
+  // Map the result to the appropriate format
+  const getUploadsResponse = searchType === "channel" ? queryResult.data : undefined;
+  const getPlaylistResponse = searchType === "playlist" ? queryResult.data : undefined;
+  const getUploadsError = searchType === "channel" ? queryResult.error : null;
+  const getPlaylistError = searchType === "playlist" ? queryResult.error : null;
+  const getUploadsQueryIsLoading = searchType === "channel" ? queryResult.isLoading : false;
+  const getPlaylistQueryIsLoading = searchType === "playlist" ? queryResult.isLoading : false;
+
   const currentPageToken = pageTokens.get(currentPage) || "";
+  const activePlaylistId = searchType === "channel" ? uploadsPlaylistId : (playlistId || "");
+  const activeChannelHandle = searchType === "channel" ? channelHandle : (getPlaylistResponse?.channelHandle || "");
   
   const {
     data: currentPageVideosMetadata,
@@ -36,23 +51,26 @@ export const useVideoTableState = ({
     isLoading: getNextVideosForPlaylistQueryIsLoading,
   } = useQuery({
     ...trpc.videos.getNextVideosForPlaylist.queryOptions({
-      channelHandle,
-      playlistId: uploadsPlaylistId,
+      channelHandle: activeChannelHandle,
+      playlistId: activePlaylistId,
       nextToken: currentPageToken,
       currentPage,
     }),
-    enabled: !!uploadsPlaylistId && !pageCache.has(currentPage),
+    enabled: !!activePlaylistId && !pageCache.has(currentPage),
   });
 
   useEffect(() => {
     setApiError(
-      getUploadsError?.message || currentPageVideosError?.message || null
+      getUploadsError?.message || 
+      getPlaylistError?.message || 
+      currentPageVideosError?.message || 
+      null
     );
-  }, [getUploadsError, currentPageVideosError]);
+  }, [getUploadsError, getPlaylistError, currentPageVideosError]);
 
   const isLoading = useMemo(
-    () => getUploadsQueryIsLoading || getNextVideosForPlaylistQueryIsLoading,
-    [getUploadsQueryIsLoading, getNextVideosForPlaylistQueryIsLoading]
+    () => getUploadsQueryIsLoading || getPlaylistQueryIsLoading || getNextVideosForPlaylistQueryIsLoading,
+    [getUploadsQueryIsLoading, getPlaylistQueryIsLoading, getNextVideosForPlaylistQueryIsLoading]
   );
 
   const currentVideos = useMemo(() => {
@@ -87,9 +105,10 @@ export const useVideoTableState = ({
     }
   }, [currentPageVideosMetadata]);
 
-  // Handle uploads metadata
+  // Handle uploads metadata (channel search)
   useEffect(() => {
     if (
+      searchType === "channel" &&
       getUploadsResponse?.uploadsPlaylistId &&
       typeof getUploadsResponse?.totalVideoCount === "number"
     ) {
@@ -120,7 +139,43 @@ export const useVideoTableState = ({
         }
       }
     }
-  }, [getUploadsResponse]);
+  }, [getUploadsResponse, searchType]);
+
+  // Handle playlist metadata (playlist search)
+  useEffect(() => {
+    if (
+      searchType === "playlist" &&
+      getPlaylistResponse?.playlistId &&
+      typeof getPlaylistResponse?.totalVideoCount === "number"
+    ) {
+      setUploadsPlaylistId(getPlaylistResponse.playlistId);
+      setTotalVideoCount(getPlaylistResponse.totalVideoCount);
+
+      // Calculate total pages based on total video count
+      const calculatedTotalPages = Math.ceil(
+        getPlaylistResponse.totalVideoCount / 20
+      );
+      setTotalPages(calculatedTotalPages);
+
+      // Cache first page videos if available
+      if (getPlaylistResponse.firstPageVideos) {
+        setPageCache(prev => {
+          const newCache = new Map(prev);
+          newCache.set(1, getPlaylistResponse.firstPageVideos);
+          return newCache;
+        });
+
+        // Store the next page token for page 2
+        if (getPlaylistResponse.nextToken) {
+          setPageTokens(prev => {
+            const newTokens = new Map(prev);
+            newTokens.set(2, getPlaylistResponse.nextToken!);
+            return newTokens;
+          });
+        }
+      }
+    }
+  }, [getPlaylistResponse, searchType]);
 
   // Navigation functions
   const previousPage = useCallback(() => {

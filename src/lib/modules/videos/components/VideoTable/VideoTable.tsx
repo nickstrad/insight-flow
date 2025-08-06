@@ -69,11 +69,20 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   
-  // Retry transcription mutation
-  const retryTranscriptionMutation = useMutation(
-    trpc.transcriptions.transcribeExistingVideos.mutationOptions({
+  // Retry video mutation (smart retry based on status)
+  const retryVideoMutation = useMutation(
+    trpc.transcriptions.retryVideo.mutationOptions({
       onSuccess: (data) => {
-        toast.success(`Re-transcription started! Processing ${data.totalAttempts} videos.`);
+        if (data.success) {
+          const actionText = data.action === 'transcribe' 
+            ? 'Re-transcription' 
+            : data.action === 'embed' 
+            ? 'Re-embedding' 
+            : 'Processing';
+          toast.success(`${actionText} started successfully!`);
+        } else {
+          toast.error(`Retry failed: ${data.error}`);
+        }
         
         // Invalidate videos query to refresh the table
         queryClient.invalidateQueries(
@@ -84,7 +93,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
         setSelectedVideoForRetry(null);
       },
       onError: (error) => {
-        toast.error(`Re-transcription failed: ${error.message}`);
+        toast.error(`Retry failed: ${error.message}`);
       },
     })
   );
@@ -98,14 +107,28 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
     if (!selectedVideoForRetry) return;
     
     try {
-      await retryTranscriptionMutation.mutateAsync({
-        videoIds: [selectedVideoForRetry],
+      await retryVideoMutation.mutateAsync({
+        videoId: selectedVideoForRetry,
         userEmail,
-        batchSize: 1,
       });
     } catch (error) {
       // Error handling is already done in the mutation options
-      console.error('Retry transcription error:', error);
+      console.error('Retry video error:', error);
+    }
+  };
+  
+  // Get the selected video to show status-specific retry message
+  const selectedVideo = currentVideos.find(v => v.id === selectedVideoForRetry);
+  const getRetryMessage = (status: string) => {
+    switch (status) {
+      case 'TRANSCRIBE_ERROR':
+        return 'This will reset the video status and attempt full transcription and embedding again.';
+      case 'EMBEDDING_ERROR':
+        return 'This will attempt to generate embeddings for the already transcribed video.';
+      case 'FAILED': // Legacy status
+        return 'This will reset the video status and attempt transcription again.';
+      default:
+        return 'This will retry processing the video.';
     }
   };
 
@@ -164,12 +187,15 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                     variant={
                       video.status === "COMPLETED"
                         ? "default"
-                        : video.status === "FAILED"
+                        : video.status === "TRANSCRIBE_ERROR" ||
+                          video.status === "EMBEDDING_ERROR"
                         ? "destructive"
                         : "secondary"
                     }
                   >
-                    {video.status}
+                    {video.status === 'TRANSCRIBE_ERROR' ? 'TRANSCRIPTION FAILED' :
+                     video.status === 'EMBEDDING_ERROR' ? 'EMBEDDING FAILED' :
+                     video.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="max-w-md">
@@ -200,19 +226,20 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    {video.status === "FAILED" && (
+                    {(video.status === "TRANSCRIBE_ERROR" || 
+                      video.status === "EMBEDDING_ERROR") && (
                       <div className="flex items-center gap-1">
                         <Button
                           onClick={() => handleRetryClick(video.id)}
                           variant="ghost"
                           size="icon"
                           className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                          title="Retry transcription"
-                          disabled={retryTranscriptionMutation.isPending}
+                          title={`Retry ${video.status === 'EMBEDDING_ERROR' ? 'embedding' : 'transcription'}`}
+                          disabled={retryVideoMutation.isPending}
                         >
                           <RefreshCcw className="h-4 w-4" />
                         </Button>
-                        {retryTranscriptionMutation.isPending && selectedVideoForRetry === video.id && (
+                        {retryVideoMutation.isPending && selectedVideoForRetry === video.id && (
                           <Loader2 className="h-4 w-4 animate-spin text-orange-600" />
                         )}
                       </div>
@@ -277,20 +304,23 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
       <AlertDialog open={isRetryModalOpen} onOpenChange={setIsRetryModalOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Retry Video Transcription</AlertDialogTitle>
+            <AlertDialogTitle>
+              Retry Video {selectedVideo?.status === 'EMBEDDING_ERROR' ? 'Embedding' : 'Transcription'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to retry transcribing this video? This will reset the video status and attempt transcription again. This action will consume quota if successful.
+              Are you sure you want to retry processing this video? {selectedVideo ? getRetryMessage(selectedVideo.status) : ''} This action will consume quota if successful.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={retryTranscriptionMutation.isPending}>
+            <AlertDialogCancel disabled={retryVideoMutation.isPending}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmRetry}
-              disabled={retryTranscriptionMutation.isPending}
+              disabled={retryVideoMutation.isPending}
             >
-              {retryTranscriptionMutation.isPending ? "Retrying..." : "Retry Transcription"}
+              {retryVideoMutation.isPending ? "Retrying..." : 
+               `Retry ${selectedVideo?.status === 'EMBEDDING_ERROR' ? 'Embedding' : 'Processing'}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

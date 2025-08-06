@@ -24,3 +24,47 @@ export function convertDurationToMinutes(duration = ""): number {
     return 0;
   }
 }
+
+// Helper function to retry failed operations up to 3 times with exponential backoff
+export async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelayMs: number = 1000,
+  operationName: string = "API call"
+): Promise<T> {
+  let lastError: Error;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`  = ${operationName} - Attempt ${attempt}/${maxRetries}`);
+      const result = await operation();
+
+      if (attempt > 1) {
+        console.log(`   ${operationName} succeeded on attempt ${attempt}`);
+      }
+
+      return result;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("Unknown error");
+
+      if (attempt === maxRetries) {
+        console.error(
+          `  L ${operationName} failed after ${maxRetries} attempts:`,
+          lastError.message
+        );
+        throw lastError;
+      }
+
+      // Calculate exponential backoff delay: 1s, 2s, 4s, 8s...
+      const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
+      console.warn(
+        `  � ${operationName} failed on attempt ${attempt}/${maxRetries}: ${lastError.message}. Retrying in ${delayMs}ms...`
+      );
+
+      // Wait before retrying
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  throw lastError!;
+}

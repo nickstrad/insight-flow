@@ -1,5 +1,4 @@
 import { ErrorBoundary } from "react-error-boundary";
-import { Suspense } from "react";
 import { VideoSearch } from "@/lib/modules/videos/components/VideoSearch/VideoSearch";
 import DashboardPageHeader from "@/components/DashboardPageHeader";
 import { getQueryClient, trpc } from "@/trpc/server";
@@ -27,9 +26,7 @@ const Page = async () => {
 
       <HydrationBoundary state={dehydrate(queryClient)}>
         <ErrorBoundary fallback={<div>Something went wrong</div>}>
-          <Suspense fallback={<div>Loading videos...</div>}>
-            <VideoSearch userEmail={userEmail} />
-          </Suspense>
+          <VideoSearch userEmail={userEmail} />
         </ErrorBoundary>
       </HydrationBoundary>
     </>

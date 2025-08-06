@@ -16,9 +16,9 @@ datasource db {
 
 enum TranscriptionStatus {
   PENDING
-  PROCESSING
+  TRANSCRIBE_ERROR
+  EMBEDDING_ERROR
   COMPLETED
-  FAILED
 }
 
 enum MessageRole {
@@ -41,6 +41,7 @@ model Video {
   title             String
   content           String
   channelHandle     String?
+  playlistId        String?
   chunks            TranscriptChunk[]
   durationInMinutes Int
   createdAt         DateTime            @default(now())

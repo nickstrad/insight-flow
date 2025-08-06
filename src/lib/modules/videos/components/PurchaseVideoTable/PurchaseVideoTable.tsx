@@ -36,23 +36,29 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTRPC } from "@/trpc/client";
-import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clock, Video, AlertCircle, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import PaginatedVideoList from "./PaginatedVideoList";
+import { useRouter } from "next/navigation";
 
 interface VideoTableProps {
   channelHandle: string;
+  playlistId?: string;
+  searchType: "channel" | "playlist";
   userEmail: string;
+  onLoadingStateChange?: (isLoading: boolean) => void;
 }
 
 export default function PurchaseVideoTable({
   channelHandle,
+  playlistId,
+  searchType,
   userEmail,
+  onLoadingStateChange,
 }: VideoTableProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedVideoIds, setSelectedVideoIds] = useState<Set<string>>(
@@ -60,6 +66,7 @@ export default function PurchaseVideoTable({
   );
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const {
     pagination: {
@@ -73,7 +80,14 @@ export default function PurchaseVideoTable({
     },
     data: { currentVideos, isLoading },
     error: { apiError, clearError },
-  } = useVideoTableState({ channelHandle });
+  } = useVideoTableState({ channelHandle, playlistId, searchType });
+
+  // Communicate loading state changes to parent component
+  useEffect(() => {
+    if (onLoadingStateChange) {
+      onLoadingStateChange(isLoading);
+    }
+  }, [isLoading, onLoadingStateChange]);
 
   const handleVideoSelection = (videoId: string, isSelected: boolean) => {
     const video = currentVideos.find((v) => v.youtubeId === videoId);
@@ -177,6 +191,9 @@ export default function PurchaseVideoTable({
 
         setIsConfirmModalOpen(false);
         setSelectedVideoIds(new Set());
+
+        // Navigate to videos page to view transcription status
+        router.push("/dashboard/videos");
       },
       onError: (error) => {
         toast.error(`Transcription failed: ${error.message}`);
@@ -317,7 +334,7 @@ export default function PurchaseVideoTable({
             ) : currentVideos.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  No videos found for {channelHandle}
+                  No videos found for {searchType === "channel" ? `channel ${channelHandle}` : `playlist ${playlistId}`}
                 </TableCell>
               </TableRow>
             ) : (

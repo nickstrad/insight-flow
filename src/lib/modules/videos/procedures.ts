@@ -3,6 +3,7 @@ import z from "zod";
 import {
   getUploadsMetadataForChannel,
   getNextVideosForPlaylist,
+  getPlaylistMetadata,
 } from "./helpers";
 const { prisma } = await import("@/db");
 
@@ -75,5 +76,16 @@ export const videosRouter = createTRPCRouter({
       });
 
       return vals.filter(Boolean).map((v) => v.channelHandle!);
+    }),
+  getPlaylistMetadata: baseProcedure
+    .input(
+      z.object({
+        playlistId: z
+          .string()
+          .min(1, { message: "Playlist ID is required." }),
+      })
+    )
+    .query(async ({ input: { playlistId } }) => {
+      return getPlaylistMetadata(playlistId);
     }),
 });

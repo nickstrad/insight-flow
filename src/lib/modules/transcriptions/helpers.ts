@@ -12,14 +12,16 @@ import {
   checkVideoQuota,
   deductVideoQuota,
 } from "../quota/helpers";
+import {
+  getEmbeddings,
+  appendEmbeddings,
+  updateEmbeddingsForExistingChunks,
+  type TranscriptChunk,
+  type Transcript,
+} from "../embeddings/helpers";
+import { retryWithBackoff } from "@/lib/utils";
 
-type TranscriptChunk = {
-  timestamp: number | string;
-  text: string;
-  embedding: number[] | null;
-};
-
-type Transcript = TranscriptChunk[];
+// Types are now imported from embeddings/helpers
 
 type TranscriptWithVideoId = {
   videoId: string;
@@ -46,7 +48,10 @@ const geminiSchema = toGeminiSchema(zodSchema);
 
 function convertTimestampToSeconds(time: string): number | null {
   try {
-    const [minutesStr, secondsStr] = time.split(":");
+    // Handle both single timestamps "02:12" and ranges "02:12 - 02:28"
+    // For ranges, we only need the starting timestamp
+    const startTime = time.includes(" - ") ? time.split(" - ")[0].trim() : time.trim();
+    const [minutesStr, secondsStr] = startTime.split(":");
 
     const minutes = parseInt(minutesStr, 10);
     const seconds = parseInt(secondsStr, 10);
@@ -57,46 +62,59 @@ function convertTimestampToSeconds(time: string): number | null {
   }
 }
 
+// Helper function to merge transcript chunks to be at least 10 seconds each
+function mergeTranscriptChunks(transcript: Transcript, minChunkDurationSeconds: number = 10): Transcript {
+  if (transcript.length === 0) return transcript;
+  
+  const mergedChunks: Transcript = [];
+  let currentChunk: TranscriptChunk | null = null;
+  let currentChunkStartTime: number = 0;
+  
+  for (let i = 0; i < transcript.length; i++) {
+    const chunk = transcript[i];
+    const chunkTimestamp = typeof chunk.timestamp === 'number' 
+      ? chunk.timestamp 
+      : (convertTimestampToSeconds(chunk.timestamp.toString()) || 0);
+    
+    if (currentChunk === null) {
+      // Start new chunk
+      currentChunk = {
+        timestamp: chunkTimestamp,
+        text: chunk.text,
+        embedding: null
+      };
+      currentChunkStartTime = chunkTimestamp;
+    } else {
+      // Check if we should merge with current chunk or start a new one
+      const chunkDuration = chunkTimestamp - currentChunkStartTime;
+      
+      if (chunkDuration < minChunkDurationSeconds) {
+        // Merge with current chunk
+        currentChunk.text += ' ' + chunk.text;
+      } else {
+        // Current chunk is long enough, save it and start new one
+        mergedChunks.push(currentChunk);
+        currentChunk = {
+          timestamp: chunkTimestamp,
+          text: chunk.text,
+          embedding: null
+        };
+        currentChunkStartTime = chunkTimestamp;
+      }
+    }
+  }
+  
+  // Don't forget the last chunk
+  if (currentChunk !== null) {
+    mergedChunks.push(currentChunk);
+  }
+  
+  return mergedChunks;
+}
+
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-// This script transcribes a YouTube video using the YoutubeLoader from LangChain
-export const getEmbeddings = async (text: string[]) => {
-  const batchSize = 100;
-  const maxConcurrent = 5;
-  const allEmbeddings: (number[] | undefined)[] = new Array(text.length);
-
-  // Create batches
-  const batches: string[][] = [];
-  for (let i = 0; i < text.length; i += batchSize) {
-    batches.push(text.slice(i, i + batchSize));
-  }
-
-  // Process batches in groups of up to 5 concurrent calls
-  for (let i = 0; i < batches.length; i += maxConcurrent) {
-    const batchGroup = batches.slice(i, i + maxConcurrent);
-
-    const promises = batchGroup.map(async (batch, groupIndex) => {
-      const response = await ai.models.embedContent({
-        model: "gemini-embedding-001",
-        contents: batch,
-      });
-
-      const batchEmbeddings = (response.embeddings ?? []).map(
-        (embedding) => embedding.values
-      );
-      const startIndex = (i + groupIndex) * batchSize;
-
-      // Place embeddings in correct positions
-      batchEmbeddings.forEach((embedding, embeddingIndex) => {
-        allEmbeddings[startIndex + embeddingIndex] = embedding;
-      });
-    });
-
-    await Promise.all(promises);
-  }
-
-  return allEmbeddings;
-};
+// Embedding functions are now in ../embeddings/helpers.ts
 
 // Helper function to prepare existing videos for re-transcription
 async function prepareExistingVideos(
@@ -197,46 +215,21 @@ async function prepareExistingVideos(
   };
 }
 
-const appendEmbeddings = async ({
-  videoId,
-  transcript,
-}: {
-  videoId: string;
-  transcript: Transcript;
-}) => {
-  console.log(
-    `  🔍 Generating embeddings for ${transcript.length} transcript chunks`
+// Helper function to prepare videos for embedding (videos in COMPLETED state)
+async function prepareVideosForEmbedding(videos: Video[]): Promise<Video[]> {
+  console.log(`🔄 Preparing ${videos.length} videos for embedding`);
+
+  // Filter to only videos that are in COMPLETED state (transcribed but not embedded)
+  const videosReadyForEmbedding = videos.filter(
+    (v) => v.status === "COMPLETED"
   );
-  const embeddings = await getEmbeddings(transcript.map((t) => t.text));
 
-  const newTranscript = transcript.map((chunk, i) => ({
-    ...chunk,
-    embedding: embeddings?.[i] || null,
-  }));
+  console.log(
+    `📊 Found ${videosReadyForEmbedding.length} videos ready for embedding`
+  );
 
-  console.log(`  💾 Storing transcript chunks with embeddings to database`);
-  // Store transcript chunks with embeddings in PostgreSQL with pgvector support
-  // Use individual create operations since embedding field is Unsupported("vector") type in Prisma
-  for (const chunk of newTranscript) {
-    await prisma.$executeRaw`
-      INSERT INTO "TranscriptChunk" (id, "timestampInSeconds", text, embedding, "videoId", "createdAt")
-      VALUES (
-        gen_random_uuid(),
-        ${
-          typeof chunk.timestamp === "number"
-            ? chunk.timestamp
-            : parseInt(chunk.timestamp.toString(), 10)
-        },
-        ${chunk.text},
-        ${chunk.embedding ? `[${chunk.embedding.join(",")}]` : null}::vector,
-        ${videoId},
-        NOW()
-      )
-    `;
-  }
-
-  return newTranscript;
-};
+  return videosReadyForEmbedding;
+}
 
 const getTranscript = async ({
   video,
@@ -247,46 +240,64 @@ const getTranscript = async ({
   fromSeconds: number;
   toSeconds: number;
 }) => {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
-    contents: [
-      `Please transcribe this video.`,
-      {
-        fileData: {
-          mimeType: "video/mp4",
-          fileUri: `https://www.youtube.com/watch?v=${video}`,
+  const operationName = `Transcribe ${video} (${fromSeconds}s-${toSeconds}s)`;
+
+  return await retryWithBackoff(
+    async () => {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-lite",
+        contents: [
+          `Please transcribe this video.`,
+          {
+            fileData: {
+              mimeType: "video/mp4",
+              fileUri: `https://www.youtube.com/watch?v=${video}`,
+            },
+            videoMetadata: {
+              startOffset: `${fromSeconds}s`,
+              endOffset: `${toSeconds}s`,
+            },
+          },
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: geminiSchema,
         },
-        videoMetadata: {
-          startOffset: `${fromSeconds}s`,
-          endOffset: `${toSeconds}s`,
-        },
-      },
-    ],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: geminiSchema,
+      });
+
+      console.log("response.text:");
+      console.log(response.text);
+
+      if (!response.text) {
+        throw new Error("Empty response from Gemini API");
+      }
+
+      const transcriptionArray = JSON.parse(response.text ?? "[]");
+      const formattedTranscriptions: Transcript = transcriptionArray.map(
+        (item: any) => {
+          const seconds = convertTimestampToSeconds(item.timestamp);
+          const transcription: TranscriptChunk = {
+            timestamp: seconds !== null ? seconds : item.timestamp,
+            text: item.text,
+            embedding: null,
+          };
+          return transcription;
+        }
+      );
+
+      // Merge chunks to be at least 10 seconds each
+      const mergedTranscriptions = mergeTranscriptChunks(formattedTranscriptions, 10);
+
+      const transcriptionText = mergedTranscriptions
+        .map((chunk) => chunk.text)
+        .join(" ");
+
+      return { transcriptionText, formattedTranscriptions: mergedTranscriptions };
     },
-  });
-  console.log("response.text:");
-  console.log(response.text);
-  const transcriptionArray = JSON.parse(response.text ?? "[]");
-  const formattedTranscriptions: Transcript = transcriptionArray.map(
-    (item: any) => {
-      const seconds = convertTimestampToSeconds(item.timestamp);
-      const transcription: TranscriptChunk = {
-        timestamp: seconds !== null ? seconds : item.timestamp,
-        text: item.text,
-        embedding: null,
-      };
-      return transcription;
-    }
+    3,
+    1000,
+    operationName
   );
-
-  const transcriptionText = formattedTranscriptions
-    .map((chunk) => chunk.text)
-    .join(" ");
-
-  return { transcriptionText, formattedTranscriptions };
 };
 
 // 1. Extract setup/preparation logic
@@ -514,6 +525,36 @@ async function processVideoTranscription(
   }
 }
 
+// Process video embedding only (for already transcribed videos)
+async function processVideoEmbedding(
+  video: Video
+): Promise<TranscriptionResult> {
+  console.log(
+    `🔍 Generating embeddings for video: ${video.youtubeId} (${
+      video.title || "Untitled"
+    })`
+  );
+
+  try {
+    // Update embeddings for existing transcript chunks
+    const transcriptWithEmbeddings = await updateEmbeddingsForExistingChunks(
+      video.id
+    );
+
+    return {
+      video,
+      transcript: {
+        videoId: video.id,
+        chunks: transcriptWithEmbeddings,
+      },
+      fullTranscriptionText: video.content,
+    };
+  } catch (error) {
+    // Re-throw error to be handled by batch processing
+    throw error;
+  }
+}
+
 // 4. Extract quota validation logic
 type ValidationResult = {
   isValid: boolean;
@@ -572,8 +613,8 @@ async function handleVideoTranscriptionError(
 ): Promise<TranscriptionResult> {
   logTranscriptionError(video.youtubeId, error);
 
-  // Update video to failed status
-  await markVideoFailed(video.id);
+  // Update video to transcription failed status
+  await markVideoTranscriptionFailed(video.id);
 
   return {
     video,
@@ -581,7 +622,133 @@ async function handleVideoTranscriptionError(
   };
 }
 
-// 5. Extract batch processing loop
+async function handleVideoEmbeddingError(
+  video: Video,
+  error: Error
+): Promise<TranscriptionResult> {
+  console.error(`  ❌ Failed to embed ${video.youtubeId}:`, error);
+
+  // Update video to embedding failed status
+  await markVideoEmbeddingFailed(video.id);
+
+  return {
+    video,
+    error:
+      error instanceof Error
+        ? error.message
+        : "Unknown embedding error occurred",
+  };
+}
+
+// 5a. Extract transcription batch processing loop
+async function processTranscriptionBatchesWithQuotaCheck(
+  pendingVideos: Video[],
+  userEmail: string,
+  batchSize: number
+): Promise<{
+  results: TranscriptionResult[];
+  quotaExceeded: boolean;
+}> {
+  const results: TranscriptionResult[] = [];
+  let quotaExceeded = false;
+
+  for (let i = 0; i < pendingVideos.length; i += batchSize) {
+    const batch = pendingVideos.slice(i, i + batchSize);
+    const batchNumber = Math.floor(i / batchSize) + 1;
+    const totalBatches = Math.ceil(pendingVideos.length / batchSize);
+
+    logBatchProgress(batchNumber, totalBatches, batch.length);
+
+    // Process each video in batch in parallel
+    const batchPromises = batch.map(async (video) => {
+      try {
+        const result = await executeVideoProcessingPipeline(
+          video,
+          userEmail,
+          transcriptionOnlyPipeline
+        );
+        return result;
+      } catch (error) {
+        if (error instanceof Error && error.message === "QUOTA_EXCEEDED") {
+          throw error; // Re-throw to be handled at batch level
+        }
+
+        // Handle other transcription errors
+        if (error instanceof Error) {
+          const errorResult = await handleVideoTranscriptionError(video, error);
+          return errorResult;
+        } else {
+          throw error;
+        }
+      }
+    });
+
+    try {
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+    } catch (error) {
+      if (error instanceof Error && error.message === "QUOTA_EXCEEDED") {
+        quotaExceeded = true;
+        break;
+      }
+      throw error;
+    }
+
+    if (quotaExceeded) {
+      logQuotaExceeded();
+      break;
+    }
+
+    logBatchCompleted(batchNumber);
+  }
+
+  return { results, quotaExceeded };
+}
+
+// 5b. Extract embedding batch processing loop
+async function processEmbeddingBatches(
+  completedVideos: Video[],
+  batchSize: number
+): Promise<{
+  results: TranscriptionResult[];
+}> {
+  const results: TranscriptionResult[] = [];
+
+  for (let i = 0; i < completedVideos.length; i += batchSize) {
+    const batch = completedVideos.slice(i, i + batchSize);
+    const batchNumber = Math.floor(i / batchSize) + 1;
+    const totalBatches = Math.ceil(completedVideos.length / batchSize);
+
+    console.log(
+      `🔄 Processing embedding batch ${batchNumber}/${totalBatches} (${batch.length} videos)`
+    );
+
+    // Process each video in batch in parallel
+    const batchPromises = batch.map(async (video) => {
+      try {
+        const result = await processVideoEmbedding(video);
+        return result;
+      } catch (error) {
+        // Handle embedding errors
+        if (error instanceof Error) {
+          const errorResult = await handleVideoEmbeddingError(video, error);
+          return errorResult;
+        } else {
+          throw error;
+        }
+      }
+    });
+
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...batchResults);
+
+    console.log(`  ✅ Embedding batch ${batchNumber} completed`);
+  }
+
+  return { results };
+}
+
+// 5. Extract batch processing loop (original for backward compatibility)
 async function processBatchesWithQuotaCheck(
   pendingVideos: Video[],
   userEmail: string,
@@ -656,10 +823,17 @@ async function markVideoCompleted(
   });
 }
 
-async function markVideoFailed(videoId: string): Promise<void> {
+async function markVideoTranscriptionFailed(videoId: string): Promise<void> {
   await prisma.video.update({
     where: { id: videoId },
-    data: { status: "FAILED" },
+    data: { status: "TRANSCRIBE_ERROR" },
+  });
+}
+
+async function markVideoEmbeddingFailed(videoId: string): Promise<void> {
+  await prisma.video.update({
+    where: { id: videoId },
+    data: { status: "EMBEDDING_ERROR" },
   });
 }
 
@@ -861,6 +1035,28 @@ const checkQuotaStep: ProcessingStep = {
 const transcribeChunksStep: ProcessingStep = {
   name: "transcribeChunks",
   execute: async (context: ProcessingContext): Promise<ProcessingContext> => {
+    // For transcription-only pipeline, get existing transcripts from DB if they exist
+    if (context.video.status === "COMPLETED") {
+      // Video already transcribed, get existing chunks
+      const existingChunks = await prisma.transcriptChunk.findMany({
+        where: { videoId: context.video.id },
+        orderBy: { timestampInSeconds: "asc" },
+      });
+
+      const allTranscripts = existingChunks.map((chunk) => ({
+        timestamp: chunk.timestampInSeconds,
+        text: chunk.text,
+        embedding: null,
+      }));
+
+      return {
+        ...context,
+        allTranscripts,
+        fullTranscriptionText: context.video.content,
+      };
+    }
+
+    // Otherwise, split video into chunks and get transcripts
     const { allTranscripts, fullTranscriptionText } =
       await transcribeVideoInChunks(context.video);
 
@@ -869,6 +1065,49 @@ const transcribeChunksStep: ProcessingStep = {
       allTranscripts,
       fullTranscriptionText,
     };
+  },
+};
+
+const saveTranscriptionOnlyStep: ProcessingStep = {
+  name: "saveTranscriptionOnly",
+  execute: async (context: ProcessingContext): Promise<ProcessingContext> => {
+    // Save transcription chunks without embeddings
+    const transcriptWithoutEmbeddings = context.allTranscripts!.map(
+      (chunk) => ({
+        ...chunk,
+        embedding: null,
+      })
+    );
+
+    // Store transcript chunks without embeddings
+    for (const chunk of transcriptWithoutEmbeddings) {
+      await prisma.$executeRaw`
+        INSERT INTO "TranscriptChunk" (id, "timestampInSeconds", text, embedding, "videoId", "createdAt")
+        VALUES (
+          gen_random_uuid(),
+          ${
+            typeof chunk.timestamp === "number"
+              ? chunk.timestamp
+              : parseInt(chunk.timestamp.toString(), 10)
+          },
+          ${chunk.text},
+          NULL,
+          ${context.video.id},
+          NOW()
+        )
+      `;
+    }
+
+    // Mark video as completed transcription (ready for embedding)
+    await prisma.video.update({
+      where: { id: context.video.id },
+      data: {
+        status: "COMPLETED",
+        content: context.fullTranscriptionText!,
+      },
+    });
+
+    return context;
   },
 };
 
@@ -913,6 +1152,18 @@ const deductQuotaStep: ProcessingStep = {
   },
 };
 
+// Transcription-only pipeline (Phase 1)
+const transcriptionOnlyPipeline: ProcessingStep[] = [
+  checkQuotaStep,
+  transcribeChunksStep,
+  saveTranscriptionOnlyStep,
+  deductQuotaStep,
+];
+
+// Embedding-only pipeline (Phase 2)
+const embeddingOnlyPipeline: ProcessingStep[] = [generateEmbeddingsStep];
+
+// Original full pipeline (for backward compatibility)
 const videoProcessingPipeline: ProcessingStep[] = [
   checkQuotaStep,
   transcribeChunksStep,
@@ -947,7 +1198,7 @@ async function executeVideoProcessingPipeline(
   }
 }
 
-// Main function to transcribe YoutubeVideo types with quota checking
+// Main function to transcribe YoutubeVideo types with quota checking (two-phase approach)
 export const transcribeVideos = async ({
   youtubeVideos,
   userEmail,
@@ -962,6 +1213,10 @@ export const transcribeVideos = async ({
   quotaExceeded: boolean;
   processedVideos: Video[];
 }> => {
+  console.log(
+    `🎥 Starting two-phase transcription process for ${youtubeVideos.length} videos`
+  );
+
   // Step 1: Prepare transcription job (fetch durations, create records, check quota)
   const preparation = await prepareTranscriptionJob(youtubeVideos, userEmail);
 
@@ -971,28 +1226,61 @@ export const transcribeVideos = async ({
 
   const { videoRecords, pendingVideos } = preparation;
 
-  // Step 2: Process videos in batches with quota checking
-  const { results, quotaExceeded } = await processBatchesWithQuotaCheck(
-    pendingVideos,
-    userEmail,
-    batchSize
+  // PHASE 1: Transcribe all videos first
+  console.log(`📝 Phase 1: Transcribing ${pendingVideos.length} videos`);
+  const { results: transcriptionResults, quotaExceeded } =
+    await processTranscriptionBatchesWithQuotaCheck(
+      pendingVideos,
+      userEmail,
+      batchSize
+    );
+
+  // Process transcription results
+  const transcriptionSummary =
+    processTranscriptionResults(transcriptionResults);
+  console.log(
+    `📊 Phase 1 Results: ${
+      transcriptionSummary.totalTranscribed
+    } transcribed, ${transcriptionSummary.failed.length} failed${
+      quotaExceeded ? " (quota exceeded)" : ""
+    }`
   );
 
-  // Process and log results
-  const resultSummary = processTranscriptionResults(results);
-  logTranscriptionResults(
-    resultSummary.totalTranscribed,
-    resultSummary.failed.length,
-    quotaExceeded
+  // PHASE 2: Generate embeddings for successfully transcribed videos
+  const successfullyTranscribed = transcriptionSummary.successful.map(
+    (r) => r.video
   );
+  let embeddingResults: TranscriptionResult[] = [];
+
+  if (successfullyTranscribed.length > 0) {
+    console.log(
+      `🔍 Phase 2: Generating embeddings for ${successfullyTranscribed.length} transcribed videos`
+    );
+    const embeddingBatchResults = await processEmbeddingBatches(
+      successfullyTranscribed,
+      batchSize
+    );
+    embeddingResults = embeddingBatchResults.results;
+  }
+
+  // Process embedding results
+  const embeddingSummary = processTranscriptionResults(embeddingResults);
+  console.log(
+    `📊 Phase 2 Results: ${embeddingSummary.totalTranscribed} embedded, ${embeddingSummary.failed.length} embedding failed`
+  );
+
+  // Combine all results
+  const allResults = [...transcriptionResults, ...embeddingResults];
+  const finalSummary = processTranscriptionResults(allResults);
+
   logTranscriptionComplete(
-    resultSummary.totalTranscribed,
-    resultSummary.totalAttempts
+    embeddingSummary.totalTranscribed, // Only count fully completed (transcribed + embedded)
+    finalSummary.totalAttempts
   );
 
   return {
-    totalAttempts: resultSummary.totalAttempts,
-    totalTranscribed: resultSummary.totalTranscribed,
+    totalAttempts: finalSummary.totalAttempts,
+    totalTranscribed: embeddingSummary.totalTranscribed, // Only fully completed videos
     quotaExceeded,
     processedVideos: videoRecords,
   };
@@ -1047,4 +1335,189 @@ export const transcribeExistingVideo = async ({
     quotaExceeded,
     processedVideos: videos,
   };
+};
+
+// Standalone function to transcribe videos only (Phase 1)
+export const transcribeVideosOnly = async ({
+  youtubeVideos,
+  userEmail,
+  batchSize = 5,
+}: {
+  youtubeVideos: YoutubeVideo[];
+  userEmail: string;
+  batchSize?: number;
+}): Promise<{
+  totalAttempts: number;
+  totalTranscribed: number;
+  quotaExceeded: boolean;
+  processedVideos: Video[];
+}> => {
+  console.log(
+    `📝 Transcription-only mode: Processing ${youtubeVideos.length} videos`
+  );
+
+  // Step 1: Prepare transcription job
+  const preparation = await prepareTranscriptionJob(youtubeVideos, userEmail);
+
+  if (preparation.shouldEarlyReturn) {
+    return preparation.earlyReturnResult!;
+  }
+
+  const { videoRecords, pendingVideos } = preparation;
+
+  // Step 2: Process transcription only
+  const { results, quotaExceeded } =
+    await processTranscriptionBatchesWithQuotaCheck(
+      pendingVideos,
+      userEmail,
+      batchSize
+    );
+
+  // Process and log results
+  const resultSummary = processTranscriptionResults(results);
+  logTranscriptionResults(
+    resultSummary.totalTranscribed,
+    resultSummary.failed.length,
+    quotaExceeded
+  );
+  logTranscriptionComplete(
+    resultSummary.totalTranscribed,
+    resultSummary.totalAttempts
+  );
+
+  return {
+    totalAttempts: resultSummary.totalAttempts,
+    totalTranscribed: resultSummary.totalTranscribed,
+    quotaExceeded,
+    processedVideos: videoRecords,
+  };
+};
+
+// Standalone function to generate embeddings only (Phase 2)
+export const generateEmbeddingsForVideos = async ({
+  videos,
+  batchSize = 5,
+}: {
+  videos: Video[];
+  batchSize?: number;
+}): Promise<{
+  totalAttempts: number;
+  totalEmbedded: number;
+  processedVideos: Video[];
+}> => {
+  console.log(`🔍 Embedding-only mode: Processing ${videos.length} videos`);
+
+  // Prepare videos for embedding (filter to COMPLETED status)
+  const videosReadyForEmbedding = await prepareVideosForEmbedding(videos);
+
+  if (videosReadyForEmbedding.length === 0) {
+    console.log("✅ No videos ready for embedding");
+    return {
+      totalAttempts: 0,
+      totalEmbedded: 0,
+      processedVideos: videos,
+    };
+  }
+
+  // Process embeddings
+  const { results } = await processEmbeddingBatches(
+    videosReadyForEmbedding,
+    batchSize
+  );
+
+  // Process and log results
+  const resultSummary = processTranscriptionResults(results);
+  console.log(
+    `📊 Embedding Results: ${resultSummary.totalTranscribed} embedded, ${resultSummary.failed.length} failed`
+  );
+  console.log(
+    `🏁 Embedding complete: ${resultSummary.totalTranscribed}/${resultSummary.totalAttempts} videos embedded successfully`
+  );
+
+  return {
+    totalAttempts: resultSummary.totalAttempts,
+    totalEmbedded: resultSummary.totalTranscribed,
+    processedVideos: videos,
+  };
+};
+
+// Smart retry function that determines what to do based on video status
+export const retryVideo = async ({
+  videoId,
+  userEmail,
+}: {
+  videoId: string;
+  userEmail: string;
+}): Promise<{
+  success: boolean;
+  action: "transcribe" | "embed" | "none";
+  error?: string;
+}> => {
+  // Get the video to check its status
+  const video = await prisma.video.findUnique({
+    where: { id: videoId, userEmail },
+  });
+
+  if (!video) {
+    return {
+      success: false,
+      action: "none",
+      error: "Video not found",
+    };
+  }
+
+  console.log(
+    `🔄 Retrying video ${video.youtubeId} with status ${video.status}`
+  );
+
+  try {
+    if (video.status === "TRANSCRIBE_ERROR") {
+      // Reset to PENDING and retry full transcription + embedding
+      await prisma.transcriptChunk.deleteMany({
+        where: { videoId: video.id },
+      });
+
+      const resetVideo = await prisma.video.update({
+        where: { id: video.id },
+        data: {
+          status: "PENDING",
+          content: "",
+        },
+      });
+
+      // Run full transcription + embedding pipeline
+      const result = await executeVideoProcessingPipeline(
+        resetVideo,
+        userEmail,
+        videoProcessingPipeline
+      );
+
+      return {
+        success: !result.error,
+        action: "transcribe",
+        error: result.error,
+      };
+    } else if (video.status === "EMBEDDING_ERROR") {
+      // Just retry embedding
+      const result = await processVideoEmbedding(video);
+
+      return {
+        success: !result.error,
+        action: "embed",
+        error: result.error,
+      };
+    } else {
+      return {
+        success: false,
+        action: "none",
+        error: `Video status ${video.status} does not need retry`,
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      action: video.status === "TRANSCRIBE_ERROR" ? "transcribe" : "embed",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 };

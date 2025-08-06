@@ -1,6 +1,11 @@
 import { createTRPCRouter, baseProcedure } from "@/trpc/init";
 import z from "zod";
-import { transcribeVideos, transcribeExistingVideo } from "./helpers";
+import {
+  transcribeVideos,
+  transcribeExistingVideo,
+  transcribeVideosOnly,
+  retryVideo,
+} from "./helpers";
 import { prisma } from "@/db";
 
 export const transcriptRouter = createTRPCRouter({
@@ -67,6 +72,55 @@ export const transcriptRouter = createTRPCRouter({
 
       return transcribeExistingVideo({
         videos,
+        userEmail,
+        batchSize,
+      });
+    }),
+
+  retryVideo: baseProcedure
+    .input(
+      z.object({
+        videoId: z.string().min(1, { message: "Video ID is required." }),
+        userEmail: z
+          .string()
+          .email({ message: "Valid user email is required." }),
+      })
+    )
+    .mutation(async ({ input: { videoId, userEmail } }) => {
+      return retryVideo({
+        videoId,
+        userEmail,
+      });
+    }),
+
+  transcribeVideosOnly: baseProcedure
+    .input(
+      z.object({
+        youtubeVideos: z
+          .array(
+            z.object({
+              youtubeId: z
+                .string()
+                .min(1, { message: "YouTube ID is required." }),
+              title: z.string().min(1, { message: "Title is required." }),
+              description: z.string().optional(),
+              thumbnail: z.string().optional(),
+              channelHandle: z.string(),
+            })
+          )
+          .min(1, { message: "At least one video is required." }),
+        userEmail: z
+          .string()
+          .email({ message: "Valid user email is required." }),
+        batchSize: z
+          .number()
+          .min(1, { message: "Batch size must be at least 1." })
+          .default(5),
+      })
+    )
+    .mutation(async ({ input: { youtubeVideos, userEmail, batchSize } }) => {
+      return transcribeVideosOnly({
+        youtubeVideos,
         userEmail,
         batchSize,
       });

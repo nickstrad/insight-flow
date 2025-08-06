@@ -134,6 +134,7 @@ exports.Prisma.VideoScalarFieldEnum = {
   title: 'title',
   content: 'content',
   channelHandle: 'channelHandle',
+  playlistId: 'playlistId',
   durationInMinutes: 'durationInMinutes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -180,9 +181,9 @@ exports.Prisma.NullsOrder = {
 };
 exports.TranscriptionStatus = exports.$Enums.TranscriptionStatus = {
   PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING',
-  COMPLETED: 'COMPLETED',
-  FAILED: 'FAILED'
+  TRANSCRIBE_ERROR: 'TRANSCRIBE_ERROR',
+  EMBEDDING_ERROR: 'EMBEDDING_ERROR',
+  COMPLETED: 'COMPLETED'
 };
 
 exports.MessageRole = exports.$Enums.MessageRole = {

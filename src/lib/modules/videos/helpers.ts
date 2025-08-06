@@ -304,3 +304,83 @@ export async function getNextVideosForPlaylist({
     throw error;
   }
 }
+
+// New function to get playlist metadata by direct playlist ID
+export async function getPlaylistMetadata(
+  playlistId: string
+): Promise<{
+  playlistId: string;
+  firstPageVideos: YoutubeVideo[];
+  nextToken?: string;
+  totalVideoCount: number;
+  channelHandle: string; // We'll use playlist title as fake channel handle for consistency
+}> {
+  try {
+    // Get playlist details including title and video count
+    const { data: playlistDetailsRes } =
+      await axios.get<YouTubePlaylistDetailsResponse>(
+        `https://www.googleapis.com/youtube/v3/playlists`,
+        {
+          params: {
+            part: "contentDetails,snippet",
+            id: playlistId,
+            key: API_KEY,
+          },
+        }
+      );
+
+    const playlistItem = playlistDetailsRes.items?.[0];
+    if (!playlistItem) {
+      throw new Error("Playlist not found");
+    }
+
+    const totalVideoCount = playlistItem.contentDetails?.itemCount || 0;
+    const playlistTitle = (playlistItem as any).snippet?.title || `Playlist-${playlistId}`;
+
+    // Get first page of videos
+    const { data: playlistRes } = await axios.get<YouTubePlaylistItemsResponse>(
+      `https://www.googleapis.com/youtube/v3/playlistItems`,
+      {
+        params: {
+          part: "snippet",
+          maxResults: PAGINATION_LIMIT,
+          playlistId: playlistId,
+          key: API_KEY,
+        },
+      }
+    );
+
+    const videos = playlistRes.items.map((item) => {
+      const video: YoutubeVideo = {
+        youtubeId: item.snippet.resourceId.videoId,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails.default.url,
+        channelHandle: playlistTitle, // Use playlist title as fake channel handle
+      };
+      return video;
+    });
+
+    // Fetch duration information for first page videos
+    console.log(`Fetching durations for ${videos.length} videos...`);
+    const videoIds = videos.map((video) => video.youtubeId);
+    const durationMap = await fetchVideoDurations(videoIds);
+
+    // Add duration information to videos
+    const videosWithDuration = videos.map((video) => ({
+      ...video,
+      durationInMinutes: durationMap.get(video.youtubeId) || 0,
+    }));
+
+    return {
+      playlistId,
+      firstPageVideos: videosWithDuration,
+      nextToken: playlistRes.nextPageToken,
+      totalVideoCount,
+      channelHandle: playlistTitle,
+    };
+  } catch (error) {
+    console.error("Error fetching playlist metadata:", error);
+    throw error;
+  }
+}
