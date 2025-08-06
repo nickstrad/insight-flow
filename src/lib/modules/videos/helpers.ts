@@ -59,6 +59,7 @@ function convertDurationToMinutes(duration: string): number {
   const seconds = parseInt(match[3] || "0", 10);
 
   const totalMinutes = hours * 60 + minutes + seconds / 60;
+
   return Math.ceil(totalMinutes);
 }
 
@@ -89,6 +90,8 @@ async function fetchVideoDurations(
       durationMap.set(videoId, duration);
     });
   }
+
+  console.log(durationMap);
 
   return durationMap;
 }
