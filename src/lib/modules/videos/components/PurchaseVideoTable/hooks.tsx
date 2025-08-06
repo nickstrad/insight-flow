@@ -1,4 +1,4 @@
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { YoutubeVideo } from "../../types";
@@ -22,27 +22,33 @@ export const useVideoTableState = ({
   const [apiError, setApiError] = useState<string | null>(null);
   const trpc = useTRPC();
 
-  // Use the appropriate query based on search type
-  const queryResult = useSuspenseQuery(
-    searchType === "channel"
-      ? trpc.videos.getUploadsMetadataForChannel.queryOptions({
-          channelHandle,
-        })
-      : trpc.videos.getPlaylistMetadata.queryOptions({
-          playlistId: playlistId || "",
-        })
-  );
+  // Channel uploads query
+  const {
+    data: getUploadsResponse,
+    error: getUploadsError,
+    isLoading: getUploadsQueryIsLoading,
+  } = useQuery({
+    ...trpc.videos.getUploadsMetadataForChannel.queryOptions({
+      channelHandle,
+    }),
+    enabled: searchType === "channel",
+  });
 
-  // Map the result to the appropriate format
-  const getUploadsResponse = searchType === "channel" ? queryResult.data : undefined;
-  const getPlaylistResponse = searchType === "playlist" ? queryResult.data : undefined;
-  const getUploadsError = searchType === "channel" ? queryResult.error : null;
-  const getPlaylistError = searchType === "playlist" ? queryResult.error : null;
-  const getUploadsQueryIsLoading = searchType === "channel" ? queryResult.isLoading : false;
-  const getPlaylistQueryIsLoading = searchType === "playlist" ? queryResult.isLoading : false;
+  // Playlist metadata query
+  const {
+    data: getPlaylistResponse,
+    error: getPlaylistError,
+    isLoading: getPlaylistQueryIsLoading,
+  } = useQuery({
+    ...trpc.videos.getPlaylistMetadata.queryOptions({
+      playlistId: playlistId || "",
+      channelHandle,
+    }),
+    enabled: searchType === "playlist",
+  });
 
   const currentPageToken = pageTokens.get(currentPage) || "";
-  const activePlaylistId = searchType === "channel" ? uploadsPlaylistId : (playlistId || "");
+  const activePlaylistId = searchType === "channel" ? uploadsPlaylistId : (getPlaylistResponse?.playlistId || "");
   const activeChannelHandle = searchType === "channel" ? channelHandle : (getPlaylistResponse?.channelHandle || "");
   
   const {

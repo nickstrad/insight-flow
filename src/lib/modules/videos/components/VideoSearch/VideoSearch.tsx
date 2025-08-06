@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -23,33 +30,27 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import PurchaseVideoTable from "../PurchaseVideoTable/PurchaseVideoTable";
 import QuotaViewer from "@/lib/modules/quota/components/QuotaViewer";
+import { useTRPC } from "@/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 
 export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
   const [channelHandle, setChannelHandle] = useState("");
-  const [playlistId, setPlaylistId] = useState("");
   const [submittedHandle, setSubmittedHandle] = useState("");
   const [submittedPlaylistId, setSubmittedPlaylistId] = useState("");
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [searchType, setSearchType] = useState<"channel" | "playlist">("channel");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
+  const trpc = useTRPC();
 
   const handleChannelSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (channelHandle.trim()) {
       setSubmittedHandle(channelHandle.trim());
       setSubmittedPlaylistId("");
-      setSearchType("channel");
-      setIsSubmitted(true);
-    }
-  };
-
-  const handlePlaylistSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (playlistId.trim()) {
-      setSubmittedPlaylistId(playlistId.trim());
-      setSubmittedHandle("");
-      setSearchType("playlist");
-      setIsSubmitted(true);
+      setSelectedPlaylistId("");
+      setShowPlaylistDropdown(true);
+      setIsSubmitted(false); // Don't show videos yet, wait for playlist selection
     }
   };
 
@@ -57,15 +58,38 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
     setIsLoading(loading);
   };
 
+  // Fetch playlists for the submitted channel
+  const { data: playlists, isLoading: playlistsLoading, error: playlistsError } = useQuery({
+    ...trpc.videos.getChannelPlaylists.queryOptions({
+      channelHandle: submittedHandle,
+    }),
+    enabled: !!submittedHandle && showPlaylistDropdown,
+  });
+
+  const handlePlaylistSelect = (playlistId: string) => {
+    setSelectedPlaylistId(playlistId);
+    setSubmittedPlaylistId(playlistId);
+    setIsSubmitted(true);
+  };
+
+  // Auto-select uploads playlist when playlists load
+  React.useEffect(() => {
+    if (playlists && playlists.length > 0 && !selectedPlaylistId) {
+      const uploadsPlaylist = playlists.find(p => p.title === "Uploads");
+      if (uploadsPlaylist) {
+        handlePlaylistSelect(uploadsPlaylist.id);
+      }
+    }
+  }, [playlists, selectedPlaylistId]);
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Search YouTube Channel</CardTitle>
             <CardDescription>
-              Enter a YouTube channel handle to view and select videos for
-              transcription.
+              Enter a channel handle to get playlists, then select a specific playlist to view videos.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -78,7 +102,7 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
                   placeholder="@channelname"
                   value={channelHandle}
                   onChange={(e) => setChannelHandle(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || playlistsLoading}
                 />
                 <p className="text-sm text-muted-foreground">
                   Enter the channel handle (e.g., @channelname)
@@ -86,47 +110,45 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
               </div>
               <Button 
                 type="submit" 
-                disabled={!channelHandle.trim() || isLoading}
+                disabled={!channelHandle.trim() || isLoading || playlistsLoading}
                 className="w-full"
               >
-                {isLoading && searchType === "channel" ? "Searching..." : "Search Channel Videos"}
+                {playlistsLoading ? "Loading Playlists..." : "Get Channel Playlists"}
               </Button>
             </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Search YouTube Playlist</CardTitle>
-            <CardDescription>
-              Enter a YouTube playlist ID to view and select videos for
-              transcription.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePlaylistSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="playlistId">YouTube Playlist ID</Label>
-                <Input
-                  id="playlistId"
-                  type="text"
-                  placeholder="PLxxxxxxxxxxxxxxxxxxxx"
-                  value={playlistId}
-                  onChange={(e) => setPlaylistId(e.target.value)}
-                  disabled={isLoading}
-                />
+            
+            {showPlaylistDropdown && playlists && playlists.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <Label htmlFor="playlist">Select Playlist</Label>
+                <Select onValueChange={handlePlaylistSelect} value={selectedPlaylistId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a playlist" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {playlists.map((playlist) => (
+                      <SelectItem key={playlist.id} value={playlist.id}>
+                        {playlist.title} ({playlist.itemCount} videos)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <p className="text-sm text-muted-foreground">
-                  Enter the playlist ID (found in the playlist URL)
+                  The "Uploads" playlist is selected by default
                 </p>
               </div>
-              <Button 
-                type="submit" 
-                disabled={!playlistId.trim() || isLoading}
-                className="w-full"
-              >
-                {isLoading && searchType === "playlist" ? "Searching..." : "Search Playlist Videos"}
-              </Button>
-            </form>
+            )}
+            
+            {showPlaylistDropdown && playlists && playlists.length === 0 && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+                <p className="text-sm">No playlists found for this channel.</p>
+              </div>
+            )}
+            
+            {playlistsError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800">
+                <p className="text-sm">Failed to load playlists: {playlistsError.message}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -142,12 +164,12 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
           <QuotaViewer userEmail={userEmail} />
         </Suspense>
       </div>
-      {isSubmitted && (
+      {isSubmitted && selectedPlaylistId && (
         <Suspense fallback={<VideoTableSkeleton />}>
           <PurchaseVideoTable
-            channelHandle={searchType === "channel" ? submittedHandle : ""}
-            playlistId={searchType === "playlist" ? submittedPlaylistId : ""}
-            searchType={searchType}
+            channelHandle={submittedHandle}
+            playlistId={selectedPlaylistId}
+            searchType="playlist"
             userEmail={userEmail}
             onLoadingStateChange={handleLoadingStateChange}
           />

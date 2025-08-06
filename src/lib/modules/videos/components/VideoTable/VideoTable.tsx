@@ -32,7 +32,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { SquareArrowOutUpRight, Pencil, RefreshCcw, Loader2 } from "lucide-react";
+import { SquareArrowOutUpRight, Trash2, RefreshCcw, Loader2 } from "lucide-react";
 import { useVideoTableState } from "./hooks";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -66,6 +66,8 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
   
   const [isRetryModalOpen, setIsRetryModalOpen] = useState(false);
   const [selectedVideoForRetry, setSelectedVideoForRetry] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedVideoForDelete, setSelectedVideoForDelete] = useState<string | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   
@@ -98,6 +100,28 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
     })
   );
   
+  // Delete video mutation
+  const deleteVideoMutation = useMutation(
+    trpc.videos.deleteStoredVideo.mutationOptions({
+      onSuccess: (data) => {
+        toast.success(
+          `Video deleted successfully! ${data.quotaRestored > 0 ? `${data.quotaRestored}h quota restored.` : ''}`
+        );
+        
+        // Invalidate videos query to refresh the table
+        queryClient.invalidateQueries(
+          trpc.videos.getStoredVideosForChannel.queryOptions({ userEmail })
+        );
+        
+        setIsDeleteModalOpen(false);
+        setSelectedVideoForDelete(null);
+      },
+      onError: (error) => {
+        toast.error(`Delete failed: ${error.message}`);
+      },
+    })
+  );
+  
   const handleRetryClick = (videoId: string) => {
     setSelectedVideoForRetry(videoId);
     setIsRetryModalOpen(true);
@@ -117,8 +141,28 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
     }
   };
   
+  const handleDeleteClick = (videoId: string) => {
+    setSelectedVideoForDelete(videoId);
+    setIsDeleteModalOpen(true);
+  };
+  
+  const handleConfirmDelete = async () => {
+    if (!selectedVideoForDelete) return;
+    
+    try {
+      await deleteVideoMutation.mutateAsync({
+        videoId: selectedVideoForDelete,
+        userEmail,
+      });
+    } catch (error) {
+      // Error handling is already done in the mutation options
+      console.error('Delete video error:', error);
+    }
+  };
+  
   // Get the selected video to show status-specific retry message
   const selectedVideo = currentVideos.find(v => v.id === selectedVideoForRetry);
+  const selectedVideoForDeletion = currentVideos.find(v => v.id === selectedVideoForDelete);
   const getRetryMessage = (status: string) => {
     switch (status) {
       case 'TRANSCRIBE_ERROR':
@@ -147,6 +191,9 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                             <TableHead onClick={() => handleSort("channelHandle")}>
                 Channel {getSortIcon("channelHandle")}
               </TableHead>
+              <TableHead onClick={() => handleSort("playlistId")}>
+                Playlist ID {getSortIcon("playlistId")}
+              </TableHead>
               <TableHead onClick={() => handleSort("title")}>
                 Title {getSortIcon("title")}
               </TableHead>
@@ -169,7 +216,34 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
           <TableBody>
             {currentVideos.map((video) => (
               <TableRow key={video.id}>
-                <TableCell>{video.channelHandle || 'Unknown'}</TableCell>
+                <TableCell>
+                  {video.channelHandle ? (
+                    <a
+                      href={`https://www.youtube.com/${video.channelHandle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {video.channelHandle}
+                    </a>
+                  ) : (
+                    'Unknown'
+                  )}
+                </TableCell>
+                <TableCell>
+                  {video.playlistId ? (
+                    <a
+                      href={`https://www.youtube.com/playlist?list=${video.playlistId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-xs text-blue-600 hover:underline"
+                    >
+                      {video.playlistId}
+                    </a>
+                  ) : (
+                    <span className="font-mono text-xs text-gray-600">N/A</span>
+                  )}
+                </TableCell>
                 <TableCell>
                   <a
                     href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
@@ -217,15 +291,6 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <Button
-                      onClick={() => {
-                        // TODO: Implement transcribe single video
-                      }}
-                      variant="ghost"
-                      size="icon"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
                     {(video.status === "TRANSCRIBE_ERROR" || 
                       video.status === "EMBEDDING_ERROR") && (
                       <div className="flex items-center gap-1">
@@ -244,13 +309,23 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                         )}
                       </div>
                     )}
+                    <Button
+                      onClick={() => handleDeleteClick(video.id)}
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="Delete video"
+                      disabled={deleteVideoMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
             {videos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center">
+                <TableCell colSpan={9} className="text-center">
                   No videos found for {userEmail}
                 </TableCell>
               </TableRow>
@@ -321,6 +396,36 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
             >
               {retryVideoMutation.isPending ? "Retrying..." : 
                `Retry ${selectedVideo?.status === 'EMBEDDING_ERROR' ? 'Embedding' : 'Processing'}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete Video
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this video? This action will permanently remove the video, its transcript chunks, embeddings, and restore any quota that was used. This action cannot be undone.
+              {selectedVideoForDeletion && (
+                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                  <strong>Video:</strong> {selectedVideoForDeletion.title}
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteVideoMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              disabled={deleteVideoMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteVideoMutation.isPending ? "Deleting..." : "Delete Video"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

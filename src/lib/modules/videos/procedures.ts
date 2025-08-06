@@ -4,6 +4,12 @@ import {
   getUploadsMetadataForChannel,
   getNextVideosForPlaylist,
   getPlaylistMetadata,
+  getAllPlaylistsForUser,
+  getChannelPlaylists,
+  getStoredVideoById,
+  updateStoredVideo,
+  deleteStoredVideo,
+  bulkDeleteStoredVideos,
 } from "./helpers";
 const { prisma } = await import("@/db");
 
@@ -83,9 +89,87 @@ export const videosRouter = createTRPCRouter({
         playlistId: z
           .string()
           .min(1, { message: "Playlist ID is required." }),
+        channelHandle: z
+          .string()
+          .min(1, { message: "Channel handle is required." }),
       })
     )
-    .query(async ({ input: { playlistId } }) => {
-      return getPlaylistMetadata(playlistId);
+    .query(async ({ input: { playlistId, channelHandle } }) => {
+      return getPlaylistMetadata(playlistId, channelHandle);
+    }),
+  getAllPlaylistsForUser: baseProcedure
+    .input(
+      z.object({
+        userEmail: z.string().min(1, { message: "User email is required." }),
+      })
+    )
+    .query(async ({ input: { userEmail } }) => {
+      return getAllPlaylistsForUser(userEmail);
+    }),
+  getChannelPlaylists: baseProcedure
+    .input(
+      z.object({
+        channelHandle: z
+          .string()
+          .min(1, { message: "Channel handle is required." }),
+      })
+    )
+    .query(async ({ input: { channelHandle } }) => {
+      return getChannelPlaylists(channelHandle);
+    }),
+
+  // CRUD Operations for stored videos
+  getStoredVideoById: baseProcedure
+    .input(
+      z.object({
+        videoId: z.string().min(1, { message: "Video ID is required." }),
+        userEmail: z.string().email({ message: "Valid user email is required." }),
+      })
+    )
+    .query(async ({ input: { videoId, userEmail } }) => {
+      return getStoredVideoById(videoId, userEmail);
+    }),
+
+  updateStoredVideo: baseProcedure
+    .input(
+      z.object({
+        videoId: z.string().min(1, { message: "Video ID is required." }),
+        userEmail: z.string().email({ message: "Valid user email is required." }),
+        updateData: z.object({
+          title: z.string().optional(),
+          channelHandle: z.string().optional(),
+          playlistId: z.string().optional(),
+        }).refine(
+          (data) => Object.keys(data).length > 0,
+          { message: "At least one field must be provided for update." }
+        ),
+      })
+    )
+    .mutation(async ({ input: { videoId, userEmail, updateData } }) => {
+      return updateStoredVideo(videoId, userEmail, updateData);
+    }),
+
+  deleteStoredVideo: baseProcedure
+    .input(
+      z.object({
+        videoId: z.string().min(1, { message: "Video ID is required." }),
+        userEmail: z.string().email({ message: "Valid user email is required." }),
+      })
+    )
+    .mutation(async ({ input: { videoId, userEmail } }) => {
+      return deleteStoredVideo(videoId, userEmail);
+    }),
+
+  bulkDeleteStoredVideos: baseProcedure
+    .input(
+      z.object({
+        videoIds: z
+          .array(z.string().min(1, { message: "Video ID is required." }))
+          .min(1, { message: "At least one video ID is required." }),
+        userEmail: z.string().email({ message: "Valid user email is required." }),
+      })
+    )
+    .mutation(async ({ input: { videoIds, userEmail } }) => {
+      return bulkDeleteStoredVideos(videoIds, userEmail);
     }),
 });

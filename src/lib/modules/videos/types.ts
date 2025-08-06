@@ -5,4 +5,5 @@ export type YoutubeVideo = {
   thumbnail?: string;
   durationInMinutes?: number;
   channelHandle: string;
+  playlistId?: string;
 };
