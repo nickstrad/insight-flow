@@ -10,6 +10,7 @@ import {
   updateStoredVideo,
   deleteStoredVideo,
   bulkDeleteStoredVideos,
+  getUserChannelsAndPlaylists,
 } from "./helpers";
 const { prisma } = await import("@/db");
 
@@ -34,17 +35,19 @@ export const videosRouter = createTRPCRouter({
         playlistId: z.string().min(1, { message: "Playlist ID is required." }),
         nextToken: z.string().optional(),
         currentPage: z.number(),
+        playlistTitle: z.string().optional(),
       })
     )
     .query(
       async ({
-        input: { channelHandle, playlistId, nextToken, currentPage },
+        input: { channelHandle, playlistId, nextToken, currentPage, playlistTitle },
       }) => {
         return getNextVideosForPlaylist({
           channelHandle,
           playlistId,
           nextToken,
           currentPage,
+          playlistTitle,
         });
       }
     ),
@@ -171,5 +174,15 @@ export const videosRouter = createTRPCRouter({
     )
     .mutation(async ({ input: { videoIds, userEmail } }) => {
       return bulkDeleteStoredVideos(videoIds, userEmail);
+    }),
+
+  getUserChannelsAndPlaylists: baseProcedure
+    .input(
+      z.object({
+        userEmail: z.string().email({ message: "Valid user email is required." }),
+      })
+    )
+    .query(async ({ input: { userEmail } }) => {
+      return getUserChannelsAndPlaylists(userEmail);
     }),
 });

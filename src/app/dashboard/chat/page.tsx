@@ -26,7 +26,7 @@ const Page = async () => {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <DashboardPageHeader
-        title="AI Chat"
+        title="Insight Flow Chat"
         description="Chat with AI about your transcribed videos and get insights"
       />
 

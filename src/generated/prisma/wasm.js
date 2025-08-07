@@ -135,10 +135,21 @@ exports.Prisma.VideoScalarFieldEnum = {
   content: 'content',
   channelHandle: 'channelHandle',
   playlistId: 'playlistId',
+  playlistTitle: 'playlistTitle',
+  thumbnailUrl: 'thumbnailUrl',
   durationInMinutes: 'durationInMinutes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   status: 'status'
+};
+
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  userEmail: 'userEmail',
+  type: 'type',
+  message: 'message',
+  read: 'read',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.TranscriptChunkScalarFieldEnum = {
@@ -153,6 +164,8 @@ exports.Prisma.ChatScalarFieldEnum = {
   id: 'id',
   userEmail: 'userEmail',
   title: 'title',
+  channelHandles: 'channelHandles',
+  playlistIds: 'playlistIds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -186,6 +199,13 @@ exports.TranscriptionStatus = exports.$Enums.TranscriptionStatus = {
   COMPLETED: 'COMPLETED'
 };
 
+exports.NotificationType = exports.$Enums.NotificationType = {
+  TRANSCRIPTION_ERROR: 'TRANSCRIPTION_ERROR',
+  TRANSCRIPTION_SUCCESS: 'TRANSCRIPTION_SUCCESS',
+  EMBEDDING_ERROR: 'EMBEDDING_ERROR',
+  EMBEDDING_SUCCESS: 'EMBEDDING_SUCCESS'
+};
+
 exports.MessageRole = exports.$Enums.MessageRole = {
   USER: 'USER',
   ASSISTANT: 'ASSISTANT',
@@ -195,6 +215,7 @@ exports.MessageRole = exports.$Enums.MessageRole = {
 exports.Prisma.ModelName = {
   Quota: 'Quota',
   Video: 'Video',
+  Notification: 'Notification',
   TranscriptChunk: 'TranscriptChunk',
   Chat: 'Chat',
   ChatMessage: 'ChatMessage'

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { UserControl } from "./user-control";
-import { Search, MessageSquare, Video, Home, ArrowLeft } from "lucide-react";
+import NotificationWidget from "@/lib/modules/notifications/components/NotificationWidget";
+import { Search, MessageSquare, Video, Home, ArrowLeft, Bell } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -38,10 +40,18 @@ const navigationItems = [
     icon: Video,
     description: "View your transcribed videos",
   },
+  {
+    name: "Notifications",
+    href: "/dashboard/notifications",
+    icon: Bell,
+    description: "Manage your notifications",
+  },
 ];
 
 function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const userEmail = user?.emailAddresses[0]?.emailAddress;
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -76,9 +86,14 @@ function AppSidebar() {
                       isActive={active}
                       tooltip={item.description}
                     >
-                      <Link href={item.href}>
-                        <Icon />
-                        <span>{item.name}</span>
+                      <Link href={item.href} className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2">
+                          <Icon />
+                          <span>{item.name}</span>
+                        </div>
+                        {item.href === "/dashboard/notifications" && userEmail && (
+                          <NotificationWidget userEmail={userEmail} />
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

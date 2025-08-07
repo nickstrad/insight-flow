@@ -1,10 +1,11 @@
 import { prisma } from "@/db";
 import { GoogleGenAI } from "@google/genai";
-import { ChatMessage, MessageRole } from "@/generated/prisma";
+import { ChatMessage, MessageRole, Prisma } from "@/generated/prisma";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { z } from "zod";
 import { StructuredOutputParser } from "langchain/output_parsers";
 import { getEmbeddings } from "../embeddings/helpers";
+import { getChatContext } from "../chats/helpers";
 
 type RetrievedChunk = {
   text: string;
@@ -36,7 +37,9 @@ const parser = StructuredOutputParser.fromZodSchema(responseSchema);
 export async function searchVideos(
   userEmail: string,
   queryText: string,
-  limit: number = 5
+  limit: number = 5,
+  channelHandles?: string[],
+  playlistIds?: string[]
 ): Promise<RetrievedChunk[]> {
   const [queryEmbedding = []] = await getEmbeddings([queryText]);
   if (!queryEmbedding || queryEmbedding.length === 0) {
@@ -44,8 +47,40 @@ export async function searchVideos(
   }
   const vectorLiteral = `[${queryEmbedding.join(",")}]`;
 
-  // Use raw SQL since pgvector operations aren't supported in Prisma ORM
-  const results = await prisma.$queryRaw<
+  // Build the WHERE clause dynamically
+  let whereClause = `v.status = 'COMPLETED' AND v."userEmail" = $1`;
+  const params = [userEmail];
+  let paramIndex = 2;
+
+  // Add context-based filtering
+  if (channelHandles && channelHandles.length > 0) {
+    const placeholders = channelHandles.map(() => `$${paramIndex++}`).join(', ');
+    whereClause += ` AND v."channelHandle" IN (${placeholders})`;
+    params.push(...channelHandles);
+  }
+  
+  if (playlistIds && playlistIds.length > 0) {
+    const placeholders = playlistIds.map(() => `$${paramIndex++}`).join(', ');
+    whereClause += ` AND v."playlistId" IN (${placeholders})`;
+    params.push(...playlistIds);
+  }
+
+  const query = `
+    SELECT
+      tc.text,
+      1 - (tc.embedding <=> '${vectorLiteral}'::vector) as score,
+      tc."timestampInSeconds",
+      tc."videoId",
+      v."youtubeId"
+    FROM "TranscriptChunk" tc
+    JOIN "Video" v ON tc."videoId" = v.id
+    WHERE ${whereClause}
+    ORDER BY tc.embedding <=> '${vectorLiteral}'::vector
+    LIMIT ${limit}
+  `;
+
+  // Use $queryRawUnsafe with proper parameterization
+  const results = await prisma.$queryRawUnsafe<
     Array<{
       text: string;
       score: number;
@@ -53,19 +88,7 @@ export async function searchVideos(
       videoId: string;
       youtubeId: string;
     }>
-  >`
-    SELECT
-      tc.text,
-      1 - (tc.embedding <=> ${vectorLiteral}::vector) as score,
-      tc."timestampInSeconds",
-      tc."videoId",
-      v."youtubeId"
-    FROM "TranscriptChunk" tc
-    JOIN "Video" v ON tc."videoId" = v.id
-    WHERE v.status = 'COMPLETED' AND v."userEmail" = ${userEmail}  -- Only search through successfully transcribed videos from specific user
-    ORDER BY tc.embedding <=> ${vectorLiteral}::vector
-    LIMIT ${limit}
-  `;
+  >(query, ...params);
 
   return results;
 }
@@ -217,7 +240,7 @@ export async function handleUserQuery({
         orderBy: {
           createdAt: "asc",
         },
-        take: 5, // Limit to last 20 messages for context
+        take: 5, // Limit to last 5 messages for context
       },
     },
   });
@@ -226,10 +249,31 @@ export async function handleUserQuery({
     throw new Error("Chat not found");
   }
 
-  // 2. Search for relevant video chunks
-  const chunks = await searchVideos(chat.userEmail, query);
+  // 2. Get chat context (channel handles and playlist IDs)
+  const chatContext = await getChatContext({ id: chatId });
 
-  // 3. Get previous messages for context
+  // 3. Search for relevant video chunks with context filtering
+  let chunks: RetrievedChunk[];
+
+  if (
+    chatContext &&
+    (chatContext.channelHandles.length > 0 ||
+      chatContext.playlistIds.length > 0)
+  ) {
+    // Use context-filtered search
+    chunks = await searchVideos(
+      chat.userEmail,
+      query,
+      5,
+      chatContext.channelHandles.length > 0
+        ? chatContext.channelHandles
+        : undefined,
+      chatContext.playlistIds.length > 0 ? chatContext.playlistIds : undefined
+    );
+  } else {
+    // No context configured, search all videos for this user
+    chunks = await searchVideos(chat.userEmail, query);
+  }
 
   // 4. Generate assistant response
   const assistantResponse = await makeChatCall({

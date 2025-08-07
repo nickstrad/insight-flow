@@ -22,6 +22,15 @@ interface YouTubePlaylistDetailsResponse {
     contentDetails: {
       itemCount: number;
     };
+    snippet?: {
+      title: string;
+      description: string;
+      thumbnails: {
+        [key: string]: {
+          url: string;
+        };
+      };
+    };
   }[];
 }
 
@@ -155,6 +164,8 @@ export async function getVideosForChannelOriginal(
           thumbnail: item.snippet.thumbnails.default.url,
           channelHandle,
           playlistId: uploadsPlaylistId,
+          playlistTitle: "Uploads",
+          thumbnailUrl: item.snippet.thumbnails.default.url,
         };
         return video;
       });
@@ -237,6 +248,8 @@ export async function getUploadsMetadataForChannel(
         thumbnail: item.snippet.thumbnails.default.url,
         channelHandle,
         playlistId: uploadsPlaylistId,
+        playlistTitle: "Uploads",
+        thumbnailUrl: item.snippet.thumbnails.default.url,
       };
       return video;
     });
@@ -269,11 +282,13 @@ export async function getNextVideosForPlaylist({
   playlistId,
   nextToken,
   currentPage,
+  playlistTitle,
 }: {
   channelHandle: string;
   playlistId: string;
   nextToken?: string;
   currentPage: number;
+  playlistTitle?: string;
 }): Promise<{
   videos: YoutubeVideo[];
   nextToken?: string;
@@ -301,6 +316,8 @@ export async function getNextVideosForPlaylist({
         thumbnail: item.snippet.thumbnails.default.url,
         channelHandle,
         playlistId: playlistId,
+        playlistTitle: playlistTitle,
+        thumbnailUrl: item.snippet.thumbnails.default.url,
       };
       return video;
     });
@@ -385,6 +402,8 @@ export async function getPlaylistMetadata(
         thumbnail: item.snippet.thumbnails.default.url,
         channelHandle: channelHandle, // Use provided channel handle or fall back to playlist title
         playlistId: playlistId,
+        playlistTitle: playlistItem.snippet?.title,
+        thumbnailUrl: item.snippet.thumbnails.default.url,
       };
       return video;
     });
@@ -705,4 +724,58 @@ export async function bulkDeleteStoredVideos(
     deletedVideos: existingVideos,
     quotaRestored: totalQuotaToRestore
   };
+}
+
+// Get channels and their playlists from user's saved videos
+export async function getUserChannelsAndPlaylists(
+  userEmail: string
+): Promise<Array<{
+  channelHandle: string;
+  playlists: Array<{
+    playlistId: string;
+    playlistTitle: string | null;
+    videoCount: number;
+  }>;
+}>> {
+  const { prisma } = await import("@/db");
+
+  // Get all unique channel/playlist combinations for this user
+  const channelPlaylistData = await prisma.video.groupBy({
+    by: ['channelHandle', 'playlistId', 'playlistTitle'],
+    where: {
+      userEmail,
+      channelHandle: {
+        not: null
+      },
+      playlistId: {
+        not: null
+      }
+    },
+    _count: {
+      id: true
+    }
+  });
+
+  // Group by channel handle
+  const channelMap = new Map<string, Array<{ playlistId: string; playlistTitle: string | null; videoCount: number }>>();
+
+  channelPlaylistData.forEach(item => {
+    if (item.channelHandle && item.playlistId) {
+      if (!channelMap.has(item.channelHandle)) {
+        channelMap.set(item.channelHandle, []);
+      }
+      
+      channelMap.get(item.channelHandle)!.push({
+        playlistId: item.playlistId,
+        playlistTitle: item.playlistTitle,
+        videoCount: item._count.id
+      });
+    }
+  });
+
+  // Convert map to array format
+  return Array.from(channelMap.entries()).map(([channelHandle, playlists]) => ({
+    channelHandle,
+    playlists
+  }));
 }

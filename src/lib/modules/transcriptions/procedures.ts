@@ -23,6 +23,8 @@ export const transcriptRouter = createTRPCRouter({
               thumbnail: z.string().optional(),
               channelHandle: z.string(),
               playlistId: z.string().optional(),
+              playlistTitle: z.string().optional(),
+              thumbnailUrl: z.string().optional(),
             })
           )
           .min(1, { message: "At least one video is required." }),
@@ -108,6 +110,8 @@ export const transcriptRouter = createTRPCRouter({
               thumbnail: z.string().optional(),
               channelHandle: z.string(),
               playlistId: z.string().optional(),
+              playlistTitle: z.string().optional(),
+              thumbnailUrl: z.string().optional(),
             })
           )
           .min(1, { message: "At least one video is required." }),

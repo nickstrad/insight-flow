@@ -181,6 +181,8 @@ export async function createVideoRecordsFromYoutubeVideos(
         content: "", // Will be filled after transcription
         channelHandle: ytVideo.channelHandle,
         playlistId: ytVideo.playlistId,
+        playlistTitle: ytVideo.playlistTitle,
+        thumbnailUrl: ytVideo.thumbnailUrl,
         durationInMinutes: duration,
         status: "PENDING",
       },

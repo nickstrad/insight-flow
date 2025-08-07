@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Send } from "lucide-react";
+import { Plus, Send, MessageSquarePlus, Settings } from "lucide-react";
+import ChannelsAndPlaylistForm from "./ChannelsAndPlaylistForm";
 
 const renderMessageWithLinks = (message: string) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -56,12 +57,12 @@ interface ChatProps {
 }
 
 export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
-  const [currentChat, setCurrentChat] = useState<Chat>();
+  const [currentChat, setCurrentChat] = useState<Chat | undefined>();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   // Get chats for user and channel
-  const { data: chats, error: getAllChatsError } = useSuspenseQuery(
+  const { data: chats, error: getAllChatsError } = useQuery(
     trpc.chats.getByUserEmail.queryOptions({
       userEmail,
     })
@@ -76,6 +77,24 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
   // Create chat mutation
   const createChatHandler = useMutation(
     trpc.chats.create.mutationOptions({
+      onError: (error) => {
+        toast.error(error.message);
+      },
+      onSuccess: (newChat) => {
+        toast.success("Chat created successfully!");
+        queryClient.invalidateQueries(
+          trpc.chats.getByUserEmail.queryOptions({
+            userEmail,
+          })
+        );
+        setCurrentChat(newChat);
+      },
+    })
+  );
+
+  // Create chat with first message mutation
+  const createChatWithFirstMessageHandler = useMutation(
+    trpc.chats.createChatWithFirstMessage.mutationOptions({
       onError: (error) => {
         toast.error(error.message);
       },
@@ -120,7 +139,7 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
             userEmail,
           })
         );
-        setCurrentChat(chats[0] || undefined);
+        setCurrentChat(undefined);
       },
     })
   );
@@ -133,6 +152,16 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
       });
     },
     [createChatHandler, userEmail]
+  );
+
+  const createChatWithFirstMessage = useCallback(
+    async (firstMessage: string) => {
+      return await createChatWithFirstMessageHandler.mutateAsync({
+        userEmail,
+        firstMessage,
+      });
+    },
+    [createChatWithFirstMessageHandler, userEmail]
   );
 
   const editChatTitle = useCallback(
@@ -162,28 +191,27 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
     [deleteChatHandler]
   );
 
-  // Set initial chat if none selected
-  useEffect(() => {
-    if (!currentChat && chats.length > 0) {
-      setCurrentChat(chats[0]);
-    }
-  }, [chats, currentChat]);
+  // Don't auto-select first chat anymore - user must manually select
 
   const toggleChat = (chatId: string) => {
-    const chat = chats.find((chat) => chat.id === chatId);
+    const chat = chats?.find((chat) => chat.id === chatId);
     if (chat) {
       setCurrentChat(chat);
     }
   };
 
   return {
-    chats,
+    chats: chats || [],
     deleteChat,
     createChat,
+    createChatWithFirstMessage,
     currentChat,
+    setCurrentChat,
     editChatTitle,
     error: getAllChatsError?.message || "",
-    isLoading: createChatHandler.isPending,
+    isLoading:
+      createChatHandler.isPending ||
+      createChatWithFirstMessageHandler.isPending,
     toggleChat,
   };
 };
@@ -191,18 +219,23 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
 export const useMessageHelpers = ({
   userEmail,
   chatId,
+  isNewChatMode,
+  setCurrentChat,
 }: {
   chatId?: string;
   userEmail: string;
+  isNewChatMode: boolean;
+  setCurrentChat: (chat: Chat) => void;
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   // Get chat with messages when chatId changes
-  const { data: chat, error: getChatError } = useQuery(
-    trpc.chats.getById.queryOptions({ id: chatId || "" })
-  );
+  const { data: chat, error: getChatError } = useQuery({
+    ...trpc.chats.getById.queryOptions({ id: chatId || "" }),
+    enabled: !!chatId, // Only run query when chatId exists
+  });
 
   const {
     data: getAllChannelsForUserResponse,
@@ -234,7 +267,6 @@ export const useMessageHelpers = ({
         toast.error(error.message);
       },
       onSuccess: (result) => {
-        toast.success("Message sent successfully!");
         // Add both user and assistant messages to local state
         setMessages((prev) => [
           ...prev,
@@ -249,20 +281,52 @@ export const useMessageHelpers = ({
     })
   );
 
+  // Create chat with first message mutation
+  const createChatWithFirstMessageHandler = useMutation(
+    trpc.chats.createChatWithFirstMessage.mutationOptions({
+      onError: (error) => {
+        toast.error(error.message);
+      },
+      onSuccess: (newChat) => {
+        toast.success("Chat created successfully!");
+        queryClient.invalidateQueries(
+          trpc.chats.getByUserEmail.queryOptions({
+            userEmail,
+          })
+        );
+        setCurrentChat(newChat);
+      },
+    })
+  );
+
   const sendMessage = async (
     message: string,
     userEmail: string
   ): Promise<boolean> => {
-    if (!chatId) {
-      return false;
-    }
     try {
-      await sendMessageHandler.mutateAsync({
-        userEmail,
-        query: message,
-        chatId,
-      });
-      return true;
+      // If no chat is selected or we're in new chat mode, create a new chat first
+      if (!chatId || isNewChatMode) {
+        const newChat = await createChatWithFirstMessageHandler.mutateAsync({
+          userEmail,
+          firstMessage: message,
+        });
+
+        // Now send the message to the newly created chat
+        await sendMessageHandler.mutateAsync({
+          userEmail,
+          query: message,
+          chatId: newChat.id,
+        });
+        return true;
+      } else {
+        // Normal message sending to existing chat
+        await sendMessageHandler.mutateAsync({
+          userEmail,
+          query: message,
+          chatId,
+        });
+        return true;
+      }
     } catch (error) {
       return false;
     }
@@ -273,12 +337,16 @@ export const useMessageHelpers = ({
     messages,
     sendMessage,
     error: getChatError?.message || "",
-    isLoading: sendMessageHandler.isPending,
+    isLoading:
+      sendMessageHandler.isPending ||
+      createChatWithFirstMessageHandler.isPending,
   };
 };
 
 const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
   const [newMessage, setNewMessage] = useState("");
+  const [isNewChatMode, setIsNewChatMode] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -288,6 +356,7 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     createChat,
     editChatTitle,
     currentChat,
+    setCurrentChat,
     toggleChat,
     error: chatError,
     isLoading: chatIsLoading,
@@ -298,7 +367,12 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     sendMessage,
     error: messageError,
     isLoading: messageIsLoading,
-  } = useMessageHelpers({ chatId: currentChat?.id, userEmail });
+  } = useMessageHelpers({
+    chatId: currentChat?.id,
+    userEmail,
+    isNewChatMode,
+    setCurrentChat,
+  });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -314,9 +388,14 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     e.preventDefault();
     if (!newMessage.trim() || messageIsLoading || chatIsLoading) return;
 
+    // sendMessage now handles creating new chats when needed
     const success = await sendMessage(newMessage, userEmail);
     if (success) {
       setNewMessage("");
+      // If we were in new chat mode, exit it since we just created a chat
+      if (isNewChatMode) {
+        setIsNewChatMode(false);
+      }
     }
   };
 
@@ -327,6 +406,26 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     }
   };
 
+  const startNewChat = () => {
+    setIsNewChatMode(true);
+    setCurrentChat(undefined); // Clear current chat to hide old messages
+    setNewMessage("");
+    inputRef.current?.focus();
+  };
+
+  const openSettings = () => {
+    setIsSettingsOpen(true);
+  };
+
+  const closeSettings = () => {
+    setIsSettingsOpen(false);
+  };
+
+  const handleContextUpdate = (channelHandles: string[], playlistIds: string[]) => {
+    // Optionally refresh chat data or handle context update
+    closeSettings();
+  };
+
   return {
     chat: {
       chats,
@@ -335,6 +434,12 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
       createChat,
       deleteChat,
       editChatTitle,
+      startNewChat,
+      openSettings,
+      closeSettings,
+      isNewChatMode,
+      isSettingsOpen,
+      handleContextUpdate,
     },
     message: {
       messages,
@@ -357,8 +462,12 @@ export default function Chat({ userEmail }: ChatProps) {
       currentChat,
       toggleChat,
       createChat,
-      deleteChat,
-      editChatTitle,
+      startNewChat,
+      openSettings,
+      closeSettings,
+      isNewChatMode,
+      isSettingsOpen,
+      handleContextUpdate,
     },
     message: {
       messages,
@@ -464,9 +573,32 @@ export default function Chat({ userEmail }: ChatProps) {
         {/* Chat Header - Fixed */}
         <Card className="rounded-none border-b border-l-0 border-r-0 border-t-0 flex-shrink-0">
           <CardHeader className="py-1 px-4">
-            <CardTitle className="font-medium">
-              {currentChat?.title || "Select a chat"}
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="font-medium">
+                {isNewChatMode ? "New Chat" : currentChat?.title ?? ""}
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={openSettings}
+                  disabled={isNewChatMode || !currentChat}
+                  className="h-8 w-8"
+                  title="Chat Settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={startNewChat}
+                  className="h-8 w-8"
+                  title="New Chat"
+                >
+                  <MessageSquarePlus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
         </Card>
 
@@ -541,13 +673,19 @@ export default function Chat({ userEmail }: ChatProps) {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your message..."
+                placeholder={
+                  isNewChatMode
+                    ? "Type your first message to create a new chat..."
+                    : currentChat
+                    ? "Type your message..."
+                    : "Type a message to start a new chat..."
+                }
                 className="min-h-[2.5rem] max-h-32 resize-none"
-                disabled={isLoading || !currentChat}
+                disabled={isLoading}
               />
               <Button
                 type="submit"
-                disabled={!newMessage.trim() || isLoading || !currentChat}
+                disabled={!newMessage.trim() || isLoading}
                 size="icon"
                 className="shrink-0"
               >
@@ -557,6 +695,26 @@ export default function Chat({ userEmail }: ChatProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Settings Modal */}
+      <Dialog open={isSettingsOpen} onOpenChange={(open) => { if (!open) closeSettings(); }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Chat Settings</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            {currentChat && (
+              <ChannelsAndPlaylistForm
+                chatId={currentChat.id}
+                userEmail={userEmail}
+                initialChannelHandles={currentChat.channelHandles || []}
+                initialPlaylistIds={currentChat.playlistIds || []}
+                onUpdate={handleContextUpdate}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -188,11 +188,17 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-                            <TableHead onClick={() => handleSort("channelHandle")}>
+              <TableHead>
+                Thumbnail
+              </TableHead>
+              <TableHead onClick={() => handleSort("channelHandle")}>
                 Channel {getSortIcon("channelHandle")}
               </TableHead>
               <TableHead onClick={() => handleSort("playlistId")}>
                 Playlist ID {getSortIcon("playlistId")}
+              </TableHead>
+              <TableHead onClick={() => handleSort("playlistTitle")}>
+                Playlist Title {getSortIcon("playlistTitle")}
               </TableHead>
               <TableHead onClick={() => handleSort("title")}>
                 Title {getSortIcon("title")}
@@ -216,6 +222,19 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
           <TableBody>
             {currentVideos.map((video) => (
               <TableRow key={video.id}>
+                <TableCell>
+                  {video.thumbnailUrl ? (
+                    <img 
+                      src={video.thumbnailUrl} 
+                      alt={`Thumbnail for ${video.title}`}
+                      className="w-16 h-12 object-cover rounded"
+                    />
+                  ) : (
+                    <div className="w-16 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                      No Image
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell>
                   {video.channelHandle ? (
                     <a
@@ -243,6 +262,9 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                   ) : (
                     <span className="font-mono text-xs text-gray-600">N/A</span>
                   )}
+                </TableCell>
+                <TableCell>
+                  {video.playlistTitle || <span className="text-gray-500 italic">No playlist title</span>}
                 </TableCell>
                 <TableCell>
                   <a
@@ -325,7 +347,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
             ))}
             {videos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center">
+                <TableCell colSpan={11} className="text-center">
                   No videos found for {userEmail}
                 </TableCell>
               </TableRow>

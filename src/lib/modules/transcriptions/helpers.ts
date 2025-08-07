@@ -20,6 +20,7 @@ import {
   type Transcript,
 } from "../embeddings/helpers";
 import { retryWithBackoff } from "@/lib/utils";
+import { createTranscriptionNotifications } from "../notifications/helpers";
 
 // Types are now imported from embeddings/helpers
 
@@ -983,6 +984,47 @@ function processTranscriptionResults(
   };
 }
 
+// Helper function to categorize videos for notifications
+async function categorizeVideoResultsForNotifications(
+  transcriptionResults: TranscriptionResult[],
+  embeddingResults: TranscriptionResult[]
+): Promise<{
+  transcriptionSuccesses: Video[];
+  transcriptionFailures: Video[];
+  embeddingSuccesses: Video[];
+  embeddingFailures: Video[];
+}> {
+  const transcriptionSuccesses: Video[] = [];
+  const transcriptionFailures: Video[] = [];
+  const embeddingSuccesses: Video[] = [];
+  const embeddingFailures: Video[] = [];
+
+  // Categorize transcription results
+  for (const result of transcriptionResults) {
+    if (result.transcript && !result.error) {
+      transcriptionSuccesses.push(result.video);
+    } else if (result.error) {
+      transcriptionFailures.push(result.video);
+    }
+  }
+
+  // Categorize embedding results
+  for (const result of embeddingResults) {
+    if (result.transcript && !result.error) {
+      embeddingSuccesses.push(result.video);
+    } else if (result.error) {
+      embeddingFailures.push(result.video);
+    }
+  }
+
+  return {
+    transcriptionSuccesses,
+    transcriptionFailures,
+    embeddingSuccesses,
+    embeddingFailures,
+  };
+}
+
 // 10. Create video processing pipeline pattern
 type ProcessingStep = {
   name: string;
@@ -1278,6 +1320,22 @@ export const transcribeVideos = async ({
     finalSummary.totalAttempts
   );
 
+  // Create notifications for transcription and embedding results
+  try {
+    const categorizedResults = await categorizeVideoResultsForNotifications(
+      transcriptionResults,
+      embeddingResults
+    );
+    
+    await createTranscriptionNotifications({
+      userEmail,
+      ...categorizedResults,
+    });
+  } catch (error) {
+    console.error("Failed to create transcription notifications:", error);
+    // Don't fail the entire operation if notification creation fails
+  }
+
   return {
     totalAttempts: finalSummary.totalAttempts,
     totalTranscribed: embeddingSummary.totalTranscribed, // Only fully completed videos
@@ -1328,6 +1386,22 @@ export const transcribeExistingVideo = async ({
     resultSummary.totalTranscribed,
     resultSummary.totalAttempts
   );
+
+  // Create notifications for re-transcription results (transcription + embedding combined)
+  try {
+    const categorizedResults = await categorizeVideoResultsForNotifications(
+      results,
+      [] // No separate embedding results since this is the full pipeline
+    );
+    
+    await createTranscriptionNotifications({
+      userEmail,
+      ...categorizedResults,
+    });
+  } catch (error) {
+    console.error("Failed to create transcription notifications:", error);
+    // Don't fail the entire operation if notification creation fails
+  }
 
   return {
     totalAttempts: resultSummary.totalAttempts,
@@ -1385,6 +1459,22 @@ export const transcribeVideosOnly = async ({
     resultSummary.totalAttempts
   );
 
+  // Create notifications for transcription-only results
+  try {
+    const categorizedResults = await categorizeVideoResultsForNotifications(
+      results,
+      [] // No embedding results in transcription-only mode
+    );
+    
+    await createTranscriptionNotifications({
+      userEmail,
+      ...categorizedResults,
+    });
+  } catch (error) {
+    console.error("Failed to create transcription notifications:", error);
+    // Don't fail the entire operation if notification creation fails
+  }
+
   return {
     totalAttempts: resultSummary.totalAttempts,
     totalTranscribed: resultSummary.totalTranscribed,
@@ -1433,6 +1523,27 @@ export const generateEmbeddingsForVideos = async ({
   console.log(
     `🏁 Embedding complete: ${resultSummary.totalTranscribed}/${resultSummary.totalAttempts} videos embedded successfully`
   );
+
+  // Create notifications for embedding-only results
+  try {
+    // For embedding-only mode, we need to get the userEmail from the first video
+    const userEmail = videos.length > 0 ? videos[0].userEmail : '';
+    
+    if (userEmail) {
+      const categorizedResults = await categorizeVideoResultsForNotifications(
+        [], // No transcription results in embedding-only mode
+        results
+      );
+      
+      await createTranscriptionNotifications({
+        userEmail,
+        ...categorizedResults,
+      });
+    }
+  } catch (error) {
+    console.error("Failed to create embedding notifications:", error);
+    // Don't fail the entire operation if notification creation fails
+  }
 
   return {
     totalAttempts: resultSummary.totalAttempts,
@@ -1492,6 +1603,22 @@ export const retryVideo = async ({
         videoProcessingPipeline
       );
 
+      // Create notification for retry result
+      try {
+        const categorizedResults = await categorizeVideoResultsForNotifications(
+          [result], // Single result from retry
+          []
+        );
+        
+        await createTranscriptionNotifications({
+          userEmail,
+          ...categorizedResults,
+        });
+      } catch (error) {
+        console.error("Failed to create retry notification:", error);
+        // Don't fail the retry operation if notification creation fails
+      }
+
       return {
         success: !result.error,
         action: "transcribe",
@@ -1500,6 +1627,22 @@ export const retryVideo = async ({
     } else if (video.status === "EMBEDDING_ERROR") {
       // Just retry embedding
       const result = await processVideoEmbedding(video);
+
+      // Create notification for embedding retry result
+      try {
+        const categorizedResults = await categorizeVideoResultsForNotifications(
+          [], // No transcription results for embedding retry
+          [result] // Single embedding result from retry
+        );
+        
+        await createTranscriptionNotifications({
+          userEmail,
+          ...categorizedResults,
+        });
+      } catch (error) {
+        console.error("Failed to create embedding retry notification:", error);
+        // Don't fail the retry operation if notification creation fails
+      }
 
       return {
         success: !result.error,

@@ -6,4 +6,6 @@ export type YoutubeVideo = {
   durationInMinutes?: number;
   channelHandle: string;
   playlistId?: string;
+  playlistTitle?: string;
+  thumbnailUrl?: string;
 };

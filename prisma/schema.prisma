@@ -14,19 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum TranscriptionStatus {
-  PENDING
-  TRANSCRIBE_ERROR
-  EMBEDDING_ERROR
-  COMPLETED
-}
-
-enum MessageRole {
-  USER
-  ASSISTANT
-  SYSTEM
-}
-
 model Quota {
   userEmail      String   @unique
   messagesLeft   Int
@@ -34,19 +21,45 @@ model Quota {
   resetAt        DateTime
 }
 
+enum TranscriptionStatus {
+  PENDING
+  TRANSCRIBE_ERROR
+  EMBEDDING_ERROR
+  COMPLETED
+}
+
 model Video {
-  id                String              @id @default(uuid())
-  youtubeId         String              @unique
-  userEmail         String
-  title             String
-  content           String
-  channelHandle     String?
-  playlistId        String?
+  id            String  @id @default(uuid())
+  youtubeId     String  @unique
+  userEmail     String
+  title         String
+  content       String
+  channelHandle String?
+  playlistId    String?
+  playlistTitle String?
+  thumbnailUrl  String?
+
   chunks            TranscriptChunk[]
   durationInMinutes Int
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   status            TranscriptionStatus @default(PENDING)
+}
+
+enum NotificationType {
+  TRANSCRIPTION_ERROR
+  TRANSCRIPTION_SUCCESS
+  EMBEDDING_ERROR
+  EMBEDDING_SUCCESS
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userEmail String
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
 }
 
 model TranscriptChunk {
@@ -60,12 +73,20 @@ model TranscriptChunk {
 }
 
 model Chat {
-  id        String        @id @default(uuid())
-  userEmail String
-  title     String
-  messages  ChatMessage[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id             String        @id @default(uuid())
+  userEmail      String
+  title          String
+  channelHandles String[]
+  playlistIds    String[]
+  messages       ChatMessage[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
 }
 
 model ChatMessage {

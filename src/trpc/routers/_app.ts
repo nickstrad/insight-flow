@@ -4,6 +4,7 @@ import { chatRouter } from "@/lib/modules/chats/procedures";
 import { messageRouter } from "@/lib/modules/messages/procedures";
 import { videosRouter } from "@/lib/modules/videos/procedures";
 import { quotasRouter } from "@/lib/modules/quota/procedures";
+import { notificationsRouter } from "@/lib/modules/notifications/procedures";
 
 export const appRouter = createTRPCRouter({
   transcriptions: transcriptRouter,
@@ -11,6 +12,7 @@ export const appRouter = createTRPCRouter({
   chats: chatRouter,
   messages: messageRouter,
   quotas: quotasRouter,
+  notifications: notificationsRouter,
 });
 
 // export type definition of API
