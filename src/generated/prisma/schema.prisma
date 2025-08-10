@@ -29,15 +29,16 @@ enum TranscriptionStatus {
 }
 
 model Video {
-  id                String              @id @default(uuid())
-  youtubeId         String              @unique
-  userEmail         String
-  title             String
-  content           String
-  channelHandle     String?
-  playlistId        String?
-  playlistTitle     String?
-  thumbnailUrl      String?
+  id            String  @id @default(uuid())
+  youtubeId     String  @unique
+  userEmail     String
+  title         String
+  content       String
+  channelHandle String?
+  playlistId    String?
+  playlistTitle String?
+  thumbnailUrl  String?
+
   chunks            TranscriptChunk[]
   durationInMinutes Int
   createdAt         DateTime            @default(now())
@@ -46,6 +47,7 @@ model Video {
 }
 
 enum NotificationType {
+  TRANSCRIPTION_STARTED
   TRANSCRIPTION_ERROR
   TRANSCRIPTION_SUCCESS
   EMBEDDING_ERROR

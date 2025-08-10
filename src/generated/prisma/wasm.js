@@ -200,6 +200,7 @@ exports.TranscriptionStatus = exports.$Enums.TranscriptionStatus = {
 };
 
 exports.NotificationType = exports.$Enums.NotificationType = {
+  TRANSCRIPTION_STARTED: 'TRANSCRIPTION_STARTED',
   TRANSCRIPTION_ERROR: 'TRANSCRIPTION_ERROR',
   TRANSCRIPTION_SUCCESS: 'TRANSCRIPTION_SUCCESS',
   EMBEDDING_ERROR: 'EMBEDDING_ERROR',

@@ -59,6 +59,7 @@ export type TranscriptionStatus = (typeof TranscriptionStatus)[keyof typeof Tran
 
 
 export const NotificationType: {
+  TRANSCRIPTION_STARTED: 'TRANSCRIPTION_STARTED',
   TRANSCRIPTION_ERROR: 'TRANSCRIPTION_ERROR',
   TRANSCRIPTION_SUCCESS: 'TRANSCRIPTION_SUCCESS',
   EMBEDDING_ERROR: 'EMBEDDING_ERROR',

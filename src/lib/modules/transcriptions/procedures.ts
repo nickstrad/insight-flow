@@ -1,12 +1,7 @@
 import { createTRPCRouter, baseProcedure } from "@/trpc/init";
 import z from "zod";
-import {
-  transcribeVideos,
-  transcribeExistingVideo,
-  transcribeVideosOnly,
-  retryVideo,
-} from "./helpers";
 import { prisma } from "@/db";
+import { inngest } from "@/inngest/client";
 
 export const transcriptRouter = createTRPCRouter({
   transcribeVideos: baseProcedure
@@ -38,11 +33,22 @@ export const transcriptRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input: { youtubeVideos, userEmail, batchSize } }) => {
-      return transcribeVideos({
-        youtubeVideos,
-        userEmail,
-        batchSize,
+      // Send event to Inngest for async processing
+      await inngest.send({
+        name: "transcription/videos.submitted",
+        data: {
+          youtubeVideos,
+          userEmail,
+          batchSize,
+        },
       });
+
+      return {
+        success: true,
+        message: `Transcription started for ${youtubeVideos.length} video${youtubeVideos.length > 1 ? 's' : ''}. You'll receive notifications when complete.`,
+        videoCount: youtubeVideos.length,
+        async: true,
+      };
     }),
 
   transcribeExistingVideos: baseProcedure
@@ -73,11 +79,22 @@ export const transcriptRouter = createTRPCRouter({
         throw new Error("No videos found with the provided IDs");
       }
 
-      return transcribeExistingVideo({
-        videos,
-        userEmail,
-        batchSize,
+      // Send event to Inngest for async processing
+      await inngest.send({
+        name: "transcription/existing-videos.submitted",
+        data: {
+          videos,
+          userEmail,
+          batchSize,
+        },
       });
+
+      return {
+        success: true,
+        message: `Re-transcription started for ${videos.length} video${videos.length > 1 ? 's' : ''}. You'll receive notifications when complete.`,
+        videoCount: videos.length,
+        async: true,
+      };
     }),
 
   retryVideo: baseProcedure
@@ -90,10 +107,20 @@ export const transcriptRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input: { videoId, userEmail } }) => {
-      return retryVideo({
-        videoId,
-        userEmail,
+      // Send event to Inngest for async processing
+      await inngest.send({
+        name: "transcription/retry.requested",
+        data: {
+          videoId,
+          userEmail,
+        },
       });
+
+      return {
+        success: true,
+        message: "Video retry started. You'll receive notifications when complete.",
+        async: true,
+      };
     }),
 
   transcribeVideosOnly: baseProcedure
@@ -125,10 +152,21 @@ export const transcriptRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input: { youtubeVideos, userEmail, batchSize } }) => {
-      return transcribeVideosOnly({
-        youtubeVideos,
-        userEmail,
-        batchSize,
+      // Send event to Inngest for async processing
+      await inngest.send({
+        name: "transcription/videos-only.submitted",
+        data: {
+          youtubeVideos,
+          userEmail,
+          batchSize,
+        },
       });
+
+      return {
+        success: true,
+        message: `Transcription-only started for ${youtubeVideos.length} video${youtubeVideos.length > 1 ? 's' : ''} (no embeddings). You'll receive notifications when complete.`,
+        videoCount: youtubeVideos.length,
+        async: true,
+      };
     }),
 });
