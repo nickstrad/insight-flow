@@ -44,7 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { SquareArrowOutUpRight, Trash2, Check, CheckCheck } from "lucide-react";
+import { SquareArrowOutUpRight, Trash2, Check } from "lucide-react";
 import { useNotificationTableState } from "./hooks";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -54,9 +54,7 @@ interface NotificationTableProps {
   userEmail: string;
 }
 
-function NotificationTableContent({
-  userEmail,
-}: NotificationTableProps) {
+function NotificationTableContent({ userEmail }: NotificationTableProps) {
   const {
     pagination: { currentPage, totalPages, handlePreviousPage, handleNextPage },
     state: { isModalOpen, selectedNotificationMessage, selectedNotifications },

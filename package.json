@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:inngest": "npx inngest-cli@latest dev",
+    "typecheck": "npx tsc --noEmit",
+    "build-check": "npm run build && npm run typecheck && npm run lint",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

@@ -51,7 +51,9 @@ function convertTimestampToSeconds(time: string): number | null {
   try {
     // Handle both single timestamps "02:12" and ranges "02:12 - 02:28"
     // For ranges, we only need the starting timestamp
-    const startTime = time.includes(" - ") ? time.split(" - ")[0].trim() : time.trim();
+    const startTime = time.includes(" - ")
+      ? time.split(" - ")[0].trim()
+      : time.trim();
     const [minutesStr, secondsStr] = startTime.split(":");
 
     const minutes = parseInt(minutesStr, 10);
@@ -64,52 +66,56 @@ function convertTimestampToSeconds(time: string): number | null {
 }
 
 // Helper function to merge transcript chunks to be at least 10 seconds each
-function mergeTranscriptChunks(transcript: Transcript, minChunkDurationSeconds: number = 10): Transcript {
+function mergeTranscriptChunks(
+  transcript: Transcript,
+  minChunkDurationSeconds: number = 10
+): Transcript {
   if (transcript.length === 0) return transcript;
-  
+
   const mergedChunks: Transcript = [];
   let currentChunk: TranscriptChunk | null = null;
   let currentChunkStartTime: number = 0;
-  
+
   for (let i = 0; i < transcript.length; i++) {
     const chunk = transcript[i];
-    const chunkTimestamp = typeof chunk.timestamp === 'number' 
-      ? chunk.timestamp 
-      : (convertTimestampToSeconds(chunk.timestamp.toString()) || 0);
-    
+    const chunkTimestamp =
+      typeof chunk.timestamp === "number"
+        ? chunk.timestamp
+        : convertTimestampToSeconds(chunk.timestamp.toString()) || 0;
+
     if (currentChunk === null) {
       // Start new chunk
       currentChunk = {
         timestamp: chunkTimestamp,
         text: chunk.text,
-        embedding: null
+        embedding: null,
       };
       currentChunkStartTime = chunkTimestamp;
     } else {
       // Check if we should merge with current chunk or start a new one
       const chunkDuration = chunkTimestamp - currentChunkStartTime;
-      
+
       if (chunkDuration < minChunkDurationSeconds) {
         // Merge with current chunk
-        currentChunk.text += ' ' + chunk.text;
+        currentChunk.text += " " + chunk.text;
       } else {
         // Current chunk is long enough, save it and start new one
         mergedChunks.push(currentChunk);
         currentChunk = {
           timestamp: chunkTimestamp,
           text: chunk.text,
-          embedding: null
+          embedding: null,
         };
         currentChunkStartTime = chunkTimestamp;
       }
     }
   }
-  
+
   // Don't forget the last chunk
   if (currentChunk !== null) {
     mergedChunks.push(currentChunk);
   }
-  
+
   return mergedChunks;
 }
 
@@ -287,13 +293,19 @@ const getTranscript = async ({
       );
 
       // Merge chunks to be at least 10 seconds each
-      const mergedTranscriptions = mergeTranscriptChunks(formattedTranscriptions, 10);
+      const mergedTranscriptions = mergeTranscriptChunks(
+        formattedTranscriptions,
+        10
+      );
 
       const transcriptionText = mergedTranscriptions
         .map((chunk) => chunk.text)
         .join(" ");
 
-      return { transcriptionText, formattedTranscriptions: mergedTranscriptions };
+      return {
+        transcriptionText,
+        formattedTranscriptions: mergedTranscriptions,
+      };
     },
     3,
     1000,
@@ -1326,7 +1338,7 @@ export const transcribeVideos = async ({
       transcriptionResults,
       embeddingResults
     );
-    
+
     await createTranscriptionNotifications({
       userEmail,
       ...categorizedResults,
@@ -1393,7 +1405,7 @@ export const transcribeExistingVideo = async ({
       results,
       [] // No separate embedding results since this is the full pipeline
     );
-    
+
     await createTranscriptionNotifications({
       userEmail,
       ...categorizedResults,
@@ -1465,7 +1477,7 @@ export const transcribeVideosOnly = async ({
       results,
       [] // No embedding results in transcription-only mode
     );
-    
+
     await createTranscriptionNotifications({
       userEmail,
       ...categorizedResults,
@@ -1527,14 +1539,14 @@ export const generateEmbeddingsForVideos = async ({
   // Create notifications for embedding-only results
   try {
     // For embedding-only mode, we need to get the userEmail from the first video
-    const userEmail = videos.length > 0 ? videos[0].userEmail : '';
-    
+    const userEmail = videos.length > 0 ? videos[0].userEmail : "";
+
     if (userEmail) {
       const categorizedResults = await categorizeVideoResultsForNotifications(
         [], // No transcription results in embedding-only mode
         results
       );
-      
+
       await createTranscriptionNotifications({
         userEmail,
         ...categorizedResults,
@@ -1609,7 +1621,7 @@ export const retryVideo = async ({
           [result], // Single result from retry
           []
         );
-        
+
         await createTranscriptionNotifications({
           userEmail,
           ...categorizedResults,
@@ -1634,7 +1646,7 @@ export const retryVideo = async ({
           [], // No transcription results for embedding retry
           [result] // Single embedding result from retry
         );
-        
+
         await createTranscriptionNotifications({
           userEmail,
           ...categorizedResults,

@@ -36,7 +36,6 @@ import { useQuery } from "@tanstack/react-query";
 export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
   const [channelHandle, setChannelHandle] = useState("");
   const [submittedHandle, setSubmittedHandle] = useState("");
-  const [submittedPlaylistId, setSubmittedPlaylistId] = useState("");
   const [selectedPlaylistId, setSelectedPlaylistId] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +46,6 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
     e.preventDefault();
     if (channelHandle.trim()) {
       setSubmittedHandle(channelHandle.trim());
-      setSubmittedPlaylistId("");
       setSelectedPlaylistId("");
       setShowPlaylistDropdown(true);
       setIsSubmitted(false); // Don't show videos yet, wait for playlist selection
@@ -68,7 +66,6 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
 
   const handlePlaylistSelect = (playlistId: string) => {
     setSelectedPlaylistId(playlistId);
-    setSubmittedPlaylistId(playlistId);
     setIsSubmitted(true);
   };
 
@@ -133,7 +130,7 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground">
-                  The "Uploads" playlist is selected by default
+                  The &quot;Uploads&quot; playlist is selected by default
                 </p>
               </div>
             )}

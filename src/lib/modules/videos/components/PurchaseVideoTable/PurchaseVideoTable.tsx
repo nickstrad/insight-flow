@@ -181,7 +181,7 @@ export default function PurchaseVideoTable({
     trpc.transcriptions.transcribeVideos.mutationOptions({
       onSuccess: (data) => {
         toast.success(
-          `Transcription started! Processing ${data.totalAttempts} videos.`
+          `Transcription started! Processing ${data.videoCount} videos.`
         );
 
         // Invalidate quota query to refresh quota data
@@ -334,7 +334,10 @@ export default function PurchaseVideoTable({
             ) : currentVideos.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  No videos found for {searchType === "channel" ? `channel ${channelHandle}` : `playlist ${playlistId}`}
+                  No videos found for{" "}
+                  {searchType === "channel"
+                    ? `channel ${channelHandle}`
+                    : `playlist ${playlistId}`}
                 </TableCell>
               </TableRow>
             ) : (

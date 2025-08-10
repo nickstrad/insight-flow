@@ -7,7 +7,7 @@ import { currentUser } from "@clerk/nextjs/server";
 
 const Page = async () => {
   const user = await currentUser();
-  const userEmail = user?.emailAddresses[0]?.emailAddress!; // Access the primary email address
+  const userEmail = user?.emailAddresses[0]?.emailAddress ?? ''; // Access the primary email address
 
   const queryClient = getQueryClient();
 

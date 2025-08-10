@@ -230,7 +230,7 @@ export async function handleUserQuery({
   chunks: RetrievedChunk[];
 }> {
   // 1. Find or create chat for this user and channel
-  let chat = await prisma.chat.findFirst({
+  const chat = await prisma.chat.findFirst({
     where: {
       id: chatId,
       userEmail,

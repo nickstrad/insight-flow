@@ -32,7 +32,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { SquareArrowOutUpRight, Trash2, RefreshCcw, Loader2 } from "lucide-react";
+import {
+  SquareArrowOutUpRight,
+  Trash2,
+  RefreshCcw,
+  Loader2,
+} from "lucide-react";
 import { useVideoTableState } from "./hooks";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -63,34 +68,33 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
     openModal,
     closeModal,
   } = useVideoTableState({ userEmail });
-  
+
   const [isRetryModalOpen, setIsRetryModalOpen] = useState(false);
-  const [selectedVideoForRetry, setSelectedVideoForRetry] = useState<string | null>(null);
+  const [selectedVideoForRetry, setSelectedVideoForRetry] = useState<
+    string | null
+  >(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedVideoForDelete, setSelectedVideoForDelete] = useState<string | null>(null);
+  const [selectedVideoForDelete, setSelectedVideoForDelete] = useState<
+    string | null
+  >(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  
+
   // Retry video mutation (smart retry based on status)
   const retryVideoMutation = useMutation(
     trpc.transcriptions.retryVideo.mutationOptions({
       onSuccess: (data) => {
         if (data.success) {
-          const actionText = data.action === 'transcribe' 
-            ? 'Re-transcription' 
-            : data.action === 'embed' 
-            ? 'Re-embedding' 
-            : 'Processing';
-          toast.success(`${actionText} started successfully!`);
+          toast.success("Video retry started successfully!");
         } else {
-          toast.error(`Retry failed: ${data.error}`);
+          toast.error("Retry failed");
         }
-        
+
         // Invalidate videos query to refresh the table
         queryClient.invalidateQueries(
           trpc.videos.getStoredVideosForChannel.queryOptions({ userEmail })
         );
-        
+
         setIsRetryModalOpen(false);
         setSelectedVideoForRetry(null);
       },
@@ -99,20 +103,24 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
       },
     })
   );
-  
+
   // Delete video mutation
   const deleteVideoMutation = useMutation(
     trpc.videos.deleteStoredVideo.mutationOptions({
       onSuccess: (data) => {
         toast.success(
-          `Video deleted successfully! ${data.quotaRestored > 0 ? `${data.quotaRestored}h quota restored.` : ''}`
+          `Video deleted successfully! ${
+            data.quotaRestored > 0
+              ? `${data.quotaRestored}h quota restored.`
+              : ""
+          }`
         );
-        
+
         // Invalidate videos query to refresh the table
         queryClient.invalidateQueries(
           trpc.videos.getStoredVideosForChannel.queryOptions({ userEmail })
         );
-        
+
         setIsDeleteModalOpen(false);
         setSelectedVideoForDelete(null);
       },
@@ -121,15 +129,15 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
       },
     })
   );
-  
+
   const handleRetryClick = (videoId: string) => {
     setSelectedVideoForRetry(videoId);
     setIsRetryModalOpen(true);
   };
-  
+
   const handleConfirmRetry = async () => {
     if (!selectedVideoForRetry) return;
-    
+
     try {
       await retryVideoMutation.mutateAsync({
         videoId: selectedVideoForRetry,
@@ -137,18 +145,18 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
       });
     } catch (error) {
       // Error handling is already done in the mutation options
-      console.error('Retry video error:', error);
+      console.error("Retry video error:", error);
     }
   };
-  
+
   const handleDeleteClick = (videoId: string) => {
     setSelectedVideoForDelete(videoId);
     setIsDeleteModalOpen(true);
   };
-  
+
   const handleConfirmDelete = async () => {
     if (!selectedVideoForDelete) return;
-    
+
     try {
       await deleteVideoMutation.mutateAsync({
         videoId: selectedVideoForDelete,
@@ -156,23 +164,27 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
       });
     } catch (error) {
       // Error handling is already done in the mutation options
-      console.error('Delete video error:', error);
+      console.error("Delete video error:", error);
     }
   };
-  
+
   // Get the selected video to show status-specific retry message
-  const selectedVideo = currentVideos.find(v => v.id === selectedVideoForRetry);
-  const selectedVideoForDeletion = currentVideos.find(v => v.id === selectedVideoForDelete);
+  const selectedVideo = currentVideos.find(
+    (v) => v.id === selectedVideoForRetry
+  );
+  const selectedVideoForDeletion = currentVideos.find(
+    (v) => v.id === selectedVideoForDelete
+  );
   const getRetryMessage = (status: string) => {
     switch (status) {
-      case 'TRANSCRIBE_ERROR':
-        return 'This will reset the video status and attempt full transcription and embedding again.';
-      case 'EMBEDDING_ERROR':
-        return 'This will attempt to generate embeddings for the already transcribed video.';
-      case 'FAILED': // Legacy status
-        return 'This will reset the video status and attempt transcription again.';
+      case "TRANSCRIBE_ERROR":
+        return "This will reset the video status and attempt full transcription and embedding again.";
+      case "EMBEDDING_ERROR":
+        return "This will attempt to generate embeddings for the already transcribed video.";
+      case "FAILED": // Legacy status
+        return "This will reset the video status and attempt transcription again.";
       default:
-        return 'This will retry processing the video.';
+        return "This will retry processing the video.";
     }
   };
 
@@ -188,9 +200,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                Thumbnail
-              </TableHead>
+              <TableHead>Thumbnail</TableHead>
               <TableHead onClick={() => handleSort("channelHandle")}>
                 Channel {getSortIcon("channelHandle")}
               </TableHead>
@@ -224,8 +234,8 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
               <TableRow key={video.id}>
                 <TableCell>
                   {video.thumbnailUrl ? (
-                    <img 
-                      src={video.thumbnailUrl} 
+                    <img
+                      src={video.thumbnailUrl}
                       alt={`Thumbnail for ${video.title}`}
                       className="w-16 h-12 object-cover rounded"
                     />
@@ -246,7 +256,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                       {video.channelHandle}
                     </a>
                   ) : (
-                    'Unknown'
+                    "Unknown"
                   )}
                 </TableCell>
                 <TableCell>
@@ -264,7 +274,11 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                   )}
                 </TableCell>
                 <TableCell>
-                  {video.playlistTitle || <span className="text-gray-500 italic">No playlist title</span>}
+                  {video.playlistTitle || (
+                    <span className="text-gray-500 italic">
+                      No playlist title
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <a
@@ -289,9 +303,11 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                         : "secondary"
                     }
                   >
-                    {video.status === 'TRANSCRIBE_ERROR' ? 'TRANSCRIPTION FAILED' :
-                     video.status === 'EMBEDDING_ERROR' ? 'EMBEDDING FAILED' :
-                     video.status}
+                    {video.status === "TRANSCRIBE_ERROR"
+                      ? "TRANSCRIPTION FAILED"
+                      : video.status === "EMBEDDING_ERROR"
+                      ? "EMBEDDING FAILED"
+                      : video.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="max-w-md">
@@ -313,7 +329,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    {(video.status === "TRANSCRIBE_ERROR" || 
+                    {(video.status === "TRANSCRIBE_ERROR" ||
                       video.status === "EMBEDDING_ERROR") && (
                       <div className="flex items-center gap-1">
                         <Button
@@ -321,14 +337,19 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                           variant="ghost"
                           size="icon"
                           className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                          title={`Retry ${video.status === 'EMBEDDING_ERROR' ? 'embedding' : 'transcription'}`}
+                          title={`Retry ${
+                            video.status === "EMBEDDING_ERROR"
+                              ? "embedding"
+                              : "transcription"
+                          }`}
                           disabled={retryVideoMutation.isPending}
                         >
                           <RefreshCcw className="h-4 w-4" />
                         </Button>
-                        {retryVideoMutation.isPending && selectedVideoForRetry === video.id && (
-                          <Loader2 className="h-4 w-4 animate-spin text-orange-600" />
-                        )}
+                        {retryVideoMutation.isPending &&
+                          selectedVideoForRetry === video.id && (
+                            <Loader2 className="h-4 w-4 animate-spin text-orange-600" />
+                          )}
                       </div>
                     )}
                     <Button
@@ -397,40 +418,50 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
           </DialogHeader>
         </DialogContent>
       </Dialog>
-      
+
       <AlertDialog open={isRetryModalOpen} onOpenChange={setIsRetryModalOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Retry Video {selectedVideo?.status === 'EMBEDDING_ERROR' ? 'Embedding' : 'Transcription'}
+              Retry Video{" "}
+              {selectedVideo?.status === "EMBEDDING_ERROR"
+                ? "Embedding"
+                : "Transcription"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to retry processing this video? {selectedVideo ? getRetryMessage(selectedVideo.status) : ''} This action will consume quota if successful.
+              Are you sure you want to retry processing this video?{" "}
+              {selectedVideo ? getRetryMessage(selectedVideo.status) : ""} This
+              action will consume quota if successful.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={retryVideoMutation.isPending}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmRetry}
               disabled={retryVideoMutation.isPending}
             >
-              {retryVideoMutation.isPending ? "Retrying..." : 
-               `Retry ${selectedVideo?.status === 'EMBEDDING_ERROR' ? 'Embedding' : 'Processing'}`}
+              {retryVideoMutation.isPending
+                ? "Retrying..."
+                : `Retry ${
+                    selectedVideo?.status === "EMBEDDING_ERROR"
+                      ? "Embedding"
+                      : "Processing"
+                  }`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete Video
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete Video</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this video? This action will permanently remove the video, its transcript chunks, embeddings, and restore any quota that was used. This action cannot be undone.
+              Are you sure you want to delete this video? This action will
+              permanently remove the video, its transcript chunks, embeddings,
+              and restore any quota that was used. This action cannot be undone.
               {selectedVideoForDeletion && (
                 <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
                   <strong>Video:</strong> {selectedVideoForDeletion.title}
@@ -442,7 +473,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
             <AlertDialogCancel disabled={deleteVideoMutation.isPending}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={deleteVideoMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
