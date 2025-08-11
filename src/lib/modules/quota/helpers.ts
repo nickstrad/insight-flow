@@ -1,5 +1,5 @@
 import { prisma } from "@/db";
-import { Video } from "@/generated/prisma";
+import { Video, Quota } from "@/generated/prisma";
 import { YoutubeVideo } from "../videos/types";
 import axios from "axios";
 import { convertDurationToMinutes } from "@/lib/utils";
@@ -203,7 +203,7 @@ export function calculateVideoHoursNeeded(durationInMinutes: number): number {
 export async function checkVideoQuota(
   userEmail: string,
   videoHoursNeeded: number
-): Promise<{ hasQuota: boolean; currentQuota: any }> {
+): Promise<{ hasQuota: boolean; currentQuota: Quota }> {
   const currentQuota = await getQuota(userEmail);
   return {
     hasQuota: currentQuota.videoHoursLeft >= videoHoursNeeded,
@@ -215,7 +215,7 @@ export async function checkVideoQuota(
 export async function deductVideoQuota(
   userEmail: string,
   videoHoursUsed: number
-): Promise<any> {
+): Promise<Quota> {
   const currentQuota = await getQuota(userEmail);
   const newVideoHoursLeft = Math.max(
     0,

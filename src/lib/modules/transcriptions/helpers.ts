@@ -1,5 +1,5 @@
 import { prisma } from "@/db";
-import { Video } from "@/generated/prisma";
+import { Video, Quota } from "@/generated/prisma";
 import { GoogleGenAI } from "@google/genai";
 import { toGeminiSchema } from "gemini-zod";
 import z from "zod";
@@ -61,6 +61,7 @@ function convertTimestampToSeconds(time: string): number | null {
 
     return minutes * 60 + seconds;
   } catch (err) {
+    void err;
     return null;
   }
 }
@@ -130,7 +131,7 @@ async function prepareExistingVideos(
 ): Promise<{
   videosToProcess: Video[];
   totalHoursNeeded: number;
-  currentQuota: any;
+  currentQuota: Quota;
   shouldEarlyReturn: boolean;
   earlyReturnResult?: {
     totalAttempts: number;
@@ -281,7 +282,7 @@ const getTranscript = async ({
 
       const transcriptionArray = JSON.parse(response.text ?? "[]");
       const formattedTranscriptions: Transcript = transcriptionArray.map(
-        (item: any) => {
+        (item: { timestamp: string; text: string }) => {
           const seconds = convertTimestampToSeconds(item.timestamp);
           const transcription: TranscriptChunk = {
             timestamp: seconds !== null ? seconds : item.timestamp,
@@ -321,7 +322,7 @@ async function prepareTranscriptionJob(
   videoRecords: Video[];
   pendingVideos: Video[];
   totalHoursNeeded: number;
-  currentQuota: any;
+  currentQuota: Quota;
   shouldEarlyReturn: boolean;
   earlyReturnResult?: {
     totalAttempts: number;
@@ -582,7 +583,7 @@ type ValidationResult = {
 
 function validateQuotaForBatch(
   pendingVideos: Video[],
-  currentQuota: any,
+  currentQuota: Quota,
   videoRecords: Video[]
 ): ValidationResult {
   if (pendingVideos.length === 0) {
@@ -1050,7 +1051,7 @@ type ProcessingContext = {
   fullTranscriptionText?: string;
   transcriptWithEmbeddings?: Transcript;
   videoHoursNeeded?: number;
-  updatedQuota?: any;
+  updatedQuota?: Quota;
 };
 
 const checkQuotaStep: ProcessingStep = {

@@ -56,7 +56,7 @@ export default function ChannelsAndPlaylistForm({
   // Update chat context mutation
   const updateChatContextMutation = useMutation(
     trpc.chats.updateContext.mutationOptions({
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast.error(`Failed to update chat context: ${error.message}`);
       },
       onSuccess: () => {

@@ -44,6 +44,7 @@ import { Clock, Video, AlertCircle, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import PaginatedVideoList from "./PaginatedVideoList";
 import { useRouter } from "next/navigation";
+import { YoutubeVideo } from "../../types";
 
 interface VideoTableProps {
   channelHandle: string;
@@ -162,7 +163,7 @@ export default function PurchaseVideoTable({
   const selectedVideoHours = Math.ceil(selectedVideoMinutes / 60);
 
   // Function to check if a video can be selected without exceeding quota
-  const canSelectVideo = (video: any) => {
+  const canSelectVideo = (video: YoutubeVideo) => {
     if (!quota) return true;
     const newTotalMinutes =
       selectedVideoMinutes + (video.durationInMinutes || 0);
