@@ -26,8 +26,11 @@ export default function ChannelsAndPlaylistForm({
   initialPlaylistIds = [],
   onUpdate,
 }: ChannelsAndPlaylistFormProps) {
-  const [selectedChannelHandles, setSelectedChannelHandles] = useState<string[]>(initialChannelHandles);
-  const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<string[]>(initialPlaylistIds);
+  const [selectedChannelHandles, setSelectedChannelHandles] = useState<
+    string[]
+  >(initialChannelHandles);
+  const [selectedPlaylistIds, setSelectedPlaylistIds] =
+    useState<string[]>(initialPlaylistIds);
 
   const trpc = useTRPC();
 
@@ -56,7 +59,7 @@ export default function ChannelsAndPlaylistForm({
   // Update chat context mutation
   const updateChatContextMutation = useMutation(
     trpc.chats.updateContext.mutationOptions({
-      onError: (error: Error) => {
+      onError: (error) => {
         toast.error(`Failed to update chat context: ${error.message}`);
       },
       onSuccess: () => {
@@ -70,36 +73,50 @@ export default function ChannelsAndPlaylistForm({
   const handleChannelChange = (channelHandle: string, checked: boolean) => {
     if (checked) {
       // Add channel and remove all playlists from that channel
-      setSelectedChannelHandles(prev => [...prev, channelHandle]);
-      
+      setSelectedChannelHandles((prev) => [...prev, channelHandle]);
+
       // Remove all playlists from this channel
-      const channelData = channelsAndPlaylists?.find(c => c.channelHandle === channelHandle);
+      const channelData = channelsAndPlaylists?.find(
+        (c) => c.channelHandle === channelHandle
+      );
       if (channelData) {
-        const channelPlaylistIds = channelData.playlists.map(p => p.playlistId);
-        setSelectedPlaylistIds(prev => prev.filter(id => !channelPlaylistIds.includes(id)));
+        const channelPlaylistIds = channelData.playlists.map(
+          (p) => p.playlistId
+        );
+        setSelectedPlaylistIds((prev) =>
+          prev.filter((id) => !channelPlaylistIds.includes(id))
+        );
       }
     } else {
       // Remove channel
-      setSelectedChannelHandles(prev => prev.filter(h => h !== channelHandle));
+      setSelectedChannelHandles((prev) =>
+        prev.filter((h) => h !== channelHandle)
+      );
     }
   };
 
   // Handle playlist selection
-  const handlePlaylistChange = (playlistId: string, channelHandle: string, checked: boolean) => {
+  const handlePlaylistChange = (
+    playlistId: string,
+    channelHandle: string,
+    checked: boolean
+  ) => {
     if (checked) {
       // Add playlist and remove the parent channel
-      setSelectedPlaylistIds(prev => [...prev, playlistId]);
-      setSelectedChannelHandles(prev => prev.filter(h => h !== channelHandle));
+      setSelectedPlaylistIds((prev) => [...prev, playlistId]);
+      setSelectedChannelHandles((prev) =>
+        prev.filter((h) => h !== channelHandle)
+      );
     } else {
       // Remove playlist
-      setSelectedPlaylistIds(prev => prev.filter(id => id !== playlistId));
+      setSelectedPlaylistIds((prev) => prev.filter((id) => id !== playlistId));
     }
   };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       await updateChatContextMutation.mutateAsync({
         id: chatId,
@@ -132,7 +149,9 @@ export default function ChannelsAndPlaylistForm({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center">Loading chat context and channels...</div>
+          <div className="text-center">
+            Loading chat context and channels...
+          </div>
         </CardContent>
       </Card>
     );
@@ -151,12 +170,16 @@ export default function ChannelsAndPlaylistForm({
   }
 
   // Determine baseline for change detection (current context or initial props)
-  const baselineChannelHandles = currentChatContext?.channelHandles || initialChannelHandles;
-  const baselinePlaylistIds = currentChatContext?.playlistIds || initialPlaylistIds;
+  const baselineChannelHandles =
+    currentChatContext?.channelHandles || initialChannelHandles;
+  const baselinePlaylistIds =
+    currentChatContext?.playlistIds || initialPlaylistIds;
 
-  const hasChanges = 
-    JSON.stringify([...selectedChannelHandles].sort()) !== JSON.stringify([...baselineChannelHandles].sort()) ||
-    JSON.stringify([...selectedPlaylistIds].sort()) !== JSON.stringify([...baselinePlaylistIds].sort());
+  const hasChanges =
+    JSON.stringify([...selectedChannelHandles].sort()) !==
+      JSON.stringify([...baselineChannelHandles].sort()) ||
+    JSON.stringify([...selectedPlaylistIds].sort()) !==
+      JSON.stringify([...baselinePlaylistIds].sort());
 
   return (
     <Card>
@@ -164,19 +187,20 @@ export default function ChannelsAndPlaylistForm({
         <div className="flex items-center justify-between">
           <CardTitle>Chat Context</CardTitle>
           <div className="flex gap-2">
-            {(selectedChannelHandles.length > 0 || selectedPlaylistIds.length > 0) && (
-              <Button 
-                variant="outline" 
-                size="sm" 
+            {(selectedChannelHandles.length > 0 ||
+              selectedPlaylistIds.length > 0) && (
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleClearAll}
                 type="button"
               >
                 Clear All
               </Button>
             )}
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleReset}
               disabled={!hasChanges}
               type="button"
@@ -186,27 +210,30 @@ export default function ChannelsAndPlaylistForm({
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          Select channels or specific playlists to focus the chat context. Selecting a channel includes all its playlists.
+          Select channels or specific playlists to focus the chat context.
+          Selecting a channel includes all its playlists.
         </p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Selected items summary */}
-          {(selectedChannelHandles.length > 0 || selectedPlaylistIds.length > 0) && (
+          {(selectedChannelHandles.length > 0 ||
+            selectedPlaylistIds.length > 0) && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Selected Context:</Label>
               <div className="flex flex-wrap gap-1">
-                {selectedChannelHandles.map(handle => (
+                {selectedChannelHandles.map((handle) => (
                   <Badge key={handle} variant="default">
                     Channel: {handle}
                   </Badge>
                 ))}
-                {selectedPlaylistIds.map(playlistId => {
+                {selectedPlaylistIds.map((playlistId) => {
                   // Find the playlist info
                   const playlistInfo = channelsAndPlaylists
-                    ?.flatMap(c => c.playlists)
-                    .find(p => p.playlistId === playlistId);
-                  const playlistTitle = playlistInfo?.playlistTitle || "Untitled Playlist";
+                    ?.flatMap((c) => c.playlists)
+                    .find((p) => p.playlistId === playlistId);
+                  const playlistTitle =
+                    playlistInfo?.playlistTitle || "Untitled Playlist";
                   return (
                     <Badge key={playlistId} variant="secondary">
                       {playlistTitle} ({playlistInfo?.videoCount || 0} videos)
@@ -228,45 +255,58 @@ export default function ChannelsAndPlaylistForm({
                     <Checkbox
                       id={`channel-${channelHandle}`}
                       checked={selectedChannelHandles.includes(channelHandle)}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleChannelChange(channelHandle, checked as boolean)
                       }
                     />
-                    <Label 
+                    <Label
                       htmlFor={`channel-${channelHandle}`}
                       className="font-medium cursor-pointer"
                     >
                       {channelHandle}
                     </Label>
                     <Badge variant="outline">
-                      {playlists.reduce((sum, p) => sum + p.videoCount, 0)} videos
+                      {playlists.reduce((sum, p) => sum + p.videoCount, 0)}{" "}
+                      videos
                     </Badge>
                   </div>
 
                   {/* Playlist Selection */}
                   <div className="ml-6 space-y-2">
-                    {playlists.map(({ playlistId, playlistTitle, videoCount }) => (
-                      <div key={playlistId} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`playlist-${playlistId}`}
-                          checked={selectedPlaylistIds.includes(playlistId)}
-                          disabled={selectedChannelHandles.includes(channelHandle)}
-                          onCheckedChange={(checked) =>
-                            handlePlaylistChange(playlistId, channelHandle, checked as boolean)
-                          }
-                        />
-                        <Label 
-                          htmlFor={`playlist-${playlistId}`}
-                          className={`text-sm cursor-pointer ${
-                            selectedChannelHandles.includes(channelHandle) 
-                              ? 'text-muted-foreground' 
-                              : ''
-                          }`}
+                    {playlists.map(
+                      ({ playlistId, playlistTitle, videoCount }) => (
+                        <div
+                          key={playlistId}
+                          className="flex items-center space-x-2"
                         >
-                          {playlistTitle || "Untitled Playlist"} ({videoCount} videos)
-                        </Label>
-                      </div>
-                    ))}
+                          <Checkbox
+                            id={`playlist-${playlistId}`}
+                            checked={selectedPlaylistIds.includes(playlistId)}
+                            disabled={selectedChannelHandles.includes(
+                              channelHandle
+                            )}
+                            onCheckedChange={(checked) =>
+                              handlePlaylistChange(
+                                playlistId,
+                                channelHandle,
+                                checked as boolean
+                              )
+                            }
+                          />
+                          <Label
+                            htmlFor={`playlist-${playlistId}`}
+                            className={`text-sm cursor-pointer ${
+                              selectedChannelHandles.includes(channelHandle)
+                                ? "text-muted-foreground"
+                                : ""
+                            }`}
+                          >
+                            {playlistTitle || "Untitled Playlist"} ({videoCount}{" "}
+                            videos)
+                          </Label>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               ))}
@@ -275,11 +315,13 @@ export default function ChannelsAndPlaylistForm({
 
           {/* Submit Button */}
           <div className="flex justify-end">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={!hasChanges || updateChatContextMutation.isPending}
             >
-              {updateChatContextMutation.isPending ? "Updating..." : "Update Context"}
+              {updateChatContextMutation.isPending
+                ? "Updating..."
+                : "Update Context"}
             </Button>
           </div>
         </form>
