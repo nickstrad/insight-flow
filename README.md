@@ -16,23 +16,23 @@ and also giving the content creator more views when users click through the sour
 
 ### Transcribed Videos View
 
-![](screenshots/my_videos_view.png)
+![Transcribed Videos View](screenshots/my_videos_view.png)
 
 ### Video Selection View
 
-![](screenshots/video_selection_view.png)
+![Video Selection View](screenshots/video_selection_view.png)
 
 ### Video Selection Confirmation View
 
-![](screenshots/confirm_transcriptions_view.png)
+![Video Selection Confirmation View](screenshots/confirm_transcriptions_view.png)
 
 ### Notifications View
 
-![](screenshots/notifications_view.png)
+![Notifications View](screenshots/notifications_view.png)
 
 ### Chat View
 
-![](screenshots/chat_ux.png)
+![Chat View](screenshots/chat_ux.png)
 
 ### Technologies Used
 
