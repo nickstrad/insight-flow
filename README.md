@@ -1,7 +1,9 @@
 ### Overview
-`insight-flow` is a web application that allows Youtube Channel owners the ability for their audience to 
-ask questions against their content. This allows users to gain insights into the content creators opinions 
+
+`insight-flow` is a web application that allows Youtube Channel owners the ability for their audience to
+ask questions against their content. This allows users to gain insights into the content creators opinions
 across all of their videos. The app will also help content creators get insights into:
+
 - the questions users ask about their content
 - what questions their content doesn't answer adequately
 
@@ -11,12 +13,29 @@ engaging a content creators chat page, giving the content creator analytics to h
 and also giving the content creator more views when users click through the sources.
 
 ## Screenshots
-### Youtube Creator Video View
-![Screenshot 1](https://drive.google.com/uc?id=148CLphlyopIS7C2-r2Qn6UBpxIY9J1pi)
-### User Chatbox View
-![Screenshot 2](https://drive.google.com/uc?id=129tKfbAXyCbQKPwO5wKnAUHLb1bHzDbr)
+
+### Transcribed Videos View
+
+![](screenshots/my_videos_view.png)
+
+### Video Selection View
+
+![](screenshots/video_selection_view.png)
+
+### Video Selection Confirmation View
+
+![](screenshots/confirm_transcriptions_view.png)
+
+### Notifications View
+
+![](screenshots/notifications_view.png)
+
+### Chat View
+
+![](screenshots/chat_ux.png)
 
 ### Technologies Used
+
 - Prisma for postgresql db management and ORM logic
 - ShadCN components to build UI
 - tailwind for styling
@@ -24,11 +43,14 @@ and also giving the content creator more views when users click through the sour
 - Clerk for authentication
 
 ### Postgresql Notes
-1. The postgresql db must have `pgvector` enabled. For example the db environment has to have ran
-`CREATE EXTENSION IF NOT EXISTS vector;`
 
-### Configure `.env` file 
+1. The postgresql db must have `pgvector` enabled. For example the db environment has to have ran
+   `CREATE EXTENSION IF NOT EXISTS vector;`
+
+### Configure `.env` file
+
 Create `.env` file in root of project with these values:
+
 ```
 # URL to postgresql db
 DATABASE_URL=""
@@ -43,7 +65,7 @@ NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL="/"
 ```
 
 ### Dev setup
+
 1. `npm i`
 2. `npm run dev`
 3. open `localhost:3000`
-
