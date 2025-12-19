@@ -1,6 +1,6 @@
 ### Overview
 
-`insight-flow` is a web application that allows Youtube Channel owners the ability for their audience to
+`insight-flow`(insight-flow.app) is a web application that allows Youtube Channel owners the ability for their audience to
 ask questions against their content. This allows users to gain insights into the content creators opinions
 across all of their videos. The app will also help content creators get insights into:
 
