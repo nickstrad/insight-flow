@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="#0B0F14"/>
+
+  <!-- IF mark (simple geometric shapes; no fonts) -->
+  <!-- I -->
+  <rect x="150" y="150" width="64" height="212" rx="20" fill="#7C9CFF"/>
+
+  <!-- F (vertical + top bar + mid bar) -->
+  <rect x="246" y="150" width="64" height="212" rx="20" fill="#7C9CFF"/>
+  <rect x="246" y="150" width="140" height="64" rx="20" fill="#7C9CFF"/>
+  <rect x="246" y="236" width="112" height="64" rx="20" fill="#7C9CFF"/>
+</svg>

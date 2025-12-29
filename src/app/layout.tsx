@@ -17,9 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ImsightFlow",
+  title: "InsightFlow",
   description:
     "Platform for AI-driven to help content creators connect with their audience.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -31,7 +34,12 @@ export default function RootLayout({
     <ClerkProvider
       appearance={{
         variables: {
-          colorPrimary: "#C96342",
+          colorPrimary: "#18181b",
+          colorText: "#18181b",
+          colorTextSecondary: "#71717a",
+          colorBackground: "#ffffff",
+          colorInputBackground: "#ffffff",
+          colorInputText: "#18181b",
         },
       }}
     >
