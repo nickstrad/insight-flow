@@ -15,11 +15,11 @@ export default function Home() {
           </Badge>
 
           <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-6">
-            Chat With Any YouTube Channel's Content
+            Chat With Any YouTube Channel&apos;s Content
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-            Ask questions across any creator's video library and get instant answers
+            Ask questions across any creator&apos;s video library and get instant answers
             with timestamped citations. Turn hours of video into searchable knowledge.
           </p>
 
@@ -44,7 +44,7 @@ export default function Home() {
               How It Works
             </h2>
             <p className="text-xl text-muted-foreground">
-              Four simple steps to unlock your content's potential
+              Four simple steps to unlock your content&apos;s potential
             </p>
           </div>
 
@@ -135,7 +135,7 @@ export default function Home() {
               <CardContent>
                 <p className="text-muted-foreground">
                   Transform hours of video content into searchable, accessible knowledge.
-                  Find exactly what you're looking for instantly.
+                  Find exactly what you&apos;re looking for instantly.
                 </p>
               </CardContent>
             </Card>
@@ -177,7 +177,7 @@ export default function Home() {
                 <Badge>Your Library</Badge>
                 <h3 className="text-3xl font-bold">Track Your Transcriptions</h3>
                 <p className="text-lg text-muted-foreground">
-                  View all the videos you've transcribed from any YouTube channel. See processing status,
+                  View all the videos you&apos;ve transcribed from any YouTube channel. See processing status,
                   manage your library, and organize content by channel or playlist.
                 </p>
               </div>
@@ -262,10 +262,10 @@ export default function Home() {
       <section className="py-20 px-4 bg-gradient-to-b from-muted/20 to-background">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <h2 className="text-4xl md:text-5xl font-bold">
-            Ready to Unlock YouTube's Knowledge?
+            Ready to Unlock YouTube&apos;s Knowledge?
           </h2>
           <p className="text-xl text-muted-foreground">
-            Start chatting with any YouTube channel's content today.
+            Start chatting with any YouTube channel&apos;s content today.
             Get instant answers with timestamped citations.
           </p>
           <SignUpButton mode="modal">
