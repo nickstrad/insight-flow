@@ -14,13 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Quota {
-  userEmail      String   @unique
-  messagesLeft   Int
-  videoHoursLeft Int
-  resetAt        DateTime
-}
-
 enum TranscriptionStatus {
   PENDING
   TRANSCRIBE_ERROR
@@ -31,7 +24,6 @@ enum TranscriptionStatus {
 model Video {
   id            String  @id @default(uuid())
   youtubeId     String  @unique
-  userEmail     String
   title         String
   content       String
   channelHandle String?
@@ -56,7 +48,6 @@ enum NotificationType {
 
 model Notification {
   id        String           @id @default(uuid())
-  userEmail String
   type      NotificationType
   message   String
   read      Boolean          @default(false)
@@ -75,7 +66,7 @@ model TranscriptChunk {
 
 model Chat {
   id             String        @id @default(uuid())
-  userEmail      String
+  uid            String
   title          String
   channelHandles String[]
   playlistIds    String[]

@@ -1,2 +1,0 @@
--- AlterEnum
-ALTER TYPE "NotificationType" ADD VALUE 'TRANSCRIPTION_STARTED';
