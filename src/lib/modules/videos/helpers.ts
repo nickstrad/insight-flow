@@ -464,16 +464,10 @@ export async function getAllPlaylistsForUser(): Promise<
 export async function getStoredVideoById(videoId: string) {
   const { prisma } = await import("@/db");
 
-  const video = await prisma.video.findFirst({
-    where: {
-      id: videoId,
-    },
-  });
-
+  const video = await prisma.video.findUnique({ where: { id: videoId } });
   if (!video) {
     throw new Error("Video not found");
   }
-
   return video;
 }
 
@@ -487,52 +481,17 @@ export async function updateStoredVideo(
 ) {
   const { prisma } = await import("@/db");
 
-  const existingVideo = await prisma.video.findFirst({
-    where: {
-      id: videoId,
-    },
+  return prisma.video.update({
+    where: { id: videoId },
+    data: { ...updateData, updatedAt: new Date() },
   });
-
-  if (!existingVideo) {
-    throw new Error("Video not found");
-  }
-
-  const updatedVideo = await prisma.video.update({
-    where: {
-      id: videoId,
-    },
-    data: {
-      ...updateData,
-      updatedAt: new Date(),
-    },
-  });
-
-  return updatedVideo;
 }
 
 export async function deleteStoredVideo(videoId: string) {
   const { prisma } = await import("@/db");
 
-  const existingVideo = await prisma.video.findFirst({
-    where: {
-      id: videoId,
-    },
-  });
-
-  if (!existingVideo) {
-    throw new Error("Video not found");
-  }
-
-  await prisma.video.delete({
-    where: {
-      id: videoId,
-    },
-  });
-
-  return {
-    success: true,
-    deletedVideo: existingVideo,
-  };
+  await prisma.video.delete({ where: { id: videoId } });
+  return { success: true };
 }
 
 export async function bulkDeleteStoredVideos(videoIds: string[]) {
@@ -542,27 +501,11 @@ export async function bulkDeleteStoredVideos(videoIds: string[]) {
     throw new Error("No video IDs provided");
   }
 
-  const existingVideos = await prisma.video.findMany({
-    where: {
-      id: { in: videoIds },
-    },
+  const { count } = await prisma.video.deleteMany({
+    where: { id: { in: videoIds } },
   });
 
-  if (existingVideos.length !== videoIds.length) {
-    throw new Error("Some videos not found");
-  }
-
-  const deleteResult = await prisma.video.deleteMany({
-    where: {
-      id: { in: videoIds },
-    },
-  });
-
-  return {
-    success: true,
-    deletedCount: deleteResult.count,
-    deletedVideos: existingVideos,
-  };
+  return { success: true, deletedCount: count };
 }
 
 export async function getUserChannelsAndPlaylists(): Promise<

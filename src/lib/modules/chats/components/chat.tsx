@@ -113,7 +113,7 @@ export const useChatHelpers = ({ uid }: { uid: string }) => {
         toast.error(error.message);
       },
       onSuccess: (newChat) => {
-        toast.success("Chat created successfully!");
+        toast.success("Chat title updated!");
         queryClient.invalidateQueries(
           trpc.chats.getByUid.queryOptions({
             uid,
@@ -130,7 +130,7 @@ export const useChatHelpers = ({ uid }: { uid: string }) => {
         toast.error(error.message);
       },
       onSuccess: () => {
-        toast.success("Chat created successfully!");
+        toast.success("Chat deleted!");
         queryClient.invalidateQueries(
           trpc.chats.getByUid.queryOptions({
             uid,
@@ -409,11 +409,7 @@ const useChatHandlers = ({ uid }: { uid: string }) => {
     setIsSettingsOpen(false);
   };
 
-  const handleContextUpdate = (
-    channelHandles: string[],
-    playlistIds: string[]
-  ) => {
-    // Optionally refresh chat data or handle context update
+  const handleContextUpdate = () => {
     closeSettings();
   };
 

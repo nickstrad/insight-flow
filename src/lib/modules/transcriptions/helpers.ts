@@ -108,50 +108,39 @@ async function createVideoRecordsFromYoutubeVideos(
   youtubeVideos: YoutubeVideo[],
   durationMap: Map<string, number>
 ): Promise<Video[]> {
-  for (const yv of youtubeVideos) {
-    await prisma.video.upsert({
-      where: { youtubeId: yv.youtubeId },
-      update: {},
-      create: {
-        youtubeId: yv.youtubeId,
-        title: yv.title,
-        content: "",
-        channelHandle: yv.channelHandle,
-        playlistId: yv.playlistId,
-        playlistTitle: yv.playlistTitle,
-        thumbnailUrl: yv.thumbnailUrl,
-        durationInMinutes: durationMap.get(yv.youtubeId) ?? 0,
-      },
-    });
-  }
-  return prisma.video.findMany({
-    where: {
-      youtubeId: { in: youtubeVideos.map((v) => v.youtubeId) },
-    },
-  });
+  return Promise.all(
+    youtubeVideos.map((yv) =>
+      prisma.video.upsert({
+        where: { youtubeId: yv.youtubeId },
+        update: {},
+        create: {
+          youtubeId: yv.youtubeId,
+          title: yv.title,
+          content: "",
+          channelHandle: yv.channelHandle,
+          playlistId: yv.playlistId,
+          playlistTitle: yv.playlistTitle,
+          thumbnailUrl: yv.thumbnailUrl,
+          durationInMinutes: durationMap.get(yv.youtubeId) ?? 0,
+        },
+      })
+    )
+  );
 }
 
 async function prepareExistingVideos(videos: Video[]): Promise<Video[]> {
   console.log(`Starting re-transcription of ${videos.length} existing videos`);
+  const ids = videos.map((v) => v.id);
 
-  const videosToProcess: Video[] = [];
-  for (const video of videos) {
-    await prisma.transcriptChunk.deleteMany({
-      where: { videoId: video.id },
-    });
+  await prisma.transcriptChunk.deleteMany({
+    where: { videoId: { in: ids } },
+  });
+  await prisma.video.updateMany({
+    where: { id: { in: ids } },
+    data: { status: "PENDING", content: "" },
+  });
 
-    const resetVideo = await prisma.video.update({
-      where: { id: video.id },
-      data: {
-        status: "PENDING",
-        content: "",
-      },
-    });
-
-    videosToProcess.push(resetVideo);
-  }
-
-  return videosToProcess;
+  return prisma.video.findMany({ where: { id: { in: ids } } });
 }
 
 async function prepareVideosForEmbedding(videos: Video[]): Promise<Video[]> {
@@ -443,30 +432,16 @@ const transcribeChunksStep: ProcessingStep = {
 const saveTranscriptionOnlyStep: ProcessingStep = {
   name: "saveTranscriptionOnly",
   execute: async (context) => {
-    const transcriptWithoutEmbeddings = context.allTranscripts!.map(
-      (chunk) => ({
-        ...chunk,
-        embedding: null,
-      })
-    );
-
-    for (const chunk of transcriptWithoutEmbeddings) {
-      await prisma.$executeRaw`
-        INSERT INTO "TranscriptChunk" (id, "timestampInSeconds", text, embedding, "videoId", "createdAt")
-        VALUES (
-          gen_random_uuid(),
-          ${
-            typeof chunk.timestamp === "number"
-              ? chunk.timestamp
-              : parseInt(chunk.timestamp.toString(), 10)
-          },
-          ${chunk.text},
-          NULL,
-          ${context.video.id},
-          NOW()
-        )
-      `;
-    }
+    await prisma.transcriptChunk.createMany({
+      data: context.allTranscripts!.map((chunk) => ({
+        videoId: context.video.id,
+        timestampInSeconds:
+          typeof chunk.timestamp === "number"
+            ? chunk.timestamp
+            : parseInt(chunk.timestamp.toString(), 10),
+        text: chunk.text,
+      })),
+    });
 
     await prisma.video.update({
       where: { id: context.video.id },

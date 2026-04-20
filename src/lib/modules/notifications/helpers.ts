@@ -97,55 +97,23 @@ export async function batchDeleteNotifications(notificationIds: string[]) {
     throw new Error("No notification IDs provided");
   }
 
-  const existingNotifications = await prisma.notification.findMany({
-    where: {
-      id: { in: notificationIds },
-    },
+  const { count } = await prisma.notification.deleteMany({
+    where: { id: { in: notificationIds } },
   });
 
-  const deleteResult = await prisma.notification.deleteMany({
-    where: {
-      id: { in: notificationIds },
-    },
-  });
-
-  return {
-    success: true,
-    deletedCount: deleteResult.count,
-    deletedNotifications: existingNotifications,
-  };
+  return { success: true, deletedCount: count };
 }
 
 export async function deleteAllReadNotifications() {
-  const readNotifications = await prisma.notification.findMany({
-    where: {
-      read: true,
-    },
+  const { count } = await prisma.notification.deleteMany({
+    where: { read: true },
   });
-
-  const deleteResult = await prisma.notification.deleteMany({
-    where: {
-      read: true,
-    },
-  });
-
-  return {
-    success: true,
-    deletedCount: deleteResult.count,
-    deletedNotifications: readNotifications,
-  };
+  return { success: true, deletedCount: count };
 }
 
 export async function deleteAllNotifications() {
-  const allNotifications = await prisma.notification.findMany();
-
-  const deleteResult = await prisma.notification.deleteMany();
-
-  return {
-    success: true,
-    deletedCount: deleteResult.count,
-    deletedNotifications: allNotifications,
-  };
+  const { count } = await prisma.notification.deleteMany();
+  return { success: true, deletedCount: count };
 }
 
 export async function createTranscriptionNotifications({
