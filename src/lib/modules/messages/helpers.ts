@@ -1,6 +1,6 @@
 import { prisma } from "@/db";
 import { GoogleGenAI } from "@google/genai";
-import { ChatMessage, MessageRole, Prisma } from "@/generated/prisma";
+import { ChatMessage, MessageRole } from "@/generated/prisma";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { z } from "zod";
 import { StructuredOutputParser } from "langchain/output_parsers";
@@ -35,7 +35,6 @@ const responseSchema = z.object({
 const parser = StructuredOutputParser.fromZodSchema(responseSchema);
 
 export async function searchVideos(
-  userEmail: string,
   queryText: string,
   limit: number = 5,
   channelHandles?: string[],
@@ -47,10 +46,9 @@ export async function searchVideos(
   }
   const vectorLiteral = `[${queryEmbedding.join(",")}]`;
 
-  // Build the WHERE clause dynamically
-  let whereClause = `v.status = 'COMPLETED' AND v."userEmail" = $1`;
-  const params = [userEmail];
-  let paramIndex = 2;
+  let whereClause = `v.status = 'COMPLETED'`;
+  const params: string[] = [];
+  let paramIndex = 1;
 
   // Add context-based filtering
   if (channelHandles && channelHandles.length > 0) {
@@ -218,11 +216,9 @@ ${formatInstructions}`;
 };
 
 export async function handleUserQuery({
-  userEmail,
   query,
   chatId,
 }: {
-  userEmail: string;
   query: string;
   chatId: string;
 }): Promise<{
@@ -231,18 +227,16 @@ export async function handleUserQuery({
   assistantMessage: ChatMessage;
   chunks: RetrievedChunk[];
 }> {
-  // 1. Find or create chat for this user and channel
-  const chat = await prisma.chat.findFirst({
+  const chat = await prisma.chat.findUnique({
     where: {
       id: chatId,
-      userEmail,
     },
     include: {
       messages: {
         orderBy: {
           createdAt: "asc",
         },
-        take: 5, // Limit to last 5 messages for context
+        take: 5,
       },
     },
   });
@@ -251,10 +245,8 @@ export async function handleUserQuery({
     throw new Error("Chat not found");
   }
 
-  // 2. Get chat context (channel handles and playlist IDs)
   const chatContext = await getChatContext({ id: chatId });
 
-  // 3. Search for relevant video chunks with context filtering
   let chunks: RetrievedChunk[];
 
   if (
@@ -262,9 +254,7 @@ export async function handleUserQuery({
     (chatContext.channelHandles.length > 0 ||
       chatContext.playlistIds.length > 0)
   ) {
-    // Use context-filtered search
     chunks = await searchVideos(
-      chat.userEmail,
       query,
       5,
       chatContext.channelHandles.length > 0
@@ -273,8 +263,7 @@ export async function handleUserQuery({
       chatContext.playlistIds.length > 0 ? chatContext.playlistIds : undefined
     );
   } else {
-    // No context configured, search all videos for this user
-    chunks = await searchVideos(chat.userEmail, query);
+    chunks = await searchVideos(query);
   }
 
   // 4. Generate assistant response

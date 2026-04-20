@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 
 interface ChannelsAndPlaylistFormProps {
   chatId: string;
-  userEmail: string;
   initialChannelHandles?: string[];
   initialPlaylistIds?: string[];
   onUpdate?: (channelHandles: string[], playlistIds: string[]) => void;
@@ -21,7 +20,6 @@ interface ChannelsAndPlaylistFormProps {
 
 export default function ChannelsAndPlaylistForm({
   chatId,
-  userEmail,
   initialChannelHandles = [],
   initialPlaylistIds = [],
   onUpdate,
@@ -43,9 +41,7 @@ export default function ChannelsAndPlaylistForm({
 
   // Fetch user's channels and playlists
   const { data: channelsAndPlaylists, isLoading: isLoadingData } = useQuery(
-    trpc.videos.getUserChannelsAndPlaylists.queryOptions({
-      userEmail,
-    })
+    trpc.videos.getUserChannelsAndPlaylists.queryOptions()
   );
 
   // Update state when chat context is loaded

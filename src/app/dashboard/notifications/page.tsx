@@ -3,18 +3,12 @@ import NotificationTable from "@/lib/modules/notifications/components/Notificati
 import DashboardPageHeader from "@/components/DashboardPageHeader";
 import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { currentUser } from "@clerk/nextjs/server";
 
 const Page = async () => {
-  const user = await currentUser();
-  const userEmail = user?.emailAddresses[0]?.emailAddress ?? "";
-
   const queryClient = getQueryClient();
 
   void queryClient.prefetchQuery(
-    trpc.notifications.getNotificationsForUser.queryOptions({
-      userEmail,
-    })
+    trpc.notifications.getNotificationsForUser.queryOptions()
   );
 
   return (
@@ -28,7 +22,7 @@ const Page = async () => {
         <ErrorBoundary
           fallback={<div>Something went wrong loading notifications</div>}
         >
-          <NotificationTable userEmail={userEmail} />
+          <NotificationTable />
         </ErrorBoundary>
       </HydrationBoundary>
     </>

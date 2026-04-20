@@ -9,7 +9,7 @@ type SortField = keyof Video;
 
 type SortDirection = "asc" | "desc" | "none";
 
-export const useVideoTableState = ({ userEmail }: { userEmail: string }) => {
+export const useVideoTableState = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>();
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
@@ -20,9 +20,7 @@ export const useVideoTableState = ({ userEmail }: { userEmail: string }) => {
   const trpc = useTRPC();
 
   const { data: videos, error: getAllVideosError } = useSuspenseQuery(
-    trpc.videos.getStoredVideosForChannel.queryOptions({
-      userEmail,
-    })
+    trpc.videos.getStoredVideosForChannel.queryOptions()
   );
 
   useEffect(() => {

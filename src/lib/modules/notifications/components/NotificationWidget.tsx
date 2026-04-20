@@ -4,23 +4,15 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 
-interface NotificationWidgetProps {
-  userEmail: string;
-}
-
-export default function NotificationWidget({
-  userEmail,
-}: NotificationWidgetProps) {
+export default function NotificationWidget() {
   const trpc = useTRPC();
 
   const { data: unreadCount = 0 } = useQuery(
-    trpc.notifications.getUnreadNotificationCount.queryOptions({
-      userEmail,
-    })
+    trpc.notifications.getUnreadNotificationCount.queryOptions()
   );
 
   if (unreadCount === 0) {
-    return null; // Don't show badge when count is 0
+    return null;
   }
 
   return (

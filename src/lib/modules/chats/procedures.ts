@@ -3,7 +3,7 @@ import z from "zod";
 import {
   createChat,
   getChatById,
-  getChatByUserEmail,
+  getChatByUid,
   updateChatTitle,
   deleteChat,
   createChatWithFirstMessage,
@@ -15,12 +15,12 @@ export const chatRouter = createTRPCRouter({
   create: baseProcedure
     .input(
       z.object({
-        userEmail: z.string().email({ message: "Valid email is required." }),
+        uid: z.string().min(1, { message: "uid is required." }),
         title: z.string().min(1, { message: "Title is required." }),
       })
     )
-    .mutation(async ({ input: { userEmail, title } }) => {
-      return createChat({ userEmail, title });
+    .mutation(async ({ input: { uid, title } }) => {
+      return createChat({ uid, title });
     }),
 
   getById: baseProcedure
@@ -33,14 +33,14 @@ export const chatRouter = createTRPCRouter({
       return getChatById(id);
     }),
 
-  getByUserEmail: baseProcedure
+  getByUid: baseProcedure
     .input(
       z.object({
-        userEmail: z.string().email({ message: "Valid email is required." }),
+        uid: z.string().min(1, { message: "uid is required." }),
       })
     )
-    .query(async ({ input: { userEmail } }) => {
-      return (await getChatByUserEmail({ userEmail })) ?? [];
+    .query(async ({ input: { uid } }) => {
+      return (await getChatByUid({ uid })) ?? [];
     }),
 
   updateTitle: baseProcedure
@@ -68,14 +68,14 @@ export const chatRouter = createTRPCRouter({
   createChatWithFirstMessage: baseProcedure
     .input(
       z.object({
-        userEmail: z.string().email({ message: "Valid email is required." }),
+        uid: z.string().min(1, { message: "uid is required." }),
         firstMessage: z
           .string()
           .min(1, { message: "First message is required." }),
       })
     )
-    .mutation(async ({ input: { userEmail, firstMessage } }) => {
-      return await createChatWithFirstMessage({ userEmail, firstMessage });
+    .mutation(async ({ input: { uid, firstMessage } }) => {
+      return await createChatWithFirstMessage({ uid, firstMessage });
     }),
 
   updateContext: baseProcedure

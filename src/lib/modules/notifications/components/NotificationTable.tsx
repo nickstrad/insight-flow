@@ -50,11 +50,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-interface NotificationTableProps {
-  userEmail: string;
-}
-
-function NotificationTableContent({ userEmail }: NotificationTableProps) {
+function NotificationTableContent() {
   const {
     pagination: { currentPage, totalPages, handlePreviousPage, handleNextPage },
     state: { isModalOpen, selectedNotificationMessage, selectedNotifications },
@@ -67,7 +63,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
     toggleAllNotifications,
     isAllSelected,
     clearSelection,
-  } = useNotificationTableState({ userEmail });
+  } = useNotificationTableState();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMarkReadModalOpen, setIsMarkReadModalOpen] = useState(false);
@@ -81,7 +77,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
       onSuccess: () => {
         toast.success("Notification marked as read");
         queryClient.invalidateQueries(
-          trpc.notifications.getNotificationsForUser.queryOptions({ userEmail })
+          trpc.notifications.getNotificationsForUser.queryOptions()
         );
       },
       onError: (error) => {
@@ -95,7 +91,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
       onSuccess: () => {
         toast.success("All notifications marked as read");
         queryClient.invalidateQueries(
-          trpc.notifications.getNotificationsForUser.queryOptions({ userEmail })
+          trpc.notifications.getNotificationsForUser.queryOptions()
         );
         clearSelection();
         setIsMarkReadModalOpen(false);
@@ -112,7 +108,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
       onSuccess: () => {
         toast.success("Notification deleted");
         queryClient.invalidateQueries(
-          trpc.notifications.getNotificationsForUser.queryOptions({ userEmail })
+          trpc.notifications.getNotificationsForUser.queryOptions()
         );
       },
       onError: (error) => {
@@ -126,7 +122,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
       onSuccess: () => {
         toast.success("Selected notifications deleted");
         queryClient.invalidateQueries(
-          trpc.notifications.getNotificationsForUser.queryOptions({ userEmail })
+          trpc.notifications.getNotificationsForUser.queryOptions()
         );
         clearSelection();
         setIsDeleteModalOpen(false);
@@ -145,7 +141,6 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
       try {
         await markAsReadMutation.mutateAsync({
           notificationId,
-          userEmail,
         });
       } catch (error) {
         console.error("Mark as read error:", error);
@@ -159,7 +154,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
 
   const handleConfirmMarkAsRead = async () => {
     try {
-      await markAllAsReadMutation.mutateAsync({ userEmail });
+      await markAllAsReadMutation.mutateAsync();
     } catch (error) {
       console.error("Mark all as read error:", error);
     }
@@ -174,7 +169,6 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
       if (selectedNotifications.length > 0) {
         await batchDeleteMutation.mutateAsync({
           notificationIds: selectedNotifications,
-          userEmail,
         });
       }
     } catch (error) {
@@ -351,7 +345,6 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
                         try {
                           await deleteNotificationMutation.mutateAsync({
                             notificationId: notification.id,
-                            userEmail,
                           });
                         } catch (error) {
                           console.error("Delete notification error:", error);
@@ -538,12 +531,10 @@ const NotificationTableSkeleton = () => (
   </Card>
 );
 
-export default function NotificationTable({
-  userEmail,
-}: NotificationTableProps) {
+export default function NotificationTable() {
   return (
     <Suspense fallback={<NotificationTableSkeleton />}>
-      <NotificationTableContent userEmail={userEmail} />
+      <NotificationTableContent />
     </Suspense>
   );
 }

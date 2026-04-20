@@ -9,11 +9,7 @@ type SortField = keyof Notification;
 
 type SortDirection = "asc" | "desc" | "none";
 
-export const useNotificationTableState = ({
-  userEmail,
-}: {
-  userEmail: string;
-}) => {
+export const useNotificationTableState = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -28,11 +24,7 @@ export const useNotificationTableState = ({
   const trpc = useTRPC();
 
   const { data: notifications, error: getAllNotificationsError } =
-    useSuspenseQuery(
-      trpc.notifications.getNotificationsForUser.queryOptions({
-        userEmail,
-      })
-    );
+    useSuspenseQuery(trpc.notifications.getNotificationsForUser.queryOptions());
 
   useEffect(() => {
     if (getAllNotificationsError) {

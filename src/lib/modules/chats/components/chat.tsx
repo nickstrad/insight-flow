@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Send, MessageSquarePlus, Settings } from "lucide-react";
 import ChannelsAndPlaylistForm from "./ChannelsAndPlaylistForm";
+import { useUid } from "@/lib/uid";
 
 const renderMessageWithLinks = (message: string) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -52,19 +53,15 @@ const renderMessageWithLinks = (message: string) => {
   });
 };
 
-interface ChatProps {
-  userEmail: string;
-}
-
-export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
+export const useChatHelpers = ({ uid }: { uid: string }) => {
   const [currentChat, setCurrentChat] = useState<Chat | undefined>();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   // Get chats for user and channel
   const { data: chats, error: getAllChatsError } = useQuery(
-    trpc.chats.getByUserEmail.queryOptions({
-      userEmail,
+    trpc.chats.getByUid.queryOptions({
+      uid,
     })
   );
 
@@ -83,8 +80,8 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
       onSuccess: (newChat) => {
         toast.success("Chat created successfully!");
         queryClient.invalidateQueries(
-          trpc.chats.getByUserEmail.queryOptions({
-            userEmail,
+          trpc.chats.getByUid.queryOptions({
+            uid,
           })
         );
         setCurrentChat(newChat);
@@ -101,8 +98,8 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
       onSuccess: (newChat) => {
         toast.success("Chat created successfully!");
         queryClient.invalidateQueries(
-          trpc.chats.getByUserEmail.queryOptions({
-            userEmail,
+          trpc.chats.getByUid.queryOptions({
+            uid,
           })
         );
         setCurrentChat(newChat);
@@ -118,8 +115,8 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
       onSuccess: (newChat) => {
         toast.success("Chat created successfully!");
         queryClient.invalidateQueries(
-          trpc.chats.getByUserEmail.queryOptions({
-            userEmail,
+          trpc.chats.getByUid.queryOptions({
+            uid,
           })
         );
         setCurrentChat(newChat);
@@ -135,8 +132,8 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
       onSuccess: () => {
         toast.success("Chat created successfully!");
         queryClient.invalidateQueries(
-          trpc.chats.getByUserEmail.queryOptions({
-            userEmail,
+          trpc.chats.getByUid.queryOptions({
+            uid,
           })
         );
         setCurrentChat(undefined);
@@ -147,21 +144,21 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
   const createChat = useCallback(
     async (title: string) => {
       return await createChatHandler.mutateAsync({
-        userEmail,
+        uid,
         title,
       });
     },
-    [createChatHandler, userEmail]
+    [createChatHandler, uid]
   );
 
   const createChatWithFirstMessage = useCallback(
     async (firstMessage: string) => {
       return await createChatWithFirstMessageHandler.mutateAsync({
-        userEmail,
+        uid,
         firstMessage,
       });
     },
-    [createChatWithFirstMessageHandler, userEmail]
+    [createChatWithFirstMessageHandler, uid]
   );
 
   const editChatTitle = useCallback(
@@ -217,13 +214,13 @@ export const useChatHelpers = ({ userEmail }: { userEmail: string }) => {
 };
 
 export const useMessageHelpers = ({
-  userEmail,
+  uid,
   chatId,
   isNewChatMode,
   setCurrentChat,
 }: {
   chatId?: string;
-  userEmail: string;
+  uid: string;
   isNewChatMode: boolean;
   setCurrentChat: (chat: Chat) => void;
 }) => {
@@ -240,11 +237,7 @@ export const useMessageHelpers = ({
   const {
     data: getAllChannelsForUserResponse,
     error: getAllChannelsForUserError,
-  } = useSuspenseQuery(
-    trpc.videos.getAllChannelsForUser.queryOptions({
-      userEmail,
-    })
-  );
+  } = useSuspenseQuery(trpc.videos.getAllChannelsForUser.queryOptions());
   useEffect(() => {
     if (getAllChannelsForUserError) {
       toast.error(getAllChannelsForUserError.message);
@@ -290,8 +283,8 @@ export const useMessageHelpers = ({
       onSuccess: (newChat) => {
         toast.success("Chat created successfully!");
         queryClient.invalidateQueries(
-          trpc.chats.getByUserEmail.queryOptions({
-            userEmail,
+          trpc.chats.getByUid.queryOptions({
+            uid,
           })
         );
         setCurrentChat(newChat);
@@ -299,21 +292,17 @@ export const useMessageHelpers = ({
     })
   );
 
-  const sendMessage = async (
-    message: string,
-    userEmail: string
-  ): Promise<boolean> => {
+  const sendMessage = async (message: string): Promise<boolean> => {
     try {
       // If no chat is selected or we're in new chat mode, create a new chat first
       if (!chatId || isNewChatMode) {
         const newChat = await createChatWithFirstMessageHandler.mutateAsync({
-          userEmail,
+          uid,
           firstMessage: message,
         });
 
         // Now send the message to the newly created chat
         await sendMessageHandler.mutateAsync({
-          userEmail,
           query: message,
           chatId: newChat.id,
         });
@@ -321,7 +310,6 @@ export const useMessageHelpers = ({
       } else {
         // Normal message sending to existing chat
         await sendMessageHandler.mutateAsync({
-          userEmail,
           query: message,
           chatId,
         });
@@ -343,7 +331,7 @@ export const useMessageHelpers = ({
   };
 };
 
-const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
+const useChatHandlers = ({ uid }: { uid: string }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isNewChatMode, setIsNewChatMode] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -360,7 +348,7 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     toggleChat,
     error: chatError,
     isLoading: chatIsLoading,
-  } = useChatHelpers({ userEmail });
+  } = useChatHelpers({ uid });
 
   const {
     messages,
@@ -369,7 +357,7 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     isLoading: messageIsLoading,
   } = useMessageHelpers({
     chatId: currentChat?.id,
-    userEmail,
+    uid,
     isNewChatMode,
     setCurrentChat,
   });
@@ -389,7 +377,7 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     if (!newMessage.trim() || messageIsLoading || chatIsLoading) return;
 
     // sendMessage now handles creating new chats when needed
-    const success = await sendMessage(newMessage, userEmail);
+    const success = await sendMessage(newMessage);
     if (success) {
       setNewMessage("");
       // If we were in new chat mode, exit it since we just created a chat
@@ -458,7 +446,15 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
   };
 };
 
-export default function Chat({ userEmail }: ChatProps) {
+export default function Chat() {
+  const uid = useUid();
+  if (uid === "") {
+    return <div>Loading...</div>;
+  }
+  return <ChatInner uid={uid} />;
+}
+
+function ChatInner({ uid }: { uid: string }) {
   const {
     chat: {
       chats,
@@ -483,7 +479,7 @@ export default function Chat({ userEmail }: ChatProps) {
     },
     isLoading,
     error,
-  } = useChatHandlers({ userEmail });
+  } = useChatHandlers({ uid });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleModalSubmit = async (ev: React.FormEvent<HTMLFormElement>) => {
@@ -714,7 +710,6 @@ export default function Chat({ userEmail }: ChatProps) {
             {currentChat && (
               <ChannelsAndPlaylistForm
                 chatId={currentChat.id}
-                userEmail={userEmail}
                 initialChannelHandles={currentChat.channelHandles || []}
                 initialPlaylistIds={currentChat.playlistIds || []}
                 onUpdate={handleContextUpdate}
