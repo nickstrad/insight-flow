@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
-import { UserControl } from "./user-control";
 import NotificationWidget from "@/lib/modules/notifications/components/NotificationWidget";
 import {
   Search,
@@ -57,8 +55,6 @@ const navigationItems = [
 
 function AppSidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
-  const userEmail = user?.emailAddresses[0]?.emailAddress;
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -101,10 +97,9 @@ function AppSidebar() {
                           <Icon />
                           <span>{item.name}</span>
                         </div>
-                        {item.href === "/dashboard/notifications" &&
-                          userEmail && (
-                            <NotificationWidget userEmail={userEmail} />
-                          )}
+                        {item.href === "/dashboard/notifications" && (
+                          <NotificationWidget />
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -126,9 +121,6 @@ function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="px-2 py-2">
-          <UserControl showName />
-        </div>
       </SidebarFooter>
 
       <SidebarRail />
@@ -145,7 +137,6 @@ export default function DashboardNavigation({
     <SidebarProvider>
       <AppSidebar />
       <main className="flex flex-1 flex-col overflow-hidden">
-        {/* Top header with sidebar trigger */}
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="bg-sidebar-border h-4 w-px" />
@@ -154,7 +145,6 @@ export default function DashboardNavigation({
           </div>
         </header>
 
-        {/* Scrollable content area */}
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 overflow-auto p-4 md:p-8">{children}</div>
         </div>
