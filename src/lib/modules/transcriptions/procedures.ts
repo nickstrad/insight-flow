@@ -23,22 +23,17 @@ export const transcriptRouter = createTRPCRouter({
             })
           )
           .min(1, { message: "At least one video is required." }),
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
         batchSize: z
           .number()
           .min(1, { message: "Batch size must be at least 1." })
           .default(5),
       })
     )
-    .mutation(async ({ input: { youtubeVideos, userEmail, batchSize } }) => {
-      // Send event to Inngest for async processing
+    .mutation(async ({ input: { youtubeVideos, batchSize } }) => {
       await inngest.send({
         name: "transcription/videos.submitted",
         data: {
           youtubeVideos,
-          userEmail,
           batchSize,
         },
       });
@@ -57,21 +52,16 @@ export const transcriptRouter = createTRPCRouter({
         videoIds: z
           .array(z.string().min(1, { message: "Video ID is required." }))
           .min(1, { message: "At least one video ID is required." }),
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
         batchSize: z
           .number()
           .min(1, { message: "Batch size must be at least 1." })
           .default(5),
       })
     )
-    .mutation(async ({ input: { videoIds, userEmail, batchSize } }) => {
-      // Fetch the Video records from the database
+    .mutation(async ({ input: { videoIds, batchSize } }) => {
       const videos = await prisma.video.findMany({
         where: {
           id: { in: videoIds },
-          userEmail: userEmail,
         },
       });
 
@@ -79,12 +69,10 @@ export const transcriptRouter = createTRPCRouter({
         throw new Error("No videos found with the provided IDs");
       }
 
-      // Send event to Inngest for async processing
       await inngest.send({
         name: "transcription/existing-videos.submitted",
         data: {
           videos,
-          userEmail,
           batchSize,
         },
       });
@@ -101,18 +89,13 @@ export const transcriptRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string().min(1, { message: "Video ID is required." }),
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
       })
     )
-    .mutation(async ({ input: { videoId, userEmail } }) => {
-      // Send event to Inngest for async processing
+    .mutation(async ({ input: { videoId } }) => {
       await inngest.send({
         name: "transcription/retry.requested",
         data: {
           videoId,
-          userEmail,
         },
       });
 
@@ -143,22 +126,17 @@ export const transcriptRouter = createTRPCRouter({
             })
           )
           .min(1, { message: "At least one video is required." }),
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
         batchSize: z
           .number()
           .min(1, { message: "Batch size must be at least 1." })
           .default(5),
       })
     )
-    .mutation(async ({ input: { youtubeVideos, userEmail, batchSize } }) => {
-      // Send event to Inngest for async processing
+    .mutation(async ({ input: { youtubeVideos, batchSize } }) => {
       await inngest.send({
         name: "transcription/videos-only.submitted",
         data: {
           youtubeVideos,
-          userEmail,
           batchSize,
         },
       });

@@ -57,41 +57,23 @@ export const videosRouter = createTRPCRouter({
         });
       }
     ),
-  getStoredVideosForChannel: baseProcedure
-    .input(
-      z.object({
-        userEmail: z.string().min(1, { message: "User email is required." }),
-      })
-    )
-    .query(async ({ input: { userEmail } }) => {
-      return await prisma.video.findMany({
-        where: {
-          userEmail,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-    }),
-  getAllChannelsForUser: baseProcedure
-    .input(
-      z.object({
-        userEmail: z.string().min(1, { message: "User email is required." }),
-      })
-    )
-    .query(async ({ input: { userEmail } }) => {
-      const vals = await prisma.video.findMany({
-        where: {
-          userEmail,
-        },
-        select: {
-          channelHandle: true,
-        },
-        distinct: ["channelHandle"],
-      });
+  getStoredVideosForChannel: baseProcedure.query(async () => {
+    return await prisma.video.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }),
+  getAllChannelsForUser: baseProcedure.query(async () => {
+    const vals = await prisma.video.findMany({
+      select: {
+        channelHandle: true,
+      },
+      distinct: ["channelHandle"],
+    });
 
-      return vals.filter(Boolean).map((v) => v.channelHandle!);
-    }),
+    return vals.filter(Boolean).map((v) => v.channelHandle!);
+  }),
   getPlaylistMetadata: baseProcedure
     .input(
       z.object({
@@ -104,15 +86,9 @@ export const videosRouter = createTRPCRouter({
     .query(async ({ input: { playlistId, channelHandle } }) => {
       return getPlaylistMetadata(playlistId, channelHandle);
     }),
-  getAllPlaylistsForUser: baseProcedure
-    .input(
-      z.object({
-        userEmail: z.string().min(1, { message: "User email is required." }),
-      })
-    )
-    .query(async ({ input: { userEmail } }) => {
-      return getAllPlaylistsForUser(userEmail);
-    }),
+  getAllPlaylistsForUser: baseProcedure.query(async () => {
+    return getAllPlaylistsForUser();
+  }),
   getChannelPlaylists: baseProcedure
     .input(
       z.object({
@@ -125,27 +101,20 @@ export const videosRouter = createTRPCRouter({
       return getChannelPlaylists(channelHandle);
     }),
 
-  // CRUD Operations for stored videos
   getStoredVideoById: baseProcedure
     .input(
       z.object({
         videoId: z.string().min(1, { message: "Video ID is required." }),
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
       })
     )
-    .query(async ({ input: { videoId, userEmail } }) => {
-      return getStoredVideoById(videoId, userEmail);
+    .query(async ({ input: { videoId } }) => {
+      return getStoredVideoById(videoId);
     }),
 
   updateStoredVideo: baseProcedure
     .input(
       z.object({
         videoId: z.string().min(1, { message: "Video ID is required." }),
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
         updateData: z
           .object({
             title: z.string().optional(),
@@ -157,21 +126,18 @@ export const videosRouter = createTRPCRouter({
           }),
       })
     )
-    .mutation(async ({ input: { videoId, userEmail, updateData } }) => {
-      return updateStoredVideo(videoId, userEmail, updateData);
+    .mutation(async ({ input: { videoId, updateData } }) => {
+      return updateStoredVideo(videoId, updateData);
     }),
 
   deleteStoredVideo: baseProcedure
     .input(
       z.object({
         videoId: z.string().min(1, { message: "Video ID is required." }),
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
       })
     )
-    .mutation(async ({ input: { videoId, userEmail } }) => {
-      return deleteStoredVideo(videoId, userEmail);
+    .mutation(async ({ input: { videoId } }) => {
+      return deleteStoredVideo(videoId);
     }),
 
   bulkDeleteStoredVideos: baseProcedure
@@ -180,24 +146,13 @@ export const videosRouter = createTRPCRouter({
         videoIds: z
           .array(z.string().min(1, { message: "Video ID is required." }))
           .min(1, { message: "At least one video ID is required." }),
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
       })
     )
-    .mutation(async ({ input: { videoIds, userEmail } }) => {
-      return bulkDeleteStoredVideos(videoIds, userEmail);
+    .mutation(async ({ input: { videoIds } }) => {
+      return bulkDeleteStoredVideos(videoIds);
     }),
 
-  getUserChannelsAndPlaylists: baseProcedure
-    .input(
-      z.object({
-        userEmail: z
-          .string()
-          .email({ message: "Valid user email is required." }),
-      })
-    )
-    .query(async ({ input: { userEmail } }) => {
-      return getUserChannelsAndPlaylists(userEmail);
-    }),
+  getUserChannelsAndPlaylists: baseProcedure.query(async () => {
+    return getUserChannelsAndPlaylists();
+  }),
 });

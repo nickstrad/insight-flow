@@ -34,23 +34,19 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from "react";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, Video, AlertCircle, X } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Video, AlertCircle, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import PaginatedVideoList from "./PaginatedVideoList";
 import { useRouter } from "next/navigation";
-import { YoutubeVideo } from "../../types";
 
 interface VideoTableProps {
   channelHandle: string;
   playlistId?: string;
   searchType: "channel" | "playlist";
-  userEmail: string;
   onLoadingStateChange?: (isLoading: boolean) => void;
 }
 
@@ -58,7 +54,6 @@ export default function PurchaseVideoTable({
   channelHandle,
   playlistId,
   searchType,
-  userEmail,
   onLoadingStateChange,
 }: VideoTableProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -66,7 +61,6 @@ export default function PurchaseVideoTable({
     new Set()
   );
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const {
@@ -83,7 +77,6 @@ export default function PurchaseVideoTable({
     error: { apiError, clearError },
   } = useVideoTableState({ channelHandle, playlistId, searchType });
 
-  // Communicate loading state changes to parent component
   useEffect(() => {
     if (onLoadingStateChange) {
       onLoadingStateChange(isLoading);
@@ -91,17 +84,6 @@ export default function PurchaseVideoTable({
   }, [isLoading, onLoadingStateChange]);
 
   const handleVideoSelection = (videoId: string, isSelected: boolean) => {
-    const video = currentVideos.find((v) => v.youtubeId === videoId);
-
-    if (isSelected && video && !canSelectVideo(video)) {
-      toast.warning(
-        `Cannot select this video - it would exceed your quota of ${
-          quota?.videoHoursLeft || 0
-        } hours`
-      );
-      return;
-    }
-
     const newSelectedIds = new Set(selectedVideoIds);
     if (isSelected) {
       newSelectedIds.add(videoId);
@@ -113,33 +95,7 @@ export default function PurchaseVideoTable({
 
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      // Only select videos that fit within quota
-      const selectableVideos = [];
-      let runningTotalMinutes = selectedVideoMinutes;
-
-      for (const video of currentVideos) {
-        if (selectedVideoIds.has(video.youtubeId)) {
-          selectableVideos.push(video.youtubeId);
-          continue;
-        }
-
-        const newTotalMinutes =
-          runningTotalMinutes + (video.durationInMinutes || 0);
-        const newTotalHours = Math.ceil(newTotalMinutes / 60);
-
-        if (quota && newTotalHours <= quota.videoHoursLeft) {
-          selectableVideos.push(video.youtubeId);
-          runningTotalMinutes = newTotalMinutes;
-        }
-      }
-
-      setSelectedVideoIds(new Set(selectableVideos));
-
-      if (selectableVideos.length < currentVideos.length) {
-        toast.warning(
-          `Only selected ${selectableVideos.length} of ${currentVideos.length} videos due to quota limits`
-        );
-      }
+      setSelectedVideoIds(new Set(currentVideos.map((v) => v.youtubeId)));
     } else {
       setSelectedVideoIds(new Set());
     }
@@ -149,35 +105,6 @@ export default function PurchaseVideoTable({
     selectedVideoIds.has(video.youtubeId)
   );
 
-  // Fetch quota data
-  const { data: quota, isLoading: quotaLoading } = useQuery({
-    ...trpc.quotas.getQuota.queryOptions({ userEmail: userEmail! }),
-    enabled: !!userEmail,
-  });
-
-  // Calculate selected video minutes and convert to hours only at the end
-  const selectedVideoMinutes = selectedVideos.reduce((total, video) => {
-    return total + (video.durationInMinutes || 0);
-  }, 0);
-
-  const selectedVideoHours = Math.ceil(selectedVideoMinutes / 60);
-
-  // Function to check if a video can be selected without exceeding quota
-  const canSelectVideo = (video: YoutubeVideo) => {
-    if (!quota) return true;
-    const newTotalMinutes =
-      selectedVideoMinutes + (video.durationInMinutes || 0);
-    const newTotalHours = Math.ceil(newTotalMinutes / 60);
-    return newTotalHours <= quota.videoHoursLeft;
-  };
-
-  // Check if quota is exceeded or at limit
-  const isQuotaExceeded = quota
-    ? selectedVideoHours >= quota.videoHoursLeft
-    : false;
-  const remainingQuota = quota ? quota.videoHoursLeft - selectedVideoHours : 0;
-
-  // Transcription mutation
   const transcriptionMutation = useMutation(
     trpc.transcriptions.transcribeVideos.mutationOptions({
       onSuccess: (data) => {
@@ -185,15 +112,9 @@ export default function PurchaseVideoTable({
           `Transcription started! Processing ${data.videoCount} videos.`
         );
 
-        // Invalidate quota query to refresh quota data
-        queryClient.invalidateQueries(
-          trpc.quotas.getQuota.queryOptions({ userEmail })
-        );
-
         setIsConfirmModalOpen(false);
         setSelectedVideoIds(new Set());
 
-        // Navigate to videos page to view transcription status
         router.push("/dashboard/videos");
       },
       onError: (error) => {
@@ -207,16 +128,14 @@ export default function PurchaseVideoTable({
   };
 
   const handleConfirmTranscription = async () => {
-    if (!userEmail || selectedVideos.length === 0) return;
+    if (selectedVideos.length === 0) return;
 
     try {
       await transcriptionMutation.mutateAsync({
         youtubeVideos: selectedVideos,
-        userEmail,
         batchSize: 5,
       });
     } catch (error) {
-      // Error handling is already done in the mutation options
       console.error("Transcription error:", error);
     }
   };
@@ -230,7 +149,6 @@ export default function PurchaseVideoTable({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* API Error Alert */}
         {apiError && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
@@ -248,52 +166,10 @@ export default function PurchaseVideoTable({
           </Alert>
         )}
 
-        {/* Quota Status Message */}
-        {quota && (
-          <div className="mb-4">
-            {isQuotaExceeded ? (
-              <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
-                <AlertCircle className="h-4 w-4" />
-                <div className="text-sm">
-                  <span className="font-medium">Quota limit reached!</span> You
-                  cannot select more videos. You have selected{" "}
-                  {selectedVideoMinutes} minutes ({selectedVideoHours}h) of your{" "}
-                  {quota.videoHoursLeft}h quota.
-                </div>
-              </div>
-            ) : remainingQuota <= 2 ? (
-              <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
-                <AlertCircle className="h-4 w-4" />
-                <div className="text-sm">
-                  <span className="font-medium">Low quota remaining!</span> Only{" "}
-                  {remainingQuota}h left. Selected: {selectedVideoMinutes}{" "}
-                  minutes (~{selectedVideoHours}h) of {quota.videoHoursLeft}h
-                  available.
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-blue-800">
-                <Clock className="h-4 w-4" />
-                <div className="text-sm">
-                  <span className="font-medium">Quota status:</span> Selected{" "}
-                  {selectedVideoMinutes} minutes (~{selectedVideoHours}h) of{" "}
-                  {quota.videoHoursLeft}h available ({remainingQuota}h
-                  remaining).
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="mb-4 flex items-center justify-between">
           <div className="text-sm text-gray-600">
             {selectedVideoIds.size} video
             {selectedVideoIds.size !== 1 ? "s" : ""} selected
-            {quota && selectedVideoMinutes > 0 && (
-              <span className="ml-2 font-medium text-blue-600">
-                ({selectedVideoMinutes} min ~{selectedVideoHours}h)
-              </span>
-            )}
           </div>
           <Button
             type="button"
@@ -344,29 +220,17 @@ export default function PurchaseVideoTable({
             ) : (
               currentVideos.map((video) => {
                 const isSelected = selectedVideoIds.has(video.youtubeId);
-                const canSelect = isSelected || canSelectVideo(video);
 
                 return (
-                  <TableRow
-                    key={video.youtubeId}
-                    className={!canSelect ? "opacity-60" : ""}
-                  >
+                  <TableRow key={video.youtubeId}>
                     <TableCell>
-                      <div className="flex flex-col items-start gap-1">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={(checked) =>
-                            handleVideoSelection(video.youtubeId, !!checked)
-                          }
-                          disabled={!canSelect}
-                          aria-label={`Select ${video.title}`}
-                        />
-                        {!canSelect && !isSelected && (
-                          <span className="text-xs text-red-600">
-                            Exceeds quota
-                          </span>
-                        )}
-                      </div>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) =>
+                          handleVideoSelection(video.youtubeId, !!checked)
+                        }
+                        aria-label={`Select ${video.title}`}
+                      />
                     </TableCell>
                     <TableCell>
                       <a
@@ -450,76 +314,19 @@ export default function PurchaseVideoTable({
                 Confirm Video Transcription
               </DialogTitle>
               <DialogDescription>
-                Review the videos you want to transcribe and check your quota
-                usage.
+                Review the videos you want to transcribe.
               </DialogDescription>
             </DialogHeader>
 
             <div className="flex-1 overflow-y-auto px-6 py-4">
               <div className="space-y-6">
-                {/* Quota Information */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <h4 className="font-medium">Current Quota</h4>
-                  </div>
-                  {quotaLoading ? (
-                    <div className="text-muted-foreground text-sm">
-                      Loading quota...
-                    </div>
-                  ) : quota ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">
-                          Video Hours Left
-                        </div>
-                        <div className="text-2xl font-bold text-blue-600">
-                          {quota.videoHoursLeft}h
-                        </div>
-                        <Progress
-                          value={(quota.videoHoursLeft / 10) * 100}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">Messages Left</div>
-                        <div className="text-2xl font-bold text-green-600">
-                          {quota.messagesLeft}
-                        </div>
-                        <Progress
-                          value={(quota.messagesLeft / 100) * 100}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-amber-600">
-                      <AlertCircle className="h-4 w-4" />
-                      <span className="text-sm">
-                        Unable to load quota information
-                      </span>
-                    </div>
-                  )}
-                  <div className="text-muted-foreground text-xs">
-                    Quota resets:{" "}
-                    {quota
-                      ? new Date(quota.resetAt).toLocaleDateString()
-                      : "Unknown"}
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Video Selection Summary */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium">
                       Selected Videos ({selectedVideos.length})
                     </h4>
                     <Badge variant="secondary">
-                      {selectedVideoMinutes > 0
-                        ? `${selectedVideoMinutes} min (~${selectedVideoHours}h)`
-                        : `~${selectedVideos.length}h`}
+                      {selectedVideos.length} videos
                     </Badge>
                   </div>
 
@@ -530,26 +337,9 @@ export default function PurchaseVideoTable({
                     />
                   </div>
                 </div>
-
-                {/* Warning if insufficient quota */}
-                {quota && selectedVideoHours > quota.videoHoursLeft && (
-                  <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                    <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-                    <div className="text-sm text-amber-800">
-                      <div className="mb-1 font-medium">Insufficient quota</div>
-                      <div>
-                        You need approximately {selectedVideoHours} hours (
-                        {selectedVideoMinutes} minutes) but only have{" "}
-                        {quota.videoHoursLeft} hours remaining. Please reduce
-                        your selection or upgrade your quota.
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Action Buttons - Fixed at bottom */}
             <div className="bg-background flex flex-shrink-0 justify-end space-x-2 border-t p-6 pt-4">
               <Button
                 variant="outline"
@@ -561,10 +351,7 @@ export default function PurchaseVideoTable({
               <Button
                 onClick={handleConfirmTranscription}
                 disabled={
-                  transcriptionMutation.isPending ||
-                  !quota ||
-                  selectedVideos.length === 0 ||
-                  selectedVideoHours > quota.videoHoursLeft
+                  transcriptionMutation.isPending || selectedVideos.length === 0
                 }
               >
                 {transcriptionMutation.isPending

@@ -54,11 +54,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface VideoTableProps {
-  userEmail: string;
-}
-
-export default function VideoTable({ userEmail }: VideoTableProps) {
+export default function VideoTable() {
   const {
     pagination: { currentPage, totalPages, handlePreviousPage, handleNextPage },
     state: { isModalOpen, selectedVideoText },
@@ -67,7 +63,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
     getSortIcon,
     openModal,
     closeModal,
-  } = useVideoTableState({ userEmail });
+  } = useVideoTableState();
 
   const [isRetryModalOpen, setIsRetryModalOpen] = useState(false);
   const [selectedVideoForRetry, setSelectedVideoForRetry] = useState<
@@ -92,7 +88,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
 
         // Invalidate videos query to refresh the table
         queryClient.invalidateQueries(
-          trpc.videos.getStoredVideosForChannel.queryOptions({ userEmail })
+          trpc.videos.getStoredVideosForChannel.queryOptions()
         );
 
         setIsRetryModalOpen(false);
@@ -107,18 +103,11 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
   // Delete video mutation
   const deleteVideoMutation = useMutation(
     trpc.videos.deleteStoredVideo.mutationOptions({
-      onSuccess: (data) => {
-        toast.success(
-          `Video deleted successfully! ${
-            data.quotaRestored > 0
-              ? `${data.quotaRestored}h quota restored.`
-              : ""
-          }`
-        );
+      onSuccess: () => {
+        toast.success("Video deleted successfully!");
 
-        // Invalidate videos query to refresh the table
         queryClient.invalidateQueries(
-          trpc.videos.getStoredVideosForChannel.queryOptions({ userEmail })
+          trpc.videos.getStoredVideosForChannel.queryOptions()
         );
 
         setIsDeleteModalOpen(false);
@@ -141,7 +130,6 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
     try {
       await retryVideoMutation.mutateAsync({
         videoId: selectedVideoForRetry,
-        userEmail,
       });
     } catch (error) {
       // Error handling is already done in the mutation options
@@ -160,7 +148,6 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
     try {
       await deleteVideoMutation.mutateAsync({
         videoId: selectedVideoForDelete,
-        userEmail,
       });
     } catch (error) {
       // Error handling is already done in the mutation options
@@ -369,7 +356,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
             {videos.length === 0 && (
               <TableRow>
                 <TableCell colSpan={11} className="text-center">
-                  No videos found for {userEmail}
+                  No videos found
                 </TableCell>
               </TableRow>
             )}
@@ -430,8 +417,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
             </AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to retry processing this video?{" "}
-              {selectedVideo ? getRetryMessage(selectedVideo.status) : ""} This
-              action will consume quota if successful.
+              {selectedVideo ? getRetryMessage(selectedVideo.status) : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -460,8 +446,8 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
             <AlertDialogTitle>Delete Video</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this video? This action will
-              permanently remove the video, its transcript chunks, embeddings,
-              and restore any quota that was used. This action cannot be undone.
+              permanently remove the video, its transcript chunks, and
+              embeddings. This action cannot be undone.
               {selectedVideoForDeletion && (
                 <div className="mt-2 rounded bg-gray-50 p-2 text-sm">
                   <strong>Video:</strong> {selectedVideoForDeletion.title}

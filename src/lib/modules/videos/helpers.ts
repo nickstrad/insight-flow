@@ -1,11 +1,6 @@
 import axios from "axios";
 import { YoutubeVideo } from "./types";
 import { convertDurationToMinutes } from "../../utils";
-import {
-  calculateVideoHoursNeeded,
-  upsertQuota,
-  getQuota,
-} from "../quota/helpers";
 
 interface YouTubeChannelResponse {
   items: {
@@ -56,7 +51,7 @@ interface YouTubePlaylistItemsResponse {
 interface YouTubeVideoDetailsResponse {
   items: {
     contentDetails: {
-      duration: string; // ISO 8601 duration format (e.g., "PT4M13S")
+      duration: string;
     };
   }[];
 }
@@ -82,13 +77,11 @@ interface YouTubeChannelPlaylistsResponse {
 
 const API_KEY = process.env.GOOGLE_API_KEY!;
 
-// Fetch video durations for a batch of video IDs
-async function fetchVideoDurations(
+export async function fetchVideoDurations(
   videoIds: string[]
 ): Promise<Map<string, number>> {
   const durationMap = new Map<string, number>();
 
-  // Process in batches of 50 (YouTube API limit)
   for (let i = 0; i < videoIds.length; i += 50) {
     const batch = videoIds.slice(i, i + 50);
 
@@ -110,80 +103,11 @@ async function fetchVideoDurations(
     });
   }
 
-  console.log(durationMap);
-
   return durationMap;
 }
 
-// BACKUP: Original function without duration fetching (for potential revert)
-export async function getVideosForChannelOriginal(
-  channelHandle: string
-): Promise<YoutubeVideo[]> {
-  try {
-    const videos: YoutubeVideo[] = [];
-
-    // Fetch all videos from the channel's upload playlist
-    const { data: channelRes } = await axios.get<YouTubeChannelResponse>(
-      `https://www.googleapis.com/youtube/v3/channels`,
-      {
-        params: {
-          part: "contentDetails",
-          forHandle: channelHandle,
-          key: API_KEY,
-        },
-      }
-    );
-
-    const uploadsPlaylistId =
-      channelRes.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
-    if (!uploadsPlaylistId) {
-      throw new Error("Failed to retrieve uploads playlist ID.");
-    }
-
-    let nextPageToken = "";
-    do {
-      const { data: playlistRes } =
-        await axios.get<YouTubePlaylistItemsResponse>(
-          `https://www.googleapis.com/youtube/v3/playlistItems`,
-          {
-            params: {
-              part: "snippet",
-              maxResults: 50,
-              playlistId: uploadsPlaylistId,
-              pageToken: nextPageToken,
-              key: API_KEY,
-            },
-          }
-        );
-
-      const nextVideos: YoutubeVideo[] = playlistRes.items.map((item) => {
-        const video: YoutubeVideo = {
-          youtubeId: item.snippet.resourceId.videoId,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.default.url,
-          channelHandle,
-          playlistId: uploadsPlaylistId,
-          playlistTitle: "Uploads",
-          thumbnailUrl: item.snippet.thumbnails.default.url,
-        };
-        return video;
-      });
-
-      videos.push(...nextVideos);
-
-      nextPageToken = playlistRes.nextPageToken || "";
-    } while (nextPageToken);
-
-    return videos;
-  } catch (error) {
-    console.error("Error fetching videos from channel:", error);
-    throw error;
-  }
-}
-
 export const PAGINATION_LIMIT = 20;
-// Updated function with duration fetching
+
 export async function getUploadsMetadataForChannel(
   channelHandle: string
 ): Promise<{
@@ -193,7 +117,6 @@ export async function getUploadsMetadataForChannel(
   totalVideoCount: number;
 }> {
   try {
-    // Fetch all videos from the channel's upload playlist
     const { data: channelRes } = await axios.get<YouTubeChannelResponse>(
       `https://www.googleapis.com/youtube/v3/channels`,
       {
@@ -211,7 +134,6 @@ export async function getUploadsMetadataForChannel(
       throw new Error("Failed to retrieve uploads playlist ID.");
     }
 
-    // Get total video count from playlist details
     const { data: playlistDetailsRes } =
       await axios.get<YouTubePlaylistDetailsResponse>(
         `https://www.googleapis.com/youtube/v3/playlists`,
@@ -227,7 +149,6 @@ export async function getUploadsMetadataForChannel(
     const totalVideoCount =
       playlistDetailsRes.items?.[0]?.contentDetails?.itemCount || 0;
 
-    // Get first page of videos
     const { data: playlistRes } = await axios.get<YouTubePlaylistItemsResponse>(
       `https://www.googleapis.com/youtube/v3/playlistItems`,
       {
@@ -254,12 +175,9 @@ export async function getUploadsMetadataForChannel(
       return video;
     });
 
-    // Fetch duration information for first page videos
-    console.log(`Fetching durations for ${videos.length} videos...`);
     const videoIds = videos.map((video) => video.youtubeId);
     const durationMap = await fetchVideoDurations(videoIds);
 
-    // Add duration information to videos
     const videosWithDuration = videos.map((video) => ({
       ...video,
       durationInMinutes: durationMap.get(video.youtubeId) || 0,
@@ -322,34 +240,25 @@ export async function getNextVideosForPlaylist({
       return video;
     });
 
-    // Fetch duration information for all videos
-    console.log(`Fetching durations for ${videos.length} videos...`);
     const videoIds = videos.map((video) => video.youtubeId);
     const durationMap = await fetchVideoDurations(videoIds);
 
-    // Add duration information to videos
     const videosWithDuration = videos.map((video) => ({
       ...video,
       durationInMinutes: durationMap.get(video.youtubeId) || 0,
     }));
 
-    const returnVal = {
+    return {
       videos: videosWithDuration,
       nextToken: playlistRes.nextPageToken,
       forPage: currentPage,
     };
-
-    console.log(
-      `Fetched ${videosWithDuration.length} videos for channel ${channelHandle} with nextToken: ${returnVal.nextToken}`
-    );
-    return returnVal;
   } catch (error) {
     console.error("Error fetching videos from channel:", error);
     throw error;
   }
 }
 
-// New function to get playlist metadata by direct playlist ID
 export async function getPlaylistMetadata(
   playlistId: string,
   channelHandle: string
@@ -361,7 +270,6 @@ export async function getPlaylistMetadata(
   channelHandle: string;
 }> {
   try {
-    // Get playlist details including title and video count
     const { data: playlistDetailsRes } =
       await axios.get<YouTubePlaylistDetailsResponse>(
         `https://www.googleapis.com/youtube/v3/playlists`,
@@ -381,7 +289,6 @@ export async function getPlaylistMetadata(
 
     const totalVideoCount = playlistItem.contentDetails?.itemCount || 0;
 
-    // Get first page of videos
     const { data: playlistRes } = await axios.get<YouTubePlaylistItemsResponse>(
       `https://www.googleapis.com/youtube/v3/playlistItems`,
       {
@@ -400,7 +307,7 @@ export async function getPlaylistMetadata(
         title: item.snippet.title,
         description: item.snippet.description,
         thumbnail: item.snippet.thumbnails.default.url,
-        channelHandle: channelHandle, // Use provided channel handle or fall back to playlist title
+        channelHandle: channelHandle,
         playlistId: playlistId,
         playlistTitle: playlistItem.snippet?.title,
         thumbnailUrl: item.snippet.thumbnails.default.url,
@@ -408,12 +315,9 @@ export async function getPlaylistMetadata(
       return video;
     });
 
-    // Fetch duration information for first page videos
-    console.log(`Fetching durations for ${videos.length} videos...`);
     const videoIds = videos.map((video) => video.youtubeId);
     const durationMap = await fetchVideoDurations(videoIds);
 
-    // Add duration information to videos
     const videosWithDuration = videos.map((video) => ({
       ...video,
       durationInMinutes: durationMap.get(video.youtubeId) || 0,
@@ -432,7 +336,6 @@ export async function getPlaylistMetadata(
   }
 }
 
-// Function to get all playlists for a channel from YouTube API
 export async function getChannelPlaylists(channelHandle: string): Promise<
   Array<{
     id: string;
@@ -443,7 +346,6 @@ export async function getChannelPlaylists(channelHandle: string): Promise<
   }>
 > {
   try {
-    // First get the channel ID from the handle
     const { data: channelRes } = await axios.get(
       `https://www.googleapis.com/youtube/v3/channels`,
       {
@@ -460,7 +362,6 @@ export async function getChannelPlaylists(channelHandle: string): Promise<
       throw new Error("Failed to retrieve channel ID.");
     }
 
-    // Get all playlists for the channel
     const playlists = [];
     let nextPageToken = "";
 
@@ -491,7 +392,6 @@ export async function getChannelPlaylists(channelHandle: string): Promise<
       nextPageToken = playlistRes.nextPageToken || "";
     } while (nextPageToken);
 
-    // Also get the uploads playlist
     const { data: channelDetailsRes } = await axios.get(
       `https://www.googleapis.com/youtube/v3/channels`,
       {
@@ -506,7 +406,6 @@ export async function getChannelPlaylists(channelHandle: string): Promise<
     const uploadsPlaylistId =
       channelDetailsRes.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
     if (uploadsPlaylistId) {
-      // Get uploads playlist details
       const { data: uploadsPlaylistRes } = await axios.get(
         `https://www.googleapis.com/youtube/v3/playlists`,
         {
@@ -520,7 +419,6 @@ export async function getChannelPlaylists(channelHandle: string): Promise<
 
       if (uploadsPlaylistRes.items?.[0]) {
         const uploadsPlaylist = uploadsPlaylistRes.items[0];
-        // Add uploads playlist at the beginning
         playlists.unshift({
           id: uploadsPlaylistId,
           title: "Uploads",
@@ -538,16 +436,14 @@ export async function getChannelPlaylists(channelHandle: string): Promise<
   }
 }
 
-// Function to get all playlists for a user
-export async function getAllPlaylistsForUser(
-  userEmail: string
-): Promise<Array<{ playlistId: string; count: number }>> {
+export async function getAllPlaylistsForUser(): Promise<
+  Array<{ playlistId: string; count: number }>
+> {
   const { prisma } = await import("@/db");
 
   const playlistsWithCount = await prisma.video.groupBy({
     by: ["playlistId"],
     where: {
-      userEmail,
       playlistId: {
         not: null,
       },
@@ -565,32 +461,24 @@ export async function getAllPlaylistsForUser(
     }));
 }
 
-// CRUD Functions for stored videos
-
-// Get a single video by ID for a user
-export async function getStoredVideoById(videoId: string, userEmail: string) {
+export async function getStoredVideoById(videoId: string) {
   const { prisma } = await import("@/db");
 
   const video = await prisma.video.findFirst({
     where: {
       id: videoId,
-      userEmail,
     },
   });
 
   if (!video) {
-    throw new Error(
-      "Video not found or you don't have permission to access it"
-    );
+    throw new Error("Video not found");
   }
 
   return video;
 }
 
-// Update a stored video
 export async function updateStoredVideo(
   videoId: string,
-  userEmail: string,
   updateData: {
     title?: string;
     channelHandle?: string;
@@ -599,19 +487,16 @@ export async function updateStoredVideo(
 ) {
   const { prisma } = await import("@/db");
 
-  // First verify the video exists and belongs to the user
   const existingVideo = await prisma.video.findFirst({
     where: {
       id: videoId,
-      userEmail,
     },
   });
 
   if (!existingVideo) {
-    throw new Error("Video not found or you don't have permission to edit it");
+    throw new Error("Video not found");
   }
 
-  // Update the video
   const updatedVideo = await prisma.video.update({
     where: {
       id: videoId,
@@ -625,121 +510,62 @@ export async function updateStoredVideo(
   return updatedVideo;
 }
 
-// Delete a stored video and its associated transcript chunks
-export async function deleteStoredVideo(videoId: string, userEmail: string) {
+export async function deleteStoredVideo(videoId: string) {
   const { prisma } = await import("@/db");
 
-  // First verify the video exists and belongs to the user
   const existingVideo = await prisma.video.findFirst({
     where: {
       id: videoId,
-      userEmail,
     },
   });
 
   if (!existingVideo) {
-    throw new Error(
-      "Video not found or you don't have permission to delete it"
-    );
+    throw new Error("Video not found");
   }
 
-  // Calculate quota to restore if the video was successfully transcribed
-  let quotaToRestore = 0;
-  if (existingVideo.status === "COMPLETED") {
-    quotaToRestore = calculateVideoHoursNeeded(existingVideo.durationInMinutes);
-  }
-
-  // Delete the video (transcript chunks will be deleted due to CASCADE)
   await prisma.video.delete({
     where: {
       id: videoId,
     },
   });
 
-  // Restore quota if applicable
-  if (quotaToRestore > 0) {
-    const currentQuota = await getQuota(userEmail);
-    await upsertQuota({
-      userEmail,
-      videoHoursLeft: currentQuota.videoHoursLeft + quotaToRestore,
-    });
-
-    console.log(
-      `Restored ${quotaToRestore} hours to quota for user ${userEmail} after deleting video ${existingVideo.youtubeId}`
-    );
-  }
-
   return {
     success: true,
     deletedVideo: existingVideo,
-    quotaRestored: quotaToRestore,
   };
 }
 
-// Bulk delete multiple videos for a user
-export async function bulkDeleteStoredVideos(
-  videoIds: string[],
-  userEmail: string
-) {
+export async function bulkDeleteStoredVideos(videoIds: string[]) {
   const { prisma } = await import("@/db");
 
   if (videoIds.length === 0) {
     throw new Error("No video IDs provided");
   }
 
-  // First verify all videos exist and belong to the user
   const existingVideos = await prisma.video.findMany({
     where: {
       id: { in: videoIds },
-      userEmail,
     },
   });
 
   if (existingVideos.length !== videoIds.length) {
-    throw new Error(
-      "Some videos not found or you don't have permission to delete them"
-    );
+    throw new Error("Some videos not found");
   }
 
-  // Calculate total quota to restore from completed videos
-  let totalQuotaToRestore = 0;
-  existingVideos.forEach((video) => {
-    if (video.status === "COMPLETED") {
-      totalQuotaToRestore += calculateVideoHoursNeeded(video.durationInMinutes);
-    }
-  });
-
-  // Delete all videos (transcript chunks will be deleted due to CASCADE)
   const deleteResult = await prisma.video.deleteMany({
     where: {
       id: { in: videoIds },
-      userEmail, // Double-check user ownership
     },
   });
-
-  // Restore quota if applicable
-  if (totalQuotaToRestore > 0) {
-    const currentQuota = await getQuota(userEmail);
-    await upsertQuota({
-      userEmail,
-      videoHoursLeft: currentQuota.videoHoursLeft + totalQuotaToRestore,
-    });
-
-    console.log(
-      `Restored ${totalQuotaToRestore} hours to quota for user ${userEmail} after bulk deleting ${deleteResult.count} videos`
-    );
-  }
 
   return {
     success: true,
     deletedCount: deleteResult.count,
     deletedVideos: existingVideos,
-    quotaRestored: totalQuotaToRestore,
   };
 }
 
-// Get channels and their playlists from user's saved videos
-export async function getUserChannelsAndPlaylists(userEmail: string): Promise<
+export async function getUserChannelsAndPlaylists(): Promise<
   Array<{
     channelHandle: string;
     playlists: Array<{
@@ -751,11 +577,9 @@ export async function getUserChannelsAndPlaylists(userEmail: string): Promise<
 > {
   const { prisma } = await import("@/db");
 
-  // Get all unique channel/playlist combinations for this user
   const channelPlaylistData = await prisma.video.groupBy({
     by: ["channelHandle", "playlistId", "playlistTitle"],
     where: {
-      userEmail,
       channelHandle: {
         not: null,
       },
@@ -768,7 +592,6 @@ export async function getUserChannelsAndPlaylists(userEmail: string): Promise<
     },
   });
 
-  // Group by channel handle
   const channelMap = new Map<
     string,
     Array<{
@@ -792,7 +615,6 @@ export async function getUserChannelsAndPlaylists(userEmail: string): Promise<
     }
   });
 
-  // Convert map to array format
   return Array.from(channelMap.entries()).map(([channelHandle, playlists]) => ({
     channelHandle,
     playlists,

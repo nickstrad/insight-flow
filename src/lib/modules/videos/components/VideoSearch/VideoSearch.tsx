@@ -29,11 +29,10 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import PurchaseVideoTable from "../PurchaseVideoTable/PurchaseVideoTable";
-import QuotaViewer from "@/lib/modules/quota/components/QuotaViewer";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 
-export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
+export const VideoSearch = () => {
   const [channelHandle, setChannelHandle] = useState("");
   const [submittedHandle, setSubmittedHandle] = useState("");
   const [selectedPlaylistId, setSelectedPlaylistId] = useState("");
@@ -163,25 +162,12 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
           </CardContent>
         </Card>
       </div>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Video Selection</h3>
-        <Suspense
-          fallback={
-            <div className="text-muted-foreground text-sm">
-              Loading quota...
-            </div>
-          }
-        >
-          <QuotaViewer userEmail={userEmail} />
-        </Suspense>
-      </div>
       {isSubmitted && selectedPlaylistId && (
         <Suspense fallback={<VideoTableSkeleton />}>
           <PurchaseVideoTable
             channelHandle={submittedHandle}
             playlistId={selectedPlaylistId}
             searchType="playlist"
-            userEmail={userEmail}
             onLoadingStateChange={handleLoadingStateChange}
           />
         </Suspense>
