@@ -2,14 +2,23 @@
 
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { clientConfig } from "@/lib/config";
+
+const NOTIFICATIONS_PATH = "/dashboard/notifications";
 
 export default function NotificationWidget() {
   const trpc = useTRPC();
+  const pathname = usePathname();
+  const refetchInterval = pathname?.startsWith(NOTIFICATIONS_PATH)
+    ? clientConfig.NEXT_PUBLIC_NOTIFICATION_PAGE_POLL_MS
+    : clientConfig.NEXT_PUBLIC_NOTIFICATION_POLL_MS;
 
-  const { data: unreadCount = 0 } = useQuery(
-    trpc.notifications.getUnreadNotificationCount.queryOptions()
-  );
+  const { data: unreadCount = 0 } = useQuery({
+    ...trpc.notifications.getUnreadNotificationCount.queryOptions(),
+    refetchInterval,
+  });
 
   if (unreadCount === 0) {
     return null;

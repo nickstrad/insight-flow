@@ -37,7 +37,7 @@ import {
 import { useState, useEffect } from "react";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Video, AlertCircle, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import PaginatedVideoList from "./PaginatedVideoList";
@@ -61,6 +61,7 @@ export default function PurchaseVideoTable({
     new Set()
   );
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   const {
@@ -110,6 +111,13 @@ export default function PurchaseVideoTable({
       onSuccess: (data) => {
         toast.success(
           `Transcription started! Processing ${data.videoCount} videos.`
+        );
+
+        queryClient.invalidateQueries(
+          trpc.notifications.getUnreadNotificationCount.queryOptions()
+        );
+        queryClient.invalidateQueries(
+          trpc.notifications.getNotificationsForUser.queryOptions()
         );
 
         setIsConfirmModalOpen(false);

@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Notification } from "@/generated/prisma";
+import { clientConfig } from "@/lib/config";
 
 type SortField = keyof Notification;
 
@@ -24,7 +25,10 @@ export const useNotificationTableState = () => {
   const trpc = useTRPC();
 
   const { data: notifications, error: getAllNotificationsError } =
-    useSuspenseQuery(trpc.notifications.getNotificationsForUser.queryOptions());
+    useSuspenseQuery({
+      ...trpc.notifications.getNotificationsForUser.queryOptions(),
+      refetchInterval: clientConfig.NEXT_PUBLIC_NOTIFICATION_PAGE_POLL_MS,
+    });
 
   useEffect(() => {
     if (getAllNotificationsError) {
