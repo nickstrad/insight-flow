@@ -262,9 +262,12 @@ function NotificationTableContent() {
             {currentNotifications.map((notification) => (
               <TableRow
                 key={notification.id}
-                className={notification.read ? "opacity-60" : ""}
+                className={`cursor-pointer ${notification.read ? "opacity-60" : ""}`}
+                onClick={() =>
+                  handleNotificationClick(notification.id, notification.read)
+                }
               >
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={selectedNotifications.includes(notification.id)}
                     onCheckedChange={() =>
@@ -279,15 +282,10 @@ function NotificationTableContent() {
                 </TableCell>
                 <TableCell className="max-w-md">
                   <div
-                    className={`flex cursor-pointer items-center rounded p-1 hover:bg-gray-50 ${
+                    className={`flex items-center rounded p-1 ${
                       !notification.read ? "font-medium" : ""
                     }`}
-                    onClick={() =>
-                      handleNotificationClick(
-                        notification.id,
-                        notification.read
-                      )
-                    }
+                    title={notification.message}
                   >
                     <div className="flex-1 truncate pr-2">
                       {truncateMessage(notification.message)}
@@ -321,7 +319,7 @@ function NotificationTableContent() {
                 <TableCell>
                   {new Date(notification.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center gap-1">
                     {!notification.read && (
                       <Button
