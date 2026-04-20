@@ -1,0 +1,5 @@
+npx lint-staged
+
+if npm run | grep -q "^  test$"; then
+  npm test
+fi

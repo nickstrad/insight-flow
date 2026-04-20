@@ -9,22 +9,30 @@ type SortField = keyof Notification;
 
 type SortDirection = "asc" | "desc" | "none";
 
-export const useNotificationTableState = ({ userEmail }: { userEmail: string }) => {
+export const useNotificationTableState = ({
+  userEmail,
+}: {
+  userEmail: string;
+}) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedNotificationMessage, setSelectedNotificationMessage] = useState("");
-  const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
+  const [selectedNotificationMessage, setSelectedNotificationMessage] =
+    useState("");
+  const [selectedNotifications, setSelectedNotifications] = useState<string[]>(
+    []
+  );
   const itemsPerPage = 20;
 
   const trpc = useTRPC();
 
-  const { data: notifications, error: getAllNotificationsError } = useSuspenseQuery(
-    trpc.notifications.getNotificationsForUser.queryOptions({
-      userEmail,
-    })
-  );
+  const { data: notifications, error: getAllNotificationsError } =
+    useSuspenseQuery(
+      trpc.notifications.getNotificationsForUser.queryOptions({
+        userEmail,
+      })
+    );
 
   useEffect(() => {
     if (getAllNotificationsError) {
@@ -43,9 +51,9 @@ export const useNotificationTableState = ({ userEmail }: { userEmail: string }) 
   };
 
   const toggleNotificationSelection = (notificationId: string) => {
-    setSelectedNotifications(prev => 
+    setSelectedNotifications((prev) =>
       prev.includes(notificationId)
-        ? prev.filter(id => id !== notificationId)
+        ? prev.filter((id) => id !== notificationId)
         : [...prev, notificationId]
     );
   };
@@ -54,7 +62,7 @@ export const useNotificationTableState = ({ userEmail }: { userEmail: string }) 
     if (selectedNotifications.length === currentNotifications.length) {
       setSelectedNotifications([]);
     } else {
-      setSelectedNotifications(currentNotifications.map(n => n.id));
+      setSelectedNotifications(currentNotifications.map((n) => n.id));
     }
   };
 
@@ -74,12 +82,12 @@ export const useNotificationTableState = ({ userEmail }: { userEmail: string }) 
 
       // Handle different data types
       let comparison = 0;
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
+      if (typeof aValue === "string" && typeof bValue === "string") {
         comparison = aValue.localeCompare(bValue);
       } else if (aValue instanceof Date && bValue instanceof Date) {
         comparison = aValue.getTime() - bValue.getTime();
-      } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
-        comparison = aValue === bValue ? 0 : (aValue ? 1 : -1);
+      } else if (typeof aValue === "boolean" && typeof bValue === "boolean") {
+        comparison = aValue === bValue ? 0 : aValue ? 1 : -1;
       } else {
         comparison = aValue < bValue ? -1 : 1;
       }
@@ -90,7 +98,10 @@ export const useNotificationTableState = ({ userEmail }: { userEmail: string }) 
     const totalPages = Math.ceil(sortedNotifications.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentNotifications = sortedNotifications.slice(startIndex, endIndex);
+    const currentNotifications = sortedNotifications.slice(
+      startIndex,
+      endIndex
+    );
 
     return {
       currentNotifications,
@@ -99,9 +110,11 @@ export const useNotificationTableState = ({ userEmail }: { userEmail: string }) 
   }, [sortField, sortDirection, notifications, currentPage]);
 
   const isAllSelected = useMemo(() => {
-    return currentNotifications.length > 0 && 
-           selectedNotifications.length === currentNotifications.length &&
-           currentNotifications.every(n => selectedNotifications.includes(n.id));
+    return (
+      currentNotifications.length > 0 &&
+      selectedNotifications.length === currentNotifications.length &&
+      currentNotifications.every((n) => selectedNotifications.includes(n.id))
+    );
   }, [currentNotifications, selectedNotifications]);
 
   const handleSort = (field: SortField) => {
@@ -125,9 +138,9 @@ export const useNotificationTableState = ({ userEmail }: { userEmail: string }) 
       if (field !== sortField) return null;
       if (sortDirection === "none") return null;
       return sortDirection === "asc" ? (
-        <ArrowUp className="w-4 h-4" />
+        <ArrowUp className="h-4 w-4" />
       ) : (
-        <ArrowDown className="w-4 h-4" />
+        <ArrowDown className="h-4 w-4" />
       );
     },
     [sortField, sortDirection]

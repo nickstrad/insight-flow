@@ -45,7 +45,7 @@ export const transcriptRouter = createTRPCRouter({
 
       return {
         success: true,
-        message: `Transcription started for ${youtubeVideos.length} video${youtubeVideos.length > 1 ? 's' : ''}. You'll receive notifications when complete.`,
+        message: `Transcription started for ${youtubeVideos.length} video${youtubeVideos.length > 1 ? "s" : ""}. You'll receive notifications when complete.`,
         videoCount: youtubeVideos.length,
         async: true,
       };
@@ -91,7 +91,7 @@ export const transcriptRouter = createTRPCRouter({
 
       return {
         success: true,
-        message: `Re-transcription started for ${videos.length} video${videos.length > 1 ? 's' : ''}. You'll receive notifications when complete.`,
+        message: `Re-transcription started for ${videos.length} video${videos.length > 1 ? "s" : ""}. You'll receive notifications when complete.`,
         videoCount: videos.length,
         async: true,
       };
@@ -118,7 +118,8 @@ export const transcriptRouter = createTRPCRouter({
 
       return {
         success: true,
-        message: "Video retry started. You'll receive notifications when complete.",
+        message:
+          "Video retry started. You'll receive notifications when complete.",
         async: true,
       };
     }),
@@ -164,7 +165,7 @@ export const transcriptRouter = createTRPCRouter({
 
       return {
         success: true,
-        message: `Transcription-only started for ${youtubeVideos.length} video${youtubeVideos.length > 1 ? 's' : ''} (no embeddings). You'll receive notifications when complete.`,
+        message: `Transcription-only started for ${youtubeVideos.length} video${youtubeVideos.length > 1 ? "s" : ""} (no embeddings). You'll receive notifications when complete.`,
         videoCount: youtubeVideos.length,
         async: true,
       };

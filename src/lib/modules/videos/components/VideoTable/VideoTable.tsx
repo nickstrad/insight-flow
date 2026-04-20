@@ -237,10 +237,10 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                     <img
                       src={video.thumbnailUrl}
                       alt={`Thumbnail for ${video.title}`}
-                      className="w-16 h-12 object-cover rounded"
+                      className="h-12 w-16 rounded object-cover"
                     />
                   ) : (
-                    <div className="w-16 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                    <div className="flex h-12 w-16 items-center justify-center rounded bg-gray-200 text-xs text-gray-500">
                       No Image
                     </div>
                   )}
@@ -298,21 +298,21 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                       video.status === "COMPLETED"
                         ? "default"
                         : video.status === "TRANSCRIBE_ERROR" ||
-                          video.status === "EMBEDDING_ERROR"
-                        ? "destructive"
-                        : "secondary"
+                            video.status === "EMBEDDING_ERROR"
+                          ? "destructive"
+                          : "secondary"
                     }
                   >
                     {video.status === "TRANSCRIBE_ERROR"
                       ? "TRANSCRIPTION FAILED"
                       : video.status === "EMBEDDING_ERROR"
-                      ? "EMBEDDING FAILED"
-                      : video.status}
+                        ? "EMBEDDING FAILED"
+                        : video.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="max-w-md">
                   <div className="flex items-center">
-                    <div className="truncate flex-1 pr-2">{video.content}</div>
+                    <div className="flex-1 truncate pr-2">{video.content}</div>
                     {video.content.length > 100 && (
                       <Button
                         onClick={() => openModal(video.content)}
@@ -336,7 +336,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                           onClick={() => handleRetryClick(video.id)}
                           variant="ghost"
                           size="icon"
-                          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                          className="text-orange-600 hover:bg-orange-50 hover:text-orange-700"
                           title={`Retry ${
                             video.status === "EMBEDDING_ERROR"
                               ? "embedding"
@@ -356,7 +356,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
                       onClick={() => handleDeleteClick(video.id)}
                       variant="ghost"
                       size="icon"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
                       title="Delete video"
                       disabled={deleteVideoMutation.isPending}
                     >
@@ -378,7 +378,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
       </CardContent>
       <CardFooter>
         {videos.length > 0 && (
-          <div className="flex items-center justify-between w-full">
+          <div className="flex w-full items-center justify-between">
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
@@ -411,7 +411,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
           <DialogHeader>
             <DialogTitle>Full Content</DialogTitle>
             <DialogDescription>
-              <div className="whitespace-pre-wrap break-words overflow-y-auto max-h-96">
+              <div className="max-h-96 overflow-y-auto break-words whitespace-pre-wrap">
                 {selectedVideoText}
               </div>
             </DialogDescription>
@@ -463,7 +463,7 @@ export default function VideoTable({ userEmail }: VideoTableProps) {
               permanently remove the video, its transcript chunks, embeddings,
               and restore any quota that was used. This action cannot be undone.
               {selectedVideoForDeletion && (
-                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                <div className="mt-2 rounded bg-gray-50 p-2 text-sm">
                   <strong>Video:</strong> {selectedVideoForDeletion.title}
                 </div>
               )}

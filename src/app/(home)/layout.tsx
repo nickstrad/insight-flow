@@ -6,7 +6,7 @@ interface Props {
 
 const Layout: React.FC<Props> = ({ children }) => {
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="bg-background flex h-screen flex-col">
       <header className="sticky top-0 z-10">
         <Navbar />
       </header>

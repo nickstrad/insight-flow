@@ -10,61 +10,61 @@ interface PaginatedVideoListProps {
   itemsPerPage?: number;
 }
 
-export default function PaginatedVideoList({ 
-  videos, 
-  itemsPerPage = 5 
+export default function PaginatedVideoList({
+  videos,
+  itemsPerPage = 5,
 }: PaginatedVideoListProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const totalPages = Math.ceil(videos.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentVideos = videos.slice(startIndex, endIndex);
-  
+
   const handlePreviousPage = () => {
-    setCurrentPage(prev => Math.max(1, prev - 1));
+    setCurrentPage((prev) => Math.max(1, prev - 1));
   };
-  
+
   const handleNextPage = () => {
-    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
   };
-  
+
   // Reset to first page when videos change
   useEffect(() => {
     setCurrentPage(1);
   }, [videos.length]);
-  
+
   if (videos.length === 0) {
     return (
-      <div className="text-center text-sm text-muted-foreground py-8">
+      <div className="text-muted-foreground py-8 text-center text-sm">
         No videos selected
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-3">
       {/* Video List */}
       <div className="space-y-2">
         {currentVideos.map((video, index) => (
-          <div 
-            key={video.youtubeId} 
-            className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"
+          <div
+            key={video.youtubeId}
+            className="bg-muted/50 flex items-start gap-3 rounded-lg p-3"
           >
             {video.thumbnail && (
-              <img 
-                src={video.thumbnail} 
+              <img
+                src={video.thumbnail}
                 alt={video.title}
-                className="w-16 h-12 object-cover rounded flex-shrink-0"
+                className="h-12 w-16 flex-shrink-0 rounded object-cover"
               />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium line-clamp-2 mb-1">
+                  <div className="mb-1 line-clamp-2 text-sm font-medium">
                     {video.title}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
+                  <div className="text-muted-foreground truncate text-xs">
                     ID: {video.youtubeId}
                   </div>
                   {video.durationInMinutes && (
@@ -73,12 +73,12 @@ export default function PaginatedVideoList({
                     </div>
                   )}
                   {video.description && (
-                    <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                    <div className="text-muted-foreground mt-1 line-clamp-2 text-xs">
                       {video.description}
                     </div>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground flex-shrink-0">
+                <div className="text-muted-foreground flex-shrink-0 text-xs">
                   #{startIndex + index + 1}
                 </div>
               </div>
@@ -86,12 +86,13 @@ export default function PaginatedVideoList({
           </div>
         ))}
       </div>
-      
+
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="text-xs text-muted-foreground">
-            Showing {startIndex + 1}-{Math.min(endIndex, videos.length)} of {videos.length} videos
+        <div className="flex items-center justify-between border-t pt-2">
+          <div className="text-muted-foreground text-xs">
+            Showing {startIndex + 1}-{Math.min(endIndex, videos.length)} of{" "}
+            {videos.length} videos
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -103,7 +104,7 @@ export default function PaginatedVideoList({
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="text-xs text-muted-foreground px-2">
+            <div className="text-muted-foreground px-2 text-xs">
               {currentPage} of {totalPages}
             </div>
             <Button

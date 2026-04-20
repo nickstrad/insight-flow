@@ -245,14 +245,14 @@ export async function createTranscriptionNotifications({
       transcriptionSuccesses.length === 1
         ? `Successfully transcribed: ${videoTitles[0]}`
         : transcriptionSuccesses.length <= 3
-        ? `Successfully transcribed ${
-            transcriptionSuccesses.length
-          } videos: ${videoTitles.join(", ")}`
-        : `Successfully transcribed ${
-            transcriptionSuccesses.length
-          } videos including: ${videoTitles.join(", ")} and ${
-            transcriptionSuccesses.length - 3
-          } more`;
+          ? `Successfully transcribed ${
+              transcriptionSuccesses.length
+            } videos: ${videoTitles.join(", ")}`
+          : `Successfully transcribed ${
+              transcriptionSuccesses.length
+            } videos including: ${videoTitles.join(", ")} and ${
+              transcriptionSuccesses.length - 3
+            } more`;
 
     notificationsToCreate.push({
       userEmail,
@@ -271,16 +271,16 @@ export async function createTranscriptionNotifications({
       transcriptionFailures.length === 1
         ? `Failed to transcribe: ${videoTitles[0]}. Please try again or check if the video is accessible.`
         : transcriptionFailures.length <= 3
-        ? `Failed to transcribe ${
-            transcriptionFailures.length
-          } videos: ${videoTitles.join(
-            ", "
-          )}. Please try again or check if the videos are accessible.`
-        : `Failed to transcribe ${
-            transcriptionFailures.length
-          } videos including: ${videoTitles.join(", ")} and ${
-            transcriptionFailures.length - 3
-          } more. Please try again or check if the videos are accessible.`;
+          ? `Failed to transcribe ${
+              transcriptionFailures.length
+            } videos: ${videoTitles.join(
+              ", "
+            )}. Please try again or check if the videos are accessible.`
+          : `Failed to transcribe ${
+              transcriptionFailures.length
+            } videos including: ${videoTitles.join(", ")} and ${
+              transcriptionFailures.length - 3
+            } more. Please try again or check if the videos are accessible.`;
 
     notificationsToCreate.push({
       userEmail,
@@ -299,16 +299,16 @@ export async function createTranscriptionNotifications({
       embeddingSuccesses.length === 1
         ? `Successfully processed embeddings for: ${videoTitles[0]}. Video is now ready for AI chat.`
         : embeddingSuccesses.length <= 3
-        ? `Successfully processed embeddings for ${
-            embeddingSuccesses.length
-          } videos: ${videoTitles.join(
-            ", "
-          )}. Videos are now ready for AI chat.`
-        : `Successfully processed embeddings for ${
-            embeddingSuccesses.length
-          } videos including: ${videoTitles.join(", ")} and ${
-            embeddingSuccesses.length - 3
-          } more. Videos are now ready for AI chat.`;
+          ? `Successfully processed embeddings for ${
+              embeddingSuccesses.length
+            } videos: ${videoTitles.join(
+              ", "
+            )}. Videos are now ready for AI chat.`
+          : `Successfully processed embeddings for ${
+              embeddingSuccesses.length
+            } videos including: ${videoTitles.join(", ")} and ${
+              embeddingSuccesses.length - 3
+            } more. Videos are now ready for AI chat.`;
 
     notificationsToCreate.push({
       userEmail,
@@ -327,16 +327,16 @@ export async function createTranscriptionNotifications({
       embeddingFailures.length === 1
         ? `Failed to process embeddings for: ${videoTitles[0]}. Transcription completed but AI chat may not work properly.`
         : embeddingFailures.length <= 3
-        ? `Failed to process embeddings for ${
-            embeddingFailures.length
-          } videos: ${videoTitles.join(
-            ", "
-          )}. Transcriptions completed but AI chat may not work properly for these videos.`
-        : `Failed to process embeddings for ${
-            embeddingFailures.length
-          } videos including: ${videoTitles.join(", ")} and ${
-            embeddingFailures.length - 3
-          } more. Transcriptions completed but AI chat may not work properly for these videos.`;
+          ? `Failed to process embeddings for ${
+              embeddingFailures.length
+            } videos: ${videoTitles.join(
+              ", "
+            )}. Transcriptions completed but AI chat may not work properly for these videos.`
+          : `Failed to process embeddings for ${
+              embeddingFailures.length
+            } videos including: ${videoTitles.join(", ")} and ${
+              embeddingFailures.length - 3
+            } more. Transcriptions completed but AI chat may not work properly for these videos.`;
 
     notificationsToCreate.push({
       userEmail,

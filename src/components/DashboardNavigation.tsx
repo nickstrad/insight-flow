@@ -5,7 +5,14 @@ import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { UserControl } from "./user-control";
 import NotificationWidget from "@/lib/modules/notifications/components/NotificationWidget";
-import { Search, MessageSquare, Video, Home, ArrowLeft, Bell } from "lucide-react";
+import {
+  Search,
+  MessageSquare,
+  Video,
+  Home,
+  ArrowLeft,
+  Bell,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -64,8 +71,8 @@ function AppSidebar() {
     <Sidebar variant="inset">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-2">
-          <Home className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          <Home className="text-primary h-5 w-5" />
+          <h1 className="from-primary to-primary/60 bg-gradient-to-r bg-clip-text text-lg font-semibold text-transparent">
             InsightFlow
           </h1>
         </div>
@@ -86,14 +93,18 @@ function AppSidebar() {
                       isActive={active}
                       tooltip={item.description}
                     >
-                      <Link href={item.href} className="flex items-center justify-between w-full">
+                      <Link
+                        href={item.href}
+                        className="flex w-full items-center justify-between"
+                      >
                         <div className="flex items-center gap-2">
                           <Icon />
                           <span>{item.name}</span>
                         </div>
-                        {item.href === "/dashboard/notifications" && userEmail && (
-                          <NotificationWidget userEmail={userEmail} />
-                        )}
+                        {item.href === "/dashboard/notifications" &&
+                          userEmail && (
+                            <NotificationWidget userEmail={userEmail} />
+                          )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -109,7 +120,7 @@ function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link href="/" className="flex items-center gap-2">
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="h-4 w-4" />
                 <span>Back to Home</span>
               </Link>
             </SidebarMenuButton>
@@ -137,8 +148,8 @@ export default function DashboardNavigation({
         {/* Top header with sidebar trigger */}
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
-          <div className="h-4 w-px bg-sidebar-border" />
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="bg-sidebar-border h-4 w-px" />
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <span>Dashboard</span>
           </div>
         </header>

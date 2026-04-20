@@ -57,7 +57,11 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
   };
 
   // Fetch playlists for the submitted channel
-  const { data: playlists, isLoading: playlistsLoading, error: playlistsError } = useQuery({
+  const {
+    data: playlists,
+    isLoading: playlistsLoading,
+    error: playlistsError,
+  } = useQuery({
     ...trpc.videos.getChannelPlaylists.queryOptions({
       channelHandle: submittedHandle,
     }),
@@ -72,7 +76,7 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
   // Auto-select uploads playlist when playlists load
   React.useEffect(() => {
     if (playlists && playlists.length > 0 && !selectedPlaylistId) {
-      const uploadsPlaylist = playlists.find(p => p.title === "Uploads");
+      const uploadsPlaylist = playlists.find((p) => p.title === "Uploads");
       if (uploadsPlaylist) {
         handlePlaylistSelect(uploadsPlaylist.id);
       }
@@ -86,7 +90,8 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
           <CardHeader>
             <CardTitle>Search YouTube Channel</CardTitle>
             <CardDescription>
-              Enter a channel handle to get playlists, then select a specific playlist to view videos.
+              Enter a channel handle to get playlists, then select a specific
+              playlist to view videos.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -101,23 +106,30 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
                   onChange={(e) => setChannelHandle(e.target.value)}
                   disabled={isLoading || playlistsLoading}
                 />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Enter the channel handle (e.g., @channelname)
                 </p>
               </div>
-              <Button 
-                type="submit" 
-                disabled={!channelHandle.trim() || isLoading || playlistsLoading}
+              <Button
+                type="submit"
+                disabled={
+                  !channelHandle.trim() || isLoading || playlistsLoading
+                }
                 className="w-full"
               >
-                {playlistsLoading ? "Loading Playlists..." : "Get Channel Playlists"}
+                {playlistsLoading
+                  ? "Loading Playlists..."
+                  : "Get Channel Playlists"}
               </Button>
             </form>
-            
+
             {showPlaylistDropdown && playlists && playlists.length > 0 && (
               <div className="mt-4 space-y-2">
                 <Label htmlFor="playlist">Select Playlist</Label>
-                <Select onValueChange={handlePlaylistSelect} value={selectedPlaylistId}>
+                <Select
+                  onValueChange={handlePlaylistSelect}
+                  value={selectedPlaylistId}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a playlist" />
                   </SelectTrigger>
@@ -129,31 +141,33 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   The &quot;Uploads&quot; playlist is selected by default
                 </p>
               </div>
             )}
-            
+
             {showPlaylistDropdown && playlists && playlists.length === 0 && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+              <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-yellow-800">
                 <p className="text-sm">No playlists found for this channel.</p>
               </div>
             )}
-            
+
             {playlistsError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                <p className="text-sm">Failed to load playlists: {playlistsError.message}</p>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+                <p className="text-sm">
+                  Failed to load playlists: {playlistsError.message}
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Video Selection</h3>
         <Suspense
           fallback={
-            <div className="text-sm text-muted-foreground">
+            <div className="text-muted-foreground text-sm">
               Loading quota...
             </div>
           }
@@ -177,20 +191,20 @@ export const VideoSearch = ({ userEmail }: { userEmail: string }) => {
 };
 
 const VideoTableSkeleton = () => (
-  <Card className="min-h-[600px] flex flex-col">
+  <Card className="flex min-h-[600px] flex-col">
     <CardHeader>
       <CardTitle>Videos</CardTitle>
       <CardDescription>
         A list of all the videos in your channel.
       </CardDescription>
     </CardHeader>
-    <CardContent className="flex-1 flex flex-col">
-      <div className="flex justify-between items-center mb-4">
+    <CardContent className="flex flex-1 flex-col">
+      <div className="mb-4 flex items-center justify-between">
         <div className="text-sm text-gray-600">Loading videos...</div>
         <Button disabled>Transcribe Selected Videos</Button>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         <Table>
           <TableHeader>
             <TableRow>
@@ -211,19 +225,19 @@ const VideoTableSkeleton = () => (
                   <Checkbox disabled />
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 animate-pulse rounded bg-gray-200" />
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 animate-pulse rounded bg-gray-200" />
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 animate-pulse rounded bg-gray-200" />
                 </TableCell>
                 <TableCell>
-                  <div className="w-16 h-12 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-12 w-16 animate-pulse rounded bg-gray-200" />
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 animate-pulse rounded bg-gray-200" />
                 </TableCell>
               </TableRow>
             ))}
@@ -232,7 +246,7 @@ const VideoTableSkeleton = () => (
       </div>
     </CardContent>
     <CardFooter>
-      <div className="flex items-center justify-between w-full">
+      <div className="flex w-full items-center justify-between">
         <span className="mx-4 text-sm text-gray-700">Loading...</span>
       </div>
     </CardFooter>

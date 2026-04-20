@@ -153,11 +153,7 @@ export async function updateChatContext({
 }
 
 // Get chat context (channel handles and playlist IDs)
-export async function getChatContext({
-  id,
-}: {
-  id: string;
-}): Promise<{
+export async function getChatContext({ id }: { id: string }): Promise<{
   channelHandles: string[];
   playlistIds: string[];
 } | null> {

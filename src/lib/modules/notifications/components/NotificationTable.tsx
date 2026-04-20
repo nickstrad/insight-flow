@@ -203,7 +203,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
       </CardHeader>
       <CardContent>
         {selectedCount > 0 && (
-          <div className="flex items-center gap-2 mb-4 p-2 bg-gray-50 rounded-md">
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-gray-50 p-2">
             <span className="text-sm text-gray-600">
               {selectedCount} selected
             </span>
@@ -212,10 +212,10 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
                 onClick={handleMarkSelectedAsRead}
                 variant="outline"
                 size="sm"
-                className="text-green-600 border-green-600 hover:bg-green-50"
+                className="border-green-600 text-green-600 hover:bg-green-50"
                 disabled={markAllAsReadMutation.isPending}
               >
-                <Check className="h-4 w-4 mr-1" />
+                <Check className="mr-1 h-4 w-4" />
                 Mark as Read
               </Button>
             )}
@@ -223,10 +223,10 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
               onClick={handleDeleteSelected}
               variant="outline"
               size="sm"
-              className="text-red-600 border-red-600 hover:bg-red-50"
+              className="border-red-600 text-red-600 hover:bg-red-50"
               disabled={batchDeleteMutation.isPending}
             >
-              <Trash2 className="h-4 w-4 mr-1" />
+              <Trash2 className="mr-1 h-4 w-4" />
               Delete Selected
             </Button>
           </div>
@@ -285,7 +285,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
                 </TableCell>
                 <TableCell className="max-w-md">
                   <div
-                    className={`flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded ${
+                    className={`flex cursor-pointer items-center rounded p-1 hover:bg-gray-50 ${
                       !notification.read ? "font-medium" : ""
                     }`}
                     onClick={() =>
@@ -295,7 +295,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
                       )
                     }
                   >
-                    <div className="truncate flex-1 pr-2">
+                    <div className="flex-1 truncate pr-2">
                       {truncateMessage(notification.message)}
                     </div>
                     {notification.message.length > 100 && (
@@ -320,7 +320,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
                       {notification.read ? "Read" : "Unread"}
                     </Badge>
                     {!notification.read && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                     )}
                   </div>
                 </TableCell>
@@ -339,7 +339,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
                         }
                         variant="ghost"
                         size="icon"
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        className="text-green-600 hover:bg-green-50 hover:text-green-700"
                         title="Mark as read"
                         disabled={markAsReadMutation.isPending}
                       >
@@ -359,7 +359,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
                       }}
                       variant="ghost"
                       size="icon"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
                       title="Delete notification"
                       disabled={deleteNotificationMutation.isPending}
                     >
@@ -381,7 +381,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
       </CardContent>
       <CardFooter>
         {notifications.length > 0 && (
-          <div className="flex items-center justify-between w-full">
+          <div className="flex w-full items-center justify-between">
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
@@ -414,7 +414,7 @@ function NotificationTableContent({ userEmail }: NotificationTableProps) {
           <DialogHeader>
             <DialogTitle>Full Message</DialogTitle>
             <DialogDescription>
-              <div className="whitespace-pre-wrap break-words overflow-y-auto max-h-96">
+              <div className="max-h-96 overflow-y-auto break-words whitespace-pre-wrap">
                 {selectedNotificationMessage}
               </div>
             </DialogDescription>
@@ -508,21 +508,21 @@ const NotificationTableSkeleton = () => (
                 <Checkbox disabled />
               </TableCell>
               <TableCell>
-                <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 animate-pulse rounded bg-gray-200" />
               </TableCell>
               <TableCell>
-                <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 animate-pulse rounded bg-gray-200" />
               </TableCell>
               <TableCell>
-                <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 animate-pulse rounded bg-gray-200" />
               </TableCell>
               <TableCell>
-                <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 animate-pulse rounded bg-gray-200" />
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1">
-                  <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-8 w-8 animate-pulse rounded bg-gray-200" />
+                  <div className="h-8 w-8 animate-pulse rounded bg-gray-200" />
                 </div>
               </TableCell>
             </TableRow>
@@ -531,7 +531,7 @@ const NotificationTableSkeleton = () => (
       </Table>
     </CardContent>
     <CardFooter>
-      <div className="flex items-center justify-between w-full">
+      <div className="flex w-full items-center justify-between">
         <span className="mx-4 text-sm text-gray-700">Loading...</span>
       </div>
     </CardFooter>

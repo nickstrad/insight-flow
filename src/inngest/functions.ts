@@ -11,19 +11,25 @@ import { YoutubeVideo } from "@/lib/modules/videos/types";
 
 // Full transcription pipeline (transcription + embeddings)
 export const transcribeVideosHandler = inngest.createFunction(
-  { 
+  {
     id: "transcribe-videos-handler",
     retries: 3,
   },
   { event: "transcription/videos.submitted" },
   async ({ event, step }) => {
-    const { youtubeVideos, userEmail, batchSize = 5 } = event.data as {
+    const {
+      youtubeVideos,
+      userEmail,
+      batchSize = 5,
+    } = event.data as {
       youtubeVideos: YoutubeVideo[];
       userEmail: string;
       batchSize?: number;
     };
 
-    console.log(`🎯 Inngest: Starting transcription of ${youtubeVideos.length} videos for user: ${userEmail}`);
+    console.log(
+      `🎯 Inngest: Starting transcription of ${youtubeVideos.length} videos for user: ${userEmail}`
+    );
 
     // Step 1: Send start notification
     await step.run("send-start-notification", async () => {
@@ -46,27 +52,35 @@ export const transcribeVideosHandler = inngest.createFunction(
       });
     });
 
-    console.log(`🏁 Inngest: Transcription complete - ${result.totalTranscribed}/${result.totalAttempts} videos processed`);
-    
+    console.log(
+      `🏁 Inngest: Transcription complete - ${result.totalTranscribed}/${result.totalAttempts} videos processed`
+    );
+
     return result;
   }
 );
 
 // Re-transcription of existing videos
 export const transcribeExistingVideosHandler = inngest.createFunction(
-  { 
+  {
     id: "transcribe-existing-videos-handler",
     retries: 3,
   },
   { event: "transcription/existing-videos.submitted" },
   async ({ event, step }) => {
-    const { videos, userEmail, batchSize = 5 } = event.data as {
+    const {
+      videos,
+      userEmail,
+      batchSize = 5,
+    } = event.data as {
       videos: Video[];
       userEmail: string;
       batchSize?: number;
     };
 
-    console.log(`🔄 Inngest: Starting re-transcription of ${videos.length} existing videos for user: ${userEmail}`);
+    console.log(
+      `🔄 Inngest: Starting re-transcription of ${videos.length} existing videos for user: ${userEmail}`
+    );
 
     // Step 1: Send start notification
     await step.run("send-start-notification", async () => {
@@ -89,27 +103,35 @@ export const transcribeExistingVideosHandler = inngest.createFunction(
       });
     });
 
-    console.log(`🏁 Inngest: Re-transcription complete - ${result.totalTranscribed}/${result.totalAttempts} videos processed`);
-    
+    console.log(
+      `🏁 Inngest: Re-transcription complete - ${result.totalTranscribed}/${result.totalAttempts} videos processed`
+    );
+
     return result;
   }
 );
 
 // Transcription-only pipeline (no embeddings)
 export const transcribeVideosOnlyHandler = inngest.createFunction(
-  { 
+  {
     id: "transcribe-videos-only-handler",
     retries: 3,
   },
   { event: "transcription/videos-only.submitted" },
   async ({ event, step }) => {
-    const { youtubeVideos, userEmail, batchSize = 5 } = event.data as {
+    const {
+      youtubeVideos,
+      userEmail,
+      batchSize = 5,
+    } = event.data as {
       youtubeVideos: YoutubeVideo[];
       userEmail: string;
       batchSize?: number;
     };
 
-    console.log(`📝 Inngest: Starting transcription-only of ${youtubeVideos.length} videos for user: ${userEmail}`);
+    console.log(
+      `📝 Inngest: Starting transcription-only of ${youtubeVideos.length} videos for user: ${userEmail}`
+    );
 
     // Step 1: Send start notification
     await step.run("send-start-notification", async () => {
@@ -132,15 +154,17 @@ export const transcribeVideosOnlyHandler = inngest.createFunction(
       });
     });
 
-    console.log(`🏁 Inngest: Transcription-only complete - ${result.totalTranscribed}/${result.totalAttempts} videos processed`);
-    
+    console.log(
+      `🏁 Inngest: Transcription-only complete - ${result.totalTranscribed}/${result.totalAttempts} videos processed`
+    );
+
     return result;
   }
 );
 
 // Single video retry
 export const retryVideoHandler = inngest.createFunction(
-  { 
+  {
     id: "retry-video-handler",
     retries: 3,
   },
@@ -161,8 +185,10 @@ export const retryVideoHandler = inngest.createFunction(
       });
     });
 
-    console.log(`🏁 Inngest: Retry ${result.success ? 'successful' : 'failed'} for video ${videoId}`);
-    
+    console.log(
+      `🏁 Inngest: Retry ${result.success ? "successful" : "failed"} for video ${videoId}`
+    );
+
     return result;
   }
 );
@@ -180,9 +206,9 @@ export const startTranscriptionNotification = inngest.createFunction(
 
     // Create notification message based on type
     const messageMap = {
-      "full-transcription": `Started transcribing ${videoCount} video${videoCount > 1 ? 's' : ''}. This may take a while - you'll be notified when complete.`,
-      "re-transcription": `Started re-transcribing ${videoCount} video${videoCount > 1 ? 's' : ''}. This may take a while - you'll be notified when complete.`,
-      "transcription-only": `Started transcribing ${videoCount} video${videoCount > 1 ? 's' : ''} (transcription only). This may take a while - you'll be notified when complete.`,
+      "full-transcription": `Started transcribing ${videoCount} video${videoCount > 1 ? "s" : ""}. This may take a while - you'll be notified when complete.`,
+      "re-transcription": `Started re-transcribing ${videoCount} video${videoCount > 1 ? "s" : ""}. This may take a while - you'll be notified when complete.`,
+      "transcription-only": `Started transcribing ${videoCount} video${videoCount > 1 ? "s" : ""} (transcription only). This may take a while - you'll be notified when complete.`,
     };
 
     const message = messageMap[type];
@@ -196,7 +222,7 @@ export const startTranscriptionNotification = inngest.createFunction(
     });
 
     console.log(`📬 Inngest: Sent start notification to user ${userEmail}`);
-    
+
     return { success: true, message };
   }
 );

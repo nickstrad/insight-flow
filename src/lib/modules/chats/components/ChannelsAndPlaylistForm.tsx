@@ -161,7 +161,7 @@ export default function ChannelsAndPlaylistForm({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">
+          <div className="text-muted-foreground text-center">
             No channels or playlists found. Add some videos first.
           </div>
         </CardContent>
@@ -209,7 +209,7 @@ export default function ChannelsAndPlaylistForm({
             </Button>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Select channels or specific playlists to focus the chat context.
           Selecting a channel includes all its playlists.
         </p>
@@ -261,7 +261,7 @@ export default function ChannelsAndPlaylistForm({
                     />
                     <Label
                       htmlFor={`channel-${channelHandle}`}
-                      className="font-medium cursor-pointer"
+                      className="cursor-pointer font-medium"
                     >
                       {channelHandle}
                     </Label>
@@ -295,7 +295,7 @@ export default function ChannelsAndPlaylistForm({
                           />
                           <Label
                             htmlFor={`playlist-${playlistId}`}
-                            className={`text-sm cursor-pointer ${
+                            className={`cursor-pointer text-sm ${
                               selectedChannelHandles.includes(channelHandle)
                                 ? "text-muted-foreground"
                                 : ""

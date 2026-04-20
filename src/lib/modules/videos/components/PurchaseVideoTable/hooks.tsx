@@ -16,7 +16,9 @@ export const useVideoTableState = ({
   const [uploadsPlaylistId, setUploadsPlaylistId] = useState<string>("");
   const [selectedVideos, setSelectedVideos] = useState<YoutubeVideo[]>([]);
   const [pageTokens, setPageTokens] = useState<Map<number, string>>(new Map());
-  const [pageCache, setPageCache] = useState<Map<number, YoutubeVideo[]>>(new Map());
+  const [pageCache, setPageCache] = useState<Map<number, YoutubeVideo[]>>(
+    new Map()
+  );
   const [totalPages, setTotalPages] = useState(1);
   const [totalVideoCount, setTotalVideoCount] = useState(0);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -48,9 +50,15 @@ export const useVideoTableState = ({
   });
 
   const currentPageToken = pageTokens.get(currentPage) || "";
-  const activePlaylistId = searchType === "channel" ? uploadsPlaylistId : (getPlaylistResponse?.playlistId || "");
-  const activeChannelHandle = searchType === "channel" ? channelHandle : (getPlaylistResponse?.channelHandle || "");
-  
+  const activePlaylistId =
+    searchType === "channel"
+      ? uploadsPlaylistId
+      : getPlaylistResponse?.playlistId || "";
+  const activeChannelHandle =
+    searchType === "channel"
+      ? channelHandle
+      : getPlaylistResponse?.channelHandle || "";
+
   const {
     data: currentPageVideosMetadata,
     error: currentPageVideosError,
@@ -67,16 +75,23 @@ export const useVideoTableState = ({
 
   useEffect(() => {
     setApiError(
-      getUploadsError?.message || 
-      getPlaylistError?.message || 
-      currentPageVideosError?.message || 
-      null
+      getUploadsError?.message ||
+        getPlaylistError?.message ||
+        currentPageVideosError?.message ||
+        null
     );
   }, [getUploadsError, getPlaylistError, currentPageVideosError]);
 
   const isLoading = useMemo(
-    () => getUploadsQueryIsLoading || getPlaylistQueryIsLoading || getNextVideosForPlaylistQueryIsLoading,
-    [getUploadsQueryIsLoading, getPlaylistQueryIsLoading, getNextVideosForPlaylistQueryIsLoading]
+    () =>
+      getUploadsQueryIsLoading ||
+      getPlaylistQueryIsLoading ||
+      getNextVideosForPlaylistQueryIsLoading,
+    [
+      getUploadsQueryIsLoading,
+      getPlaylistQueryIsLoading,
+      getNextVideosForPlaylistQueryIsLoading,
+    ]
   );
 
   const currentVideos = useMemo(() => {
@@ -90,19 +105,22 @@ export const useVideoTableState = ({
 
   // Cache videos and manage page tokens when API response arrives
   useEffect(() => {
-    if (currentPageVideosMetadata?.videos && currentPageVideosMetadata.forPage) {
+    if (
+      currentPageVideosMetadata?.videos &&
+      currentPageVideosMetadata.forPage
+    ) {
       const { videos, nextToken, forPage } = currentPageVideosMetadata;
-      
+
       // Cache the videos for this page
-      setPageCache(prev => {
+      setPageCache((prev) => {
         const newCache = new Map(prev);
         newCache.set(forPage, videos);
         return newCache;
       });
-      
+
       // Store the next page token
       if (nextToken) {
-        setPageTokens(prev => {
+        setPageTokens((prev) => {
           const newTokens = new Map(prev);
           newTokens.set(forPage + 1, nextToken);
           return newTokens;
@@ -129,7 +147,7 @@ export const useVideoTableState = ({
 
       // Cache first page videos if available
       if (getUploadsResponse.firstPageVideos) {
-        setPageCache(prev => {
+        setPageCache((prev) => {
           const newCache = new Map(prev);
           newCache.set(1, getUploadsResponse.firstPageVideos);
           return newCache;
@@ -137,7 +155,7 @@ export const useVideoTableState = ({
 
         // Store the next page token for page 2
         if (getUploadsResponse.nextToken) {
-          setPageTokens(prev => {
+          setPageTokens((prev) => {
             const newTokens = new Map(prev);
             newTokens.set(2, getUploadsResponse.nextToken!);
             return newTokens;
@@ -165,7 +183,7 @@ export const useVideoTableState = ({
 
       // Cache first page videos if available
       if (getPlaylistResponse.firstPageVideos) {
-        setPageCache(prev => {
+        setPageCache((prev) => {
           const newCache = new Map(prev);
           newCache.set(1, getPlaylistResponse.firstPageVideos);
           return newCache;
@@ -173,7 +191,7 @@ export const useVideoTableState = ({
 
         // Store the next page token for page 2
         if (getPlaylistResponse.nextToken) {
-          setPageTokens(prev => {
+          setPageTokens((prev) => {
             const newTokens = new Map(prev);
             newTokens.set(2, getPlaylistResponse.nextToken!);
             return newTokens;
@@ -194,7 +212,7 @@ export const useVideoTableState = ({
   const nextPage = useCallback(() => {
     const hasNextPageToken = pageTokens.has(currentPage + 1);
     const hasNextPageCached = pageCache.has(currentPage + 1);
-    
+
     // Can go to next page if we have a token for it, or it's cached, or we're not at the calculated total
     if (hasNextPageToken || hasNextPageCached || currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -228,9 +246,9 @@ export const useVideoTableState = ({
       previousPage,
       nextPage,
       canGoBack: currentPage > 1,
-      canGoForward: 
-        pageTokens.has(currentPage + 1) || 
-        pageCache.has(currentPage + 1) || 
+      canGoForward:
+        pageTokens.has(currentPage + 1) ||
+        pageCache.has(currentPage + 1) ||
         currentPage < totalPages,
     },
     error: {

@@ -77,7 +77,7 @@ const QuotaViewer = ({ userEmail }: QuotaViewerProps) => {
             value={getUsagePercentage(quota.messagesLeft, 100)}
             className="h-2"
           />
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center justify-between text-sm">
             <span>Used: {messagesUsed}</span>
             <span
               className={getUsageColor(
@@ -113,7 +113,7 @@ const QuotaViewer = ({ userEmail }: QuotaViewerProps) => {
             value={getUsagePercentage(quota.videoHoursLeft, 10)}
             className="h-2"
           />
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center justify-between text-sm">
             <span>Used: {videoHoursUsed} hours</span>
             <span
               className={getUsageColor(
@@ -150,7 +150,7 @@ const QuotaViewer = ({ userEmail }: QuotaViewerProps) => {
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          <MessageSquare className="text-muted-foreground h-4 w-4" />
           <Badge
             variant={quota.messagesLeft > 20 ? "secondary" : "destructive"}
             className="text-xs"
@@ -159,7 +159,7 @@ const QuotaViewer = ({ userEmail }: QuotaViewerProps) => {
           </Badge>
         </div>
         <div className="flex items-center gap-2">
-          <Video className="h-4 w-4 text-muted-foreground" />
+          <Video className="text-muted-foreground h-4 w-4" />
           <Badge
             variant={quota.videoHoursLeft > 2 ? "secondary" : "destructive"}
             className="text-xs"
@@ -172,10 +172,10 @@ const QuotaViewer = ({ userEmail }: QuotaViewerProps) => {
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-            <Info className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            <Info className="text-muted-foreground hover:text-foreground h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Quota Usage Details</DialogTitle>
           </DialogHeader>

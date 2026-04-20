@@ -40,7 +40,13 @@ export const videosRouter = createTRPCRouter({
     )
     .query(
       async ({
-        input: { channelHandle, playlistId, nextToken, currentPage, playlistTitle },
+        input: {
+          channelHandle,
+          playlistId,
+          nextToken,
+          currentPage,
+          playlistTitle,
+        },
       }) => {
         return getNextVideosForPlaylist({
           channelHandle,
@@ -89,9 +95,7 @@ export const videosRouter = createTRPCRouter({
   getPlaylistMetadata: baseProcedure
     .input(
       z.object({
-        playlistId: z
-          .string()
-          .min(1, { message: "Playlist ID is required." }),
+        playlistId: z.string().min(1, { message: "Playlist ID is required." }),
         channelHandle: z
           .string()
           .min(1, { message: "Channel handle is required." }),
@@ -126,7 +130,9 @@ export const videosRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string().min(1, { message: "Video ID is required." }),
-        userEmail: z.string().email({ message: "Valid user email is required." }),
+        userEmail: z
+          .string()
+          .email({ message: "Valid user email is required." }),
       })
     )
     .query(async ({ input: { videoId, userEmail } }) => {
@@ -137,15 +143,18 @@ export const videosRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string().min(1, { message: "Video ID is required." }),
-        userEmail: z.string().email({ message: "Valid user email is required." }),
-        updateData: z.object({
-          title: z.string().optional(),
-          channelHandle: z.string().optional(),
-          playlistId: z.string().optional(),
-        }).refine(
-          (data) => Object.keys(data).length > 0,
-          { message: "At least one field must be provided for update." }
-        ),
+        userEmail: z
+          .string()
+          .email({ message: "Valid user email is required." }),
+        updateData: z
+          .object({
+            title: z.string().optional(),
+            channelHandle: z.string().optional(),
+            playlistId: z.string().optional(),
+          })
+          .refine((data) => Object.keys(data).length > 0, {
+            message: "At least one field must be provided for update.",
+          }),
       })
     )
     .mutation(async ({ input: { videoId, userEmail, updateData } }) => {
@@ -156,7 +165,9 @@ export const videosRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string().min(1, { message: "Video ID is required." }),
-        userEmail: z.string().email({ message: "Valid user email is required." }),
+        userEmail: z
+          .string()
+          .email({ message: "Valid user email is required." }),
       })
     )
     .mutation(async ({ input: { videoId, userEmail } }) => {
@@ -169,7 +180,9 @@ export const videosRouter = createTRPCRouter({
         videoIds: z
           .array(z.string().min(1, { message: "Video ID is required." }))
           .min(1, { message: "At least one video ID is required." }),
-        userEmail: z.string().email({ message: "Valid user email is required." }),
+        userEmail: z
+          .string()
+          .email({ message: "Valid user email is required." }),
       })
     )
     .mutation(async ({ input: { videoIds, userEmail } }) => {
@@ -179,7 +192,9 @@ export const videosRouter = createTRPCRouter({
   getUserChannelsAndPlaylists: baseProcedure
     .input(
       z.object({
-        userEmail: z.string().email({ message: "Valid user email is required." }),
+        userEmail: z
+          .string()
+          .email({ message: "Valid user email is required." }),
       })
     )
     .query(async ({ input: { userEmail } }) => {

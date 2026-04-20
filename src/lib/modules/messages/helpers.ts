@@ -54,13 +54,15 @@ export async function searchVideos(
 
   // Add context-based filtering
   if (channelHandles && channelHandles.length > 0) {
-    const placeholders = channelHandles.map(() => `$${paramIndex++}`).join(', ');
+    const placeholders = channelHandles
+      .map(() => `$${paramIndex++}`)
+      .join(", ");
     whereClause += ` AND v."channelHandle" IN (${placeholders})`;
     params.push(...channelHandles);
   }
-  
+
   if (playlistIds && playlistIds.length > 0) {
-    const placeholders = playlistIds.map(() => `$${paramIndex++}`).join(', ');
+    const placeholders = playlistIds.map(() => `$${paramIndex++}`).join(", ");
     whereClause += ` AND v."playlistId" IN (${placeholders})`;
     params.push(...playlistIds);
   }

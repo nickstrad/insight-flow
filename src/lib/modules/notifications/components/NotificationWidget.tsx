@@ -8,7 +8,9 @@ interface NotificationWidgetProps {
   userEmail: string;
 }
 
-export default function NotificationWidget({ userEmail }: NotificationWidgetProps) {
+export default function NotificationWidget({
+  userEmail,
+}: NotificationWidgetProps) {
   const trpc = useTRPC();
 
   const { data: unreadCount = 0 } = useQuery(
@@ -23,16 +25,13 @@ export default function NotificationWidget({ userEmail }: NotificationWidgetProp
 
   return (
     <Badge
-      className={`
-        ml-auto min-w-[1.25rem] h-5 px-1.5 py-0 text-xs font-medium rounded-full
-        flex items-center justify-center
-        ${unreadCount > 0 
-          ? 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600' 
-          : 'bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700'
-        }
-      `}
+      className={`ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0 text-xs font-medium ${
+        unreadCount > 0
+          ? "bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+          : "bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700"
+      } `}
     >
-      {unreadCount > 99 ? '99+' : unreadCount}
+      {unreadCount > 99 ? "99+" : unreadCount}
     </Badge>
   );
 }

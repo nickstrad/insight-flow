@@ -240,7 +240,7 @@ export default function PurchaseVideoTable({
                 variant="ghost"
                 size="sm"
                 onClick={clearError}
-                className="h-6 w-6 p-0 text-destructive hover:text-destructive/90"
+                className="text-destructive hover:text-destructive/90 h-6 w-6 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -252,8 +252,8 @@ export default function PurchaseVideoTable({
         {quota && (
           <div className="mb-4">
             {isQuotaExceeded ? (
-              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                <AlertCircle className="w-4 h-4" />
+              <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+                <AlertCircle className="h-4 w-4" />
                 <div className="text-sm">
                   <span className="font-medium">Quota limit reached!</span> You
                   cannot select more videos. You have selected{" "}
@@ -262,8 +262,8 @@ export default function PurchaseVideoTable({
                 </div>
               </div>
             ) : remainingQuota <= 2 ? (
-              <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
-                <AlertCircle className="w-4 h-4" />
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
+                <AlertCircle className="h-4 w-4" />
                 <div className="text-sm">
                   <span className="font-medium">Low quota remaining!</span> Only{" "}
                   {remainingQuota}h left. Selected: {selectedVideoMinutes}{" "}
@@ -272,8 +272,8 @@ export default function PurchaseVideoTable({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
-                <Clock className="w-4 h-4" />
+              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-blue-800">
+                <Clock className="h-4 w-4" />
                 <div className="text-sm">
                   <span className="font-medium">Quota status:</span> Selected{" "}
                   {selectedVideoMinutes} minutes (~{selectedVideoHours}h) of{" "}
@@ -285,12 +285,12 @@ export default function PurchaseVideoTable({
           </div>
         )}
 
-        <div className="flex justify-between items-center mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div className="text-sm text-gray-600">
             {selectedVideoIds.size} video
             {selectedVideoIds.size !== 1 ? "s" : ""} selected
             {quota && selectedVideoMinutes > 0 && (
-              <span className="ml-2 text-blue-600 font-medium">
+              <span className="ml-2 font-medium text-blue-600">
                 ({selectedVideoMinutes} min ~{selectedVideoHours}h)
               </span>
             )}
@@ -328,13 +328,13 @@ export default function PurchaseVideoTable({
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={6} className="py-8 text-center">
                   Loading videos...
                 </TableCell>
               </TableRow>
             ) : currentVideos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={6} className="py-8 text-center">
                   No videos found for{" "}
                   {searchType === "channel"
                     ? `channel ${channelHandle}`
@@ -389,7 +389,7 @@ export default function PurchaseVideoTable({
                         <img
                           src={video.thumbnail}
                           alt={video.title}
-                          className="w-16 h-12 object-cover rounded"
+                          className="h-12 w-16 rounded object-cover"
                         />
                       )}
                     </TableCell>
@@ -413,7 +413,7 @@ export default function PurchaseVideoTable({
       </CardContent>
       <CardFooter>
         {(currentVideos.length > 0 || totalPages > 1) && (
-          <div className="flex items-center justify-between w-full">
+          <div className="flex w-full items-center justify-between">
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
@@ -442,11 +442,11 @@ export default function PurchaseVideoTable({
       </CardFooter>
 
       <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-          <div className="flex flex-col h-full max-h-[calc(90vh-2rem)]">
-            <DialogHeader className="px-6 py-4 pb-2 flex-shrink-0 border-b">
+        <DialogContent className="max-h-[90vh] max-w-4xl p-0">
+          <div className="flex h-full max-h-[calc(90vh-2rem)] flex-col">
+            <DialogHeader className="flex-shrink-0 border-b px-6 py-4 pb-2">
               <DialogTitle className="flex items-center gap-2">
-                <Video className="w-5 h-5" />
+                <Video className="h-5 w-5" />
                 Confirm Video Transcription
               </DialogTitle>
               <DialogDescription>
@@ -460,15 +460,15 @@ export default function PurchaseVideoTable({
                 {/* Quota Information */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="h-4 w-4" />
                     <h4 className="font-medium">Current Quota</h4>
                   </div>
                   {quotaLoading ? (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-muted-foreground text-sm">
                       Loading quota...
                     </div>
                   ) : quota ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-1">
                         <div className="text-sm font-medium">
                           Video Hours Left
@@ -494,13 +494,13 @@ export default function PurchaseVideoTable({
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-amber-600">
-                      <AlertCircle className="w-4 h-4" />
+                      <AlertCircle className="h-4 w-4" />
                       <span className="text-sm">
                         Unable to load quota information
                       </span>
                     </div>
                   )}
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     Quota resets:{" "}
                     {quota
                       ? new Date(quota.resetAt).toLocaleDateString()
@@ -523,7 +523,7 @@ export default function PurchaseVideoTable({
                     </Badge>
                   </div>
 
-                  <div className="border rounded-lg p-3">
+                  <div className="rounded-lg border p-3">
                     <PaginatedVideoList
                       videos={selectedVideos}
                       itemsPerPage={5}
@@ -533,10 +533,10 @@ export default function PurchaseVideoTable({
 
                 {/* Warning if insufficient quota */}
                 {quota && selectedVideoHours > quota.videoHoursLeft && (
-                  <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
                     <div className="text-sm text-amber-800">
-                      <div className="font-medium mb-1">Insufficient quota</div>
+                      <div className="mb-1 font-medium">Insufficient quota</div>
                       <div>
                         You need approximately {selectedVideoHours} hours (
                         {selectedVideoMinutes} minutes) but only have{" "}
@@ -550,7 +550,7 @@ export default function PurchaseVideoTable({
             </div>
 
             {/* Action Buttons - Fixed at bottom */}
-            <div className="flex justify-end space-x-2 p-6 pt-4 border-t bg-background flex-shrink-0">
+            <div className="bg-background flex flex-shrink-0 justify-end space-x-2 border-t p-6 pt-4">
               <Button
                 variant="outline"
                 onClick={() => setIsConfirmModalOpen(false)}

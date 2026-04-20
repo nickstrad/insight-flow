@@ -118,27 +118,29 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
-  
+
   /* Enhanced focus styles for better accessibility */
   *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-ring;
+    @apply outline-ring outline-2 outline-offset-2;
   }
-  
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
-  
+
   /* Better button and interactive element styles */
-  button, 
+  button,
   [role="button"],
   input[type="submit"],
   input[type="button"] {
     @apply cursor-pointer;
   }
-  
+
   button:disabled,
   [role="button"]:disabled,
   input[type="submit"]:disabled,

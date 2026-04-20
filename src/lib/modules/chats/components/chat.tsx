@@ -42,7 +42,7 @@ const renderMessageWithLinks = (message: string) => {
           href={part}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-500 hover:text-blue-600 underline break-all"
+          className="break-all text-blue-500 underline hover:text-blue-600"
         >
           {part}
         </a>
@@ -421,7 +421,10 @@ const useChatHandlers = ({ userEmail }: { userEmail: string }) => {
     setIsSettingsOpen(false);
   };
 
-  const handleContextUpdate = (channelHandles: string[], playlistIds: string[]) => {
+  const handleContextUpdate = (
+    channelHandles: string[],
+    playlistIds: string[]
+  ) => {
     // Optionally refresh chat data or handle context update
     closeSettings();
   };
@@ -500,12 +503,12 @@ export default function Chat({ userEmail }: ChatProps) {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="bg-background flex h-screen">
       {/* Chat Sidebar - Fixed/Sticky */}
-      <div className="w-1/4 flex flex-col h-full">
-        <Card className="rounded-none border-r flex-shrink-0">
+      <div className="flex h-full w-1/4 flex-col">
+        <Card className="flex-shrink-0 rounded-none border-r">
           <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Chats</CardTitle>
               <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogTrigger asChild>
@@ -545,8 +548,8 @@ export default function Chat({ userEmail }: ChatProps) {
             </div>
           </CardHeader>
         </Card>
-        <Card className="rounded-none border-r border-t-0 flex-1 overflow-hidden">
-          <CardContent className="p-0 h-full">
+        <Card className="flex-1 overflow-hidden rounded-none border-t-0 border-r">
+          <CardContent className="h-full p-0">
             <ScrollArea className="h-full">
               <div className="space-y-1 p-2">
                 {(chats || []).map((chat) => (
@@ -555,7 +558,7 @@ export default function Chat({ userEmail }: ChatProps) {
                     variant={
                       currentChat?.id === chat.id ? "secondary" : "ghost"
                     }
-                    className="w-full justify-start text-left h-auto p-3"
+                    className="h-auto w-full justify-start p-3 text-left"
                     onClick={() => toggleChat(chat.id)}
                     disabled={isLoading}
                   >
@@ -569,13 +572,13 @@ export default function Chat({ userEmail }: ChatProps) {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1 h-full">
+      <div className="flex h-full flex-1 flex-col">
         {/* Chat Header - Fixed */}
-        <Card className="rounded-none border-b border-l-0 border-r-0 border-t-0 flex-shrink-0">
-          <CardHeader className="py-1 px-4">
-            <div className="flex justify-between items-center">
+        <Card className="flex-shrink-0 rounded-none border-t-0 border-r-0 border-b border-l-0">
+          <CardHeader className="px-4 py-1">
+            <div className="flex items-center justify-between">
               <CardTitle className="font-medium">
-                {isNewChatMode ? "New Chat" : currentChat?.title ?? ""}
+                {isNewChatMode ? "New Chat" : (currentChat?.title ?? "")}
               </CardTitle>
               <div className="flex gap-2">
                 <Button
@@ -623,7 +626,7 @@ export default function Chat({ userEmail }: ChatProps) {
                     }`}
                   >
                     <CardContent className="p-3">
-                      <div className="whitespace-pre-line break-words text-sm">
+                      <div className="text-sm break-words whitespace-pre-line">
                         {renderMessageWithLinks(message.message)}
                       </div>
                     </CardContent>
@@ -645,9 +648,9 @@ export default function Chat({ userEmail }: ChatProps) {
                       <div className="flex items-center space-x-2">
                         {isLoading && (
                           <>
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                            <div className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full" />
+                            <div className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full delay-100" />
+                            <div className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full delay-200" />
                           </>
                         )}
                         {error && (
@@ -665,7 +668,7 @@ export default function Chat({ userEmail }: ChatProps) {
         </div>
 
         {/* Input Form - Fixed */}
-        <Card className="rounded-none border-t border-l-0 border-r-0 border-b-0 flex-shrink-0">
+        <Card className="flex-shrink-0 rounded-none border-t border-r-0 border-b-0 border-l-0">
           <CardContent className="p-4">
             <form onSubmit={handleSubmit} className="flex space-x-2">
               <Textarea
@@ -677,10 +680,10 @@ export default function Chat({ userEmail }: ChatProps) {
                   isNewChatMode
                     ? "Type your first message to create a new chat..."
                     : currentChat
-                    ? "Type your message..."
-                    : "Type a message to start a new chat..."
+                      ? "Type your message..."
+                      : "Type a message to start a new chat..."
                 }
-                className="min-h-[2.5rem] max-h-32 resize-none"
+                className="max-h-32 min-h-[2.5rem] resize-none"
                 disabled={isLoading}
               />
               <Button
@@ -697,8 +700,13 @@ export default function Chat({ userEmail }: ChatProps) {
       </div>
 
       {/* Settings Modal */}
-      <Dialog open={isSettingsOpen} onOpenChange={(open) => { if (!open) closeSettings(); }}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+      <Dialog
+        open={isSettingsOpen}
+        onOpenChange={(open) => {
+          if (!open) closeSettings();
+        }}
+      >
+        <DialogContent className="max-h-[80vh] max-w-2xl overflow-hidden">
           <DialogHeader>
             <DialogTitle>Chat Settings</DialogTitle>
           </DialogHeader>

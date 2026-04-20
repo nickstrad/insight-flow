@@ -87,9 +87,9 @@ export const useVideoTableState = ({ userEmail }: { userEmail: string }) => {
       if (field !== sortField) return null;
       if (sortDirection === "none") return null;
       return sortDirection === "asc" ? (
-        <ArrowUp className="w-4 h-4" />
+        <ArrowUp className="h-4 w-4" />
       ) : (
-        <ArrowDown className="w-4 h-4" />
+        <ArrowDown className="h-4 w-4" />
       );
     },
     [sortField, sortDirection]
