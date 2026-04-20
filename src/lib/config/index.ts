@@ -3,6 +3,8 @@ import { z } from "zod";
 const serverSchema = z.object({
   DATABASE_URL: z.string().url(),
   GOOGLE_API_KEY: z.string().min(1),
+  GOOGLE_CHAT_MODEL: z.string().min(1).default("gemini-3.1-flash-lite-preview"),
+  GOOGLE_TRANSCRIPTION_MODEL: z.string().min(1).default("gemini-3-flash"),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),

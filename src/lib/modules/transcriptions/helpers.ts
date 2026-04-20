@@ -173,7 +173,7 @@ const getTranscript = async ({
   return await retryWithBackoff(
     async () => {
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-lite",
+        model: serverConfig.GOOGLE_TRANSCRIPTION_MODEL,
         contents: [
           `Please transcribe this video.`,
           {

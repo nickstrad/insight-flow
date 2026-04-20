@@ -1,9 +1,6 @@
 import { prisma } from "@/db";
 import { GoogleGenAI } from "@google/genai";
 import { ChatMessage, MessageRole } from "@/generated/prisma";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { z } from "zod";
-import { StructuredOutputParser } from "langchain/output_parsers";
 import { getEmbeddings } from "../embeddings/helpers";
 import { getChatContext } from "../chats/helpers";
 import { serverConfig } from "@/lib/config";
@@ -19,21 +16,6 @@ type RetrievedChunk = {
 const API_KEY = serverConfig.GOOGLE_API_KEY;
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
-
-const responseSchema = z.object({
-  response: z.string().describe("The synthesized response to the user's query"),
-  sources: z
-    .array(
-      z.object({
-        url: z.string().describe("YouTube URL with timestamp"),
-        relevance: z.number().describe("Relevance score as percentage"),
-        text: z.string().describe("Relevant text from the source"),
-      })
-    )
-    .describe("List of sources cited in the response"),
-});
-
-const parser = StructuredOutputParser.fromZodSchema(responseSchema);
 
 export async function searchVideos(
   queryText: string,
@@ -156,64 +138,11 @@ Please provide a well-structured response that:
 `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
+    model: serverConfig.GOOGLE_CHAT_MODEL,
     contents: [prompt],
   });
 
   return response.text ?? "";
-};
-
-export const makeChatCallBKUP = async ({
-  query,
-  chunks,
-  previousMessages,
-}: {
-  query: string;
-  chunks: RetrievedChunk[];
-  previousMessages: string;
-}) => {
-  const formatInstructions = parser.getFormatInstructions();
-
-  const model = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite",
-    apiKey: API_KEY,
-  });
-
-  const prompt = `You are a helpful assistant that synthesizes information from multiple sources. 
-Given the following search query and relevant text chunks, create a coherent and informative response.
-Only use information from the provided chunks. If the chunks don't contain relevant information, say so.
-
-Search Query: "${query}"
-
-Relevant Chunks:
-${chunks
-  .map(
-    (chunk, i) => `
-Chunk ${i + 1} (Relevance: ${Math.round(chunk.score * 100)}%):
-${chunk.text}
-Source youtube video id:${chunk.youtubeId}
-Source timestamp in seconds:${chunk.timestampInSeconds}
-`
-  )
-  .join("\n")}
-
-Context:
-${previousMessages}
-
-Please provide a well-structured response that:
-1. Directly addresses the query
-2. Synthesizes information from the most relevant chunks
-3. Maintains context and coherence
-4. Places a citation number next to each source, formatted as [videoId]
-5. Acknowledges if certain aspects of the query aren't covered in the provided chunks
-
-${formatInstructions}`;
-
-  const response = await model.invoke(prompt);
-  const parsedResponse = await parser.parse(response.content as string);
-
-  console.log("Parsed Response:", parsedResponse);
-  return parsedResponse;
 };
 
 export async function handleUserQuery({

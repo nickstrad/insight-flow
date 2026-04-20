@@ -92,7 +92,7 @@ export async function createChatWithFirstMessage({
 }): Promise<Chat> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
+      model: serverConfig.GOOGLE_CHAT_MODEL,
       contents: [
         `Generate a concise 4 to 6 word title for a chat conversation that starts with this message: "${firstMessage}".
          The title should capture the main topic or intent. Return only the title, no quotes or additional text.`,
