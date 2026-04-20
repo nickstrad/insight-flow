@@ -1,8 +1,9 @@
 import { prisma } from "@/db";
 import { retryWithBackoff } from "@/lib/utils";
 import { GoogleGenAI } from "@google/genai";
+import { serverConfig } from "@/lib/config";
 
-const API_KEY = process.env.GOOGLE_API_KEY!;
+const API_KEY = serverConfig.GOOGLE_API_KEY;
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 // Types for embeddings

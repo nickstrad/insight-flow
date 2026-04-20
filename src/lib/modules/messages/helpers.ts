@@ -6,6 +6,7 @@ import { z } from "zod";
 import { StructuredOutputParser } from "langchain/output_parsers";
 import { getEmbeddings } from "../embeddings/helpers";
 import { getChatContext } from "../chats/helpers";
+import { serverConfig } from "@/lib/config";
 
 type RetrievedChunk = {
   text: string;
@@ -15,7 +16,7 @@ type RetrievedChunk = {
   youtubeId: string;
 };
 
-const API_KEY = process.env.GOOGLE_API_KEY!;
+const API_KEY = serverConfig.GOOGLE_API_KEY;
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 

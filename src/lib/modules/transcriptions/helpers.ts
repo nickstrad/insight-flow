@@ -33,7 +33,9 @@ const zodSchema = z.array(
   })
 );
 
-const API_KEY = process.env.GOOGLE_API_KEY!;
+import { serverConfig } from "@/lib/config";
+
+const API_KEY = serverConfig.GOOGLE_API_KEY;
 
 const geminiSchema = toGeminiSchema(zodSchema);
 

@@ -1,6 +1,7 @@
 import { prisma } from "@/db";
 import { Chat, ChatMessage } from "@/generated/prisma";
 import { GoogleGenAI } from "@google/genai";
+import { serverConfig } from "@/lib/config";
 
 export async function createChat({
   uid,
@@ -79,7 +80,7 @@ export async function deleteChat(id: string): Promise<void> {
   });
 }
 
-const API_KEY = process.env.GOOGLE_API_KEY!;
+const API_KEY = serverConfig.GOOGLE_API_KEY;
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export async function createChatWithFirstMessage({

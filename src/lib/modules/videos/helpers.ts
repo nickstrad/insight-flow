@@ -75,7 +75,9 @@ interface YouTubeChannelPlaylistsResponse {
   }[];
 }
 
-const API_KEY = process.env.GOOGLE_API_KEY!;
+import { serverConfig } from "@/lib/config";
+
+const API_KEY = serverConfig.GOOGLE_API_KEY;
 
 export async function fetchVideoDurations(
   videoIds: string[]

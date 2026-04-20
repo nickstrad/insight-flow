@@ -1,4 +1,5 @@
 import { PrismaClient } from "@/generated/prisma";
+import { serverConfig } from "@/lib/config";
 
 const globalForPrisma = global as unknown as {
   prisma: PrismaClient;
@@ -6,6 +7,6 @@ const globalForPrisma = global as unknown as {
 
 export const prisma = globalForPrisma.prisma || new PrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
+if (serverConfig.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
